@@ -64,6 +64,28 @@ function Topology() {
   );
 }
 
+function Gauge({ label, value, progress, tone = "good" }: { label: string; value: string; progress: number; tone?: string }) {
+  return <div className="dashboard-gauge"><div className="dashboard-gauge-head"><span>{label}</span><strong>{value}</strong></div><svg viewBox="0 0 160 92" aria-hidden="true"><path className="gauge-track" d="M18 78 A62 62 0 0 1 142 78" /><path className={`gauge-fill ${tone}`} d="M18 78 A62 62 0 0 1 142 78" pathLength="100" style={{ strokeDasharray: `${progress} 100` }} /></svg></div>;
+}
+
+function DashboardChart({ title, meta, path, tone = "cyan" }: { title: string; meta: string; path: string; tone?: string }) {
+  return <article className="dashboard-chart"><div className="dashboard-chart-head"><span>{title}</span><small>{meta}</small></div><svg viewBox="0 0 520 150" preserveAspectRatio="none" aria-hidden="true"><path className="chart-grid" d="M0 25H520 M0 75H520 M0 125H520" /><path className={`chart-line ${tone}`} d={path} /></svg><div className="chart-scale"><span>12:00</span><span>now</span></div></article>;
+}
+
+function ObservabilityDashboard() {
+  const statuses = [["API health", "NORMAL"], ["App Layer", "4 / 4 ready"], ["Database", "CONNECTED"], ["Backup", "VERIFIED"], ["Alerts", "0 OPEN"]];
+  return <section className="section observability-section" aria-labelledby="observability-title">
+    <div className="section-heading"><div><p className="eyebrow">OBSERVABILITY SNAPSHOT</p><h2 id="observability-title">Signals before<br />surprises.</h2></div><span className="dashboard-simulation">STATIC PORTFOLIO SIMULATION</span></div>
+    <div className="dashboard-shell">
+      <div className="dashboard-head"><div><strong>platform / overview</strong><span>illustrative environment</span></div><div className="dashboard-controls"><span>production-like</span><span>last 6 hours</span></div></div>
+      <div className="dashboard-status-grid">{statuses.map(([label, value]) => <div className="dashboard-status" key={label}><span>{label}</span><strong>{value}</strong><i /></div>)}</div>
+      <div className="dashboard-gauge-grid"><Gauge label="CPU utilization" value="32%" progress={32} /><Gauge label="Memory used" value="48%" progress={48} /><Gauge label="Disk usage" value="61%" progress={61} tone="amber" /><Gauge label="Error rate" value="0.4%" progress={8} tone="alert" /></div>
+      <div className="dashboard-chart-grid"><DashboardChart title="CPU and memory trend" meta="illustrative %" path="M0 104 C45 92 58 110 92 83 S150 90 180 66 S235 86 270 61 S324 73 360 48 S430 70 470 42 S500 49 520 35" /><DashboardChart title="Network traffic" meta="illustrative throughput" tone="amber" path="M0 93 C35 85 55 104 84 76 S132 88 164 62 S215 88 246 79 S300 90 336 56 S380 82 420 58 S474 72 520 43" /><DashboardChart title="Request latency" meta="illustrative ms" tone="violet" path="M0 110 C36 102 60 107 92 101 S142 110 175 88 S218 96 252 84 S300 98 340 73 S390 84 430 61 S480 78 520 52" /><DashboardChart title="Storage usage" meta="illustrative %" tone="teal" path="M0 120 C60 116 92 112 135 108 S210 100 258 88 S324 80 365 73 S450 64 520 55" /></div>
+      <div className="dashboard-events"><span className="eyebrow">OPERATIONS TIMELINE</span><div><span><i /> Release completed <small>02m ago</small></span><span><i /> Health checks passing <small>18m ago</small></span><span><i /> Backup verified <small>42m ago</small></span><span><i /> Recovery procedure documented <small>today</small></span></div></div>
+    </div>
+  </section>;
+}
+
 export default function Home() {
   const [resumeMessage, setResumeMessage] = useState(false);
 
@@ -79,7 +101,7 @@ export default function Home() {
         <div className="hero-copy">
           <p className="eyebrow hero-eyebrow" aria-hidden="true" />
           <h1>Systems, made <em>reliable.</em></h1>
-          <p className="lede">Gajan Rajah designs, automates, and operates cloud platforms from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
+          <p className="lede">I design, automate, and operate cloud platforms from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
           <div className="hero-actions">
             <a className="button primary" href="#work">Explore selected work <span>↓</span></a>
             <button className="button ghost" onClick={() => setResumeMessage(true)}>Resume <span>↗</span></button>
@@ -90,6 +112,7 @@ export default function Home() {
         <HeroSystem />
       </section>
 
+      <ObservabilityDashboard />
       <section id="work" className="section projects"><div className="section-heading"><p className="eyebrow">SELECTED DEPLOYMENTS</p><h2>Work that holds up<br />when it matters.</h2></div><div className="project-grid">{projects.map((project, index) => <article className="project-card" key={project.name}><div className="card-top"><span>{String(index + 1).padStart(2,"0")}</span><span className="status"><i /> {project.environment}</span></div><h3>{project.name}</h3><p>{project.detail}</p><footer><span>{project.signal}</span><code>{project.stack}</code></footer></article>)}</div></section>
 
       <section id="cases" className="section case-section"><div className="section-heading"><p className="eyebrow">PRODUCTION TROUBLESHOOTING</p><h2>Prepared beats<br />heroic.</h2></div><div className="case-list">{cases.map(([title, text], index) => <article key={title}><span>{String(index + 1).padStart(2,"0")}</span><div><h3>{title}</h3><p>{text}</p></div></article>)}</div></section>
