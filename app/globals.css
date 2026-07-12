@@ -15,5 +15,7 @@
  .topology-packet.packet-ci { fill:#7be3a7; filter:drop-shadow(0 0 7px #7be3a7); }.topology-packet.packet-amber { fill:#f1b45f; filter:drop-shadow(0 0 7px #f1b45f); }
 @media (prefers-reduced-motion: reduce) { .topology animateMotion { display:none; } }
 .topology .line-four { stroke:rgba(240,189,103,.55); stroke-dasharray:4 6; }
+.topology .line-five { stroke:rgba(94,167,255,.42); stroke-dasharray:4 6; }
+.nav-actions { display:flex; gap:8px; align-items:center; }
 .utility { font-size:0; }
 .utility::after { content:"AVAILABLE FOR DEVOPS & SYSTEM ENGINEERING  ·  COLOMBO / KANDY  ·  REMOTE / HYBRID"; font:10px var(--font-geist-mono),monospace; letter-spacing:.11em; color:var(--muted); }

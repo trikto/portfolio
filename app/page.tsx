@@ -20,10 +20,11 @@ function Topology() {
   return (
     <svg className="topology" viewBox="0 0 680 300" role="img" aria-label="Abstract infrastructure topology with healthy services">
       <path className="topology-line line-one" d="M90 154 C180 70 255 227 340 150 S488 58 588 132" />
-      <path className="topology-line line-two" d="M92 155 C195 257 268 84 340 150 S481 248 590 132" />
+      <path className="topology-line line-two" d="M92 155 C195 257 268 84 340 150" />
       <path className="topology-line line-three" d="M340 150 L340 52 M340 150 L340 250" />
       <path className="topology-line line-four" d="M340 150 C390 170 390 230 340 250" />
-      {[[90,154,"edge"],[340,52,"ci"],[340,150,"app"],[340,250,"data"],[590,132,"operations"]].map(([x,y,name]) => (
+      <path className="topology-line line-five" d="M340 250 C430 250 510 188 590 132" />
+      {[[90,154,"Edge"],[340,52,"ci"],[340,150,"App Layer"],[340,250,"Database Layer"],[590,132,"Monitoring"]].map(([x,y,name]) => (
         <g className="topology-node" key={String(name)} transform={`translate(${x} ${y})`}>
           <circle r="17" /><circle className="node-core" r="6" /><text y="37">{name}</text>
         </g>
@@ -32,7 +33,9 @@ function Topology() {
       <circle className="topology-packet packet-two" r="4"><animateMotion dur="7s" repeatCount="indefinite" path="M340 150 C268 84 195 257 92 155" /></circle>
       <circle className="topology-packet packet-ci" r="5"><animateMotion dur="5s" repeatCount="indefinite" path="M340 52 L340 150" /></circle>
       <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1.5s" repeatCount="indefinite" path="M340 250 C390 230 390 170 340 150" /></circle>
-      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-0.5s" repeatCount="indefinite" path="M340 150 C390 170 390 230 340 250" /></circle>
+      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-0.5s" repeatCount="indefinite" path="M340 150 L340 250" /></circle>
+      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1s" repeatCount="indefinite" path="M340 150 S488 58 588 132" /></circle>
+      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1.5s" repeatCount="indefinite" path="M340 250 C430 250 510 188 590 132" /></circle>
     </svg>
   );
 }
@@ -44,13 +47,13 @@ export default function Home() {
     <main className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
       <header className="nav">
-        <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a></nav>
-        <a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a>
+        <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a><a href="https://docs.google.com/spreadsheets/d/10q8vRpSrqYr7Rvx2kRfwmF9hYMBTWow8cd2c_xWUFRw" target="_blank" rel="noreferrer">Workouts</a></nav>
+        <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
       </header>
 
       <section id="top" className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">DEVOPS / CLOUD ENGINEER <span>01—26</span></p>
+          <p className="eyebrow">DEVOPS ENGINEER</p>
           <h1>Systems, made <em>legible.</em></h1>
           <p className="lede">Gajan Rajah designs, automates, and operates cloud platforms—from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
           <div className="hero-actions">
@@ -79,5 +82,5 @@ export default function Home() {
 }
 
 function HeroSystem() {
-  return <div className="hero-system"><div className="system-title"><span className="status"><i /> ALL SERVICES NOMINAL</span><span>UTC+05:30</span></div><Topology /></div>;
+  return <div className="hero-system"><div className="system-title"><span className="status"><i /> ALL SERVICES NORMAL</span><span>UTC+05:30</span></div><Topology /></div>;
 }
