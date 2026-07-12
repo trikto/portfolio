@@ -34,6 +34,7 @@
 
 ## Recent changes
 
+- Removed the redundant footer navigation links on 2026-07-12; retain only the copyright-area Workout Schedule link.
 - Added a discreet footer link and minimal `/workouts` schedule page on 2026-07-12; keep workout content secondary to the DevOps portfolio and out of primary navigation.
 - Added the `/tools` directory and placeholder routes for planned browser-based DevOps utilities on 2026-07-12.
 - Added native Next.js sitemap, robots, llms.txt, centralized canonical metadata, and non-indexable redirects for legacy tool URLs on 2026-07-12.

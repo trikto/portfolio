@@ -205,7 +205,7 @@ export default function Home() {
 
       <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system, not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
 
-      <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><nav className="footer-links" aria-label="Footer navigation"><Link href="/">DevOps portfolio</Link><Link href="/tools">Free DevOps tools</Link><a href="#work">Selected projects</a><a href="#about">Experience</a></nav><small>© 2026 Gajan Rajah <span aria-hidden="true">·</span> <Link href="/workouts">Workout Schedule</Link></small></footer>
+      <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><small>© 2026 Gajan Rajah <span aria-hidden="true">·</span> <Link href="/workouts">Workout Schedule</Link></small></footer>
       {showBackToTop && <a className="back-to-top" href="#site-top" aria-label="Back to top">↑</a>}
     </main>
   );
