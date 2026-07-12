@@ -2,14 +2,6 @@
 
 import { useState } from "react";
 
-type Concept = "control" | "console" | "cloud";
-
-const concepts: { id: Concept; label: string; name: string; description: string }[] = [
-  { id: "control", label: "A", name: "DevOps Control Plane", description: "Calm, premium reliability posture" },
-  { id: "console", label: "B", name: "Deployment Console", description: "Delivery flow with terminal restraint" },
-  { id: "cloud", label: "C", name: "Cloud Operations Portfolio", description: "Editorial systems storytelling" },
-];
-
 const projects = [
   { name: "OpenShift Platform Engineering", environment: "PRODUCTION", stack: "OpenShift · Ceph · Velero · Ansible", detail: "Built resilient cluster environments, backup paths, storage, and operational guardrails for global client workloads.", signal: "Platform" },
   { name: "Homelab / gajan.dev", environment: "LAB", stack: "GKE · GitLab CI · Prometheus · Grafana", detail: "A personal learning platform for running Kubernetes workloads, observability, and cloud delivery experiments.", signal: "Observability" },
@@ -30,7 +22,7 @@ function Topology() {
       <path className="topology-line line-one" d="M90 154 C180 70 255 227 340 150 S488 58 588 132" />
       <path className="topology-line line-two" d="M92 155 C195 257 268 84 340 150 S481 248 590 132" />
       <path className="topology-line line-three" d="M340 150 L340 52 M340 150 L340 250" />
-      {[[90,154,"edge"],[340,52,"ci"],[340,150,"core"],[340,250,"data"],[590,132,"app"]].map(([x,y,name]) => (
+      {[[90,154,"edge"],[340,52,"ci"],[340,150,"app"],[340,250,"data"],[590,132,"operations"]].map(([x,y,name]) => (
         <g className="topology-node" key={String(name)} transform={`translate(${x} ${y})`}>
           <circle r="17" /><circle className="node-core" r="6" /><text y="37">{name}</text>
         </g>
@@ -42,12 +34,10 @@ function Topology() {
 }
 
 export default function Home() {
-  const [concept, setConcept] = useState<Concept>("control");
   const [resumeMessage, setResumeMessage] = useState(false);
-  const current = concepts.find((item) => item.id === concept)!;
 
   return (
-    <main className={`site concept-${concept}`}>
+    <main className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
       <header className="nav">
         <a className="wordmark" href="#top" aria-label="Gajan Rajah home">GR<span>/</span>OPS</a>
@@ -58,7 +48,7 @@ export default function Home() {
       <section id="top" className="hero">
         <div className="hero-copy">
           <p className="eyebrow">DEVOPS / CLOUD ENGINEER <span>01—26</span></p>
-          <h1>{concept === "console" ? <>Ship with <em>confidence.</em></> : concept === "cloud" ? <>Systems, made <em>legible.</em></> : <>Make the safe path the <em>fast path.</em></>}</h1>
+          <h1>Systems, made <em>legible.</em></h1>
           <p className="lede">Gajan Rajah designs, automates, and operates cloud platforms—from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
           <div className="hero-actions">
             <a className="button primary" href="#work">Explore selected work <span>↓</span></a>
@@ -67,12 +57,7 @@ export default function Home() {
           {resumeMessage && <p className="resume-note">Resume available on request. <a href="mailto:gajanrajah@protonmail.com?subject=Resume%20request">Email Gajan</a>.</p>}
         </div>
 
-        {concept === "console" ? <Pipeline /> : <HeroSystem concept={concept} />}
-      </section>
-
-      <section className="concept-switcher" aria-label="Homepage concepts">
-        <div><p className="eyebrow">SELECTABLE PROTOTYPE</p><strong>{current.name}</strong><span>{current.description}</span></div>
-        <div className="concept-options">{concepts.map((item) => <button key={item.id} onClick={() => setConcept(item.id)} className={concept === item.id ? "selected" : ""}><b>{item.label}</b><span>{item.name}</span></button>)}</div>
+        <HeroSystem />
       </section>
 
       <section id="work" className="section projects"><div className="section-heading"><p className="eyebrow">SELECTED DEPLOYMENTS</p><h2>Work that holds up<br />when it matters.</h2></div><div className="project-grid">{projects.map((project, index) => <article className="project-card" key={project.name}><div className="card-top"><span>{String(index + 1).padStart(2,"0")}</span><span className="status"><i /> {project.environment}</span></div><h3>{project.name}</h3><p>{project.detail}</p><footer><span>{project.signal}</span><code>{project.stack}</code></footer></article>)}</div></section>
@@ -90,10 +75,6 @@ export default function Home() {
   );
 }
 
-function HeroSystem({ concept }: { concept: Concept }) {
-  return <div className="hero-system"><div className="system-title"><span className="status"><i /> ALL SERVICES NOMINAL</span><span>UTC+05:30</span></div>{concept === "cloud" ? <Topology /> : <><div className="metric-row"><div><small>DEPLOY SUCCESS</small><strong>99.98<sup>%</sup></strong><span>last 30 days</span></div><div><small>SLO BUDGET</small><strong>98<sup>.7</sup></strong><span>remaining</span></div></div><div className="service-list">{["edge-gateway","checkout-api","cluster-control","metrics-store"].map((name, i) => <div key={name}><i /><code>{name}</code><span>{["12ms","48ms","healthy","3.2GB"][i]}</span></div>)}</div></>}</div>;
-}
-
-function Pipeline() {
-  return <div className="pipeline"><div className="terminal-head"><span /><span /><span /> <code>release/ops-2026.07</code></div><div className="terminal-body"><p><b>$</b> git push origin main</p><p className="muted">→ build started · commit 71d3f2c</p>{["validate","build image","scan","deploy","verify"].map((step, i) => <div className="pipe-step" key={step}><span>0{i+1}</span><strong>{step}</strong><i className={i === 3 ? "running" : ""}>{i === 3 ? "in progress" : "passed"}</i></div>)}<p className="cursor"><b>$</b> <i /></p></div></div>;
+function HeroSystem() {
+  return <div className="hero-system"><div className="system-title"><span className="status"><i /> ALL SERVICES NOMINAL</span><span>UTC+05:30</span></div><Topology /></div>;
 }
