@@ -20,6 +20,7 @@
 .utility { font-size:0; }
 .utility::after { content:"AVAILABLE FOR DEVOPS & SYSTEM ENGINEERING  ·  COLOMBO / KANDY  ·  REMOTE / HYBRID"; font:10px var(--font-geist-mono),monospace; letter-spacing:.11em; color:var(--muted); }
 .hero { min-height:330px; }
+.hero-eyebrow { height:12px; }
 .case-list article { grid-template-columns:90px 1fr; }
 .certification-list { max-height:280px; overflow-y:auto; padding-right:10px; scrollbar-color:rgba(241,181,99,.65) transparent; }
 .certification-list li { display:flex; flex-direction:column; gap:5px; }

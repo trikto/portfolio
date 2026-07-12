@@ -78,7 +78,7 @@ export default function Home() {
 
       <section id="top" className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">DEVOPS ENGINEER</p>
+          <p className="eyebrow hero-eyebrow" aria-hidden="true" />
           <h1>Systems, made <em>reliable.</em></h1>
           <p className="lede">Gajan Rajah designs, automates, and operates cloud platforms from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
           <div className="hero-actions">
