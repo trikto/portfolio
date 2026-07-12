@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 const HERO_WORDS = ["reliable", "observable", "resilient", "repeatable"];
 
@@ -155,13 +155,26 @@ function ObservabilityDashboard() {
 
 export default function Home() {
   const [resumeMessage, setResumeMessage] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setShowBackToTop(!entry.isIntersecting);
+    });
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <main className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
-      <header className="nav">
+      <header ref={navRef} className="nav">
         <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a><a href="https://docs.google.com/spreadsheets/d/10q8vRpSrqYr7Rvx2kRfwmF9hYMBTWow8cd2c_xWUFRw" target="_blank" rel="noreferrer">Workouts</a></nav>
-        <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
+        <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="https://github.com/trikto/portfolio" target="_blank" rel="noreferrer">GitHub <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
       </header>
 
       <section id="top" className="hero">
@@ -191,6 +204,7 @@ export default function Home() {
       <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system, not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
 
       <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><small>© 2026 Gajan Rajah</small></footer>
+      {showBackToTop && <a className="back-to-top" href="#top" aria-label="Back to top">↑</a>}
     </main>
   );
 }
