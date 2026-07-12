@@ -172,8 +172,8 @@ export default function Home() {
   return (
     <main id="site-top" className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
-      <header ref={navRef} className="nav">
-        <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a><a href="https://docs.google.com/spreadsheets/d/10q8vRpSrqYr7Rvx2kRfwmF9hYMBTWow8cd2c_xWUFRw" target="_blank" rel="noreferrer">Workouts</a></nav>
+      <header id="site-nav" ref={navRef} className="nav">
+        <nav aria-label="Primary navigation"><a href="#top">Home</a><a href="#about">Experience</a><a href="#work">Projects</a><a href="/tools">Tools</a><a href="mailto:gajanrajah@protonmail.com">Contact</a></nav>
         <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="https://github.com/trikto/portfolio" target="_blank" rel="noreferrer">GitHub <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
       </header>
 

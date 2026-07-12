@@ -31,3 +31,7 @@
 ## Product note
 
 - The Observability dashboard is a client-side simulator with seeded local data; it must not fetch Grafana or Prometheus data.
+
+## Recent changes
+
+- Added the `/tools` directory and placeholder routes for planned browser-based DevOps utilities on 2026-07-12.

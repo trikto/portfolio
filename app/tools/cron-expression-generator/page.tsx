@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { SiteHeader } from "../../components/site-header";
+
+export default function CronExpressionGeneratorPage() {
+  return <main className="site concept-cloud tool-placeholder"><div className="utility"><span className="pulse" /> DEVOPS UTILITIES</div><SiteHeader /><section><p className="eyebrow">CRON EXPRESSION GENERATOR</p><h1>Coming soon.</h1><p>The generator is being prepared. Return to the tools directory to explore available utilities.</p><Link className="button primary" href="/tools">Back to tools <span>←</span></Link></section></main>;
+}
