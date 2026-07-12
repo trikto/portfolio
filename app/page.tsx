@@ -19,15 +19,40 @@ const cases = [
 
 const skills = ["Kubernetes", "OpenShift", "Docker", "GitOps", "CI/CD", "Ansible", "Prometheus", "Grafana", "AWS", "GCP", "Linux", "Python", "Bash", "Ceph", "Velero"];
 
-function FlowField() {
-  return <div className="flow-field" aria-hidden="true"><span /><span /><span /><i /><i /></div>;
+function ArchitectureBackground() {
+  return <div className="architecture-background" aria-hidden="true">
+    <svg className="architecture-map architecture-desktop" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+      <g className="architecture-zone"><rect x="70" y="135" width="375" height="280" rx="18" /><text x="98" y="172">DELIVERY LAYER</text></g>
+      <g className="architecture-zone"><rect x="505" y="135" width="550" height="280" rx="18" /><text x="533" y="172">COMPUTE LAYER</text></g>
+      <g className="architecture-zone"><rect x="1100" y="135" width="410" height="280" rx="18" /><text x="1128" y="172">DATA LAYER</text></g>
+      <g className="architecture-zone operations"><rect x="680" y="550" width="630" height="190" rx="18" /><text x="708" y="587">OPERATIONS LAYER</text></g>
+      <g className="architecture-links"><path d="M245 280H325M410 280H555M680 280H760M680 280H870M680 280H980M815 330V468H1190M925 330V468H1320M1035 330V468H1435M1190 468V610M1320 468V610M1435 468V610" /><path className="recovery" d="M1435 330V500H1320V610" /><path className="metrics" d="M815 330V610M925 330V610M1035 330V610" /></g>
+      <g className="architecture-node"><rect x="125" y="245" width="120" height="70" rx="8" /><text x="185" y="274">GIT +</text><text x="185" y="293">CI/CD</text></g>
+      <g className="architecture-node"><rect x="325" y="245" width="120" height="70" rx="8" /><text x="385" y="274">DEPLOY</text><text x="385" y="293">CONTROL</text></g>
+      <g className="architecture-node edge"><rect x="555" y="245" width="125" height="70" rx="8" /><text x="617" y="274">EDGE /</text><text x="617" y="293">INGRESS</text></g>
+      <g className="architecture-node"><rect x="760" y="245" width="110" height="70" rx="8" /><text x="815" y="283">APP A</text></g>
+      <g className="architecture-node"><rect x="870" y="245" width="110" height="70" rx="8" /><text x="925" y="283">APP B</text></g>
+      <g className="architecture-node"><rect x="980" y="245" width="110" height="70" rx="8" /><text x="1035" y="274">ASYNC</text><text x="1035" y="293">WORKER</text></g>
+      <g className="architecture-node data"><rect x="1130" y="245" width="120" height="70" rx="8" /><text x="1190" y="283">POSTGRES</text></g>
+      <g className="architecture-node data"><rect x="1260" y="245" width="120" height="70" rx="8" /><text x="1320" y="283">MONGODB</text></g>
+      <g className="architecture-node recovery-node"><rect x="1380" y="245" width="110" height="70" rx="8" /><text x="1435" y="274">BACKUP</text><text x="1435" y="293">STORE</text></g>
+      <g className="architecture-node ops"><rect x="760" y="610" width="110" height="62" rx="8" /><text x="815" y="647">METRICS</text></g><g className="architecture-node ops"><rect x="870" y="610" width="110" height="62" rx="8" /><text x="925" y="647">LOGS</text></g><g className="architecture-node ops"><rect x="980" y="610" width="110" height="62" rx="8" /><text x="1035" y="647">ALERTS</text></g><g className="architecture-node ops"><rect x="1135" y="610" width="110" height="62" rx="8" /><text x="1190" y="647">RECOVERY</text></g><g className="architecture-node ops"><rect x="1265" y="610" width="110" height="62" rx="8" /><text x="1320" y="647">ARCHIVE</text></g>
+      <circle className="flow-pulse delivery-pulse" r="5"><animateMotion dur="6s" repeatCount="indefinite" path="M185 280H385H617" /></circle><circle className="flow-pulse request-pulse" r="5"><animateMotion dur="7s" begin="-2s" repeatCount="indefinite" path="M617 280H815H925H1035" /></circle><circle className="flow-pulse recovery-pulse" r="5"><animateMotion dur="8s" begin="-4s" repeatCount="indefinite" path="M1435 280V500H1320V640" /></circle>
+    </svg>
+    <svg className="architecture-map architecture-mobile" viewBox="0 0 390 920" preserveAspectRatio="xMidYMid slice">
+      <g className="architecture-zone"><rect x="45" y="40" width="300" height="190" rx="16" /><text x="68" y="68">DELIVERY</text></g><g className="architecture-zone"><rect x="45" y="280" width="300" height="260" rx="16" /><text x="68" y="308">COMPUTE</text></g><g className="architecture-zone"><rect x="45" y="590" width="300" height="230" rx="16" /><text x="68" y="618">DATA + OPS</text></g>
+      <g className="architecture-links"><path d="M195 130V175M195 175V340M115 390H195M195 390H275M115 440V655M195 440V655M275 440V655M115 705H195M195 705H275" /><path className="recovery" d="M275 440V735H195" /></g>
+      <g className="architecture-node"><rect x="135" y="95" width="120" height="58" rx="8" /><text x="195" y="130">GIT + CI/CD</text></g><g className="architecture-node edge"><rect x="135" y="175" width="120" height="58" rx="8" /><text x="195" y="210">EDGE</text></g><g className="architecture-node"><rect x="60" y="360" width="110" height="58" rx="8" /><text x="115" y="395">APP A</text></g><g className="architecture-node"><rect x="140" y="360" width="110" height="58" rx="8" /><text x="195" y="395">APP B</text></g><g className="architecture-node"><rect x="220" y="360" width="110" height="58" rx="8" /><text x="275" y="395">WORKER</text></g><g className="architecture-node data"><rect x="60" y="675" width="110" height="58" rx="8" /><text x="115" y="710">POSTGRES</text></g><g className="architecture-node data"><rect x="140" y="675" width="110" height="58" rx="8" /><text x="195" y="710">MONGODB</text></g><g className="architecture-node recovery-node"><rect x="220" y="675" width="110" height="58" rx="8" /><text x="275" y="710">BACKUP</text></g><g className="architecture-node ops"><rect x="135" y="760" width="120" height="58" rx="8" /><text x="195" y="795">OBSERVABILITY</text></g>
+      <circle className="flow-pulse delivery-pulse" r="4"><animateMotion dur="6s" repeatCount="indefinite" path="M195 124V204" /></circle><circle className="flow-pulse request-pulse" r="4"><animateMotion dur="7s" begin="-2s" repeatCount="indefinite" path="M195 204V390H275" /></circle><circle className="flow-pulse recovery-pulse" r="4"><animateMotion dur="8s" begin="-4s" repeatCount="indefinite" path="M275 390V704H195" /></circle>
+    </svg>
+  </div>;
 }
 
 export default function Home() {
   const [resumeMessage, setResumeMessage] = useState(false);
 
   return <main className="site">
-    <FlowField />
+    <ArchitectureBackground />
     <div className="utility"><span className="pulse" /> AVAILABLE FOR DEVOPS & SYSTEMS ENGINEERING <b>·</b> REMOTE / HYBRID <b>·</b> COLOMBO / KANDY</div>
     <header className="nav">
       <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a></nav>
