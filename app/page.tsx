@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 const HERO_WORDS = ["reliable", "observable", "resilient", "repeatable"];
@@ -93,7 +94,7 @@ function Topology() {
       <path className="topology-line line-three" d="M340 150 L340 52 M340 150 L340 250" />
       <path className="topology-line line-four" d="M340 150 C390 170 390 230 340 250" />
       <path className="topology-line line-five" d="M340 250 C430 250 510 188 590 132" />
-      {[[90,154,"Edge"],[340,52,"ci"],[340,150,"App Layer"],[340,250,"Database Layer"],[590,132,"Monitoring"]].map(([x,y,name]) => (
+      {[[90,154,"Edge"],[340,52,"CI"],[340,150,"App Layer"],[340,250,"Database Layer"],[590,132,"Monitoring"]].map(([x,y,name]) => (
         <g className="topology-node" key={String(name)} transform={`translate(${x} ${y})`}>
           <circle r="17" /><circle className="node-core" r="6" /><text y="37">{name}</text>
         </g>
@@ -174,7 +175,7 @@ export default function Home() {
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
       <header id="site-nav" ref={navRef} className="nav">
         <nav aria-label="Primary navigation"><a href="#top">Home</a><a href="#about">Experience</a><a href="#work">Projects</a><a href="/tools">Tools</a><a href="mailto:gajanrajah@protonmail.com">Contact</a></nav>
-        <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="https://github.com/trikto/portfolio" target="_blank" rel="noreferrer">GitHub <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
+        <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="https://github.com/trikto" target="_blank" rel="noreferrer">GitHub <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
       </header>
 
       <section id="top" className="hero">
@@ -184,6 +185,7 @@ export default function Home() {
           <p className="lede">I design, automate, and operate cloud platforms from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
           <div className="hero-actions">
             <a className="button primary" href="#work">Explore selected work <span>↓</span></a>
+            <a className="button ghost" href="/tools">Explore DevOps tools <span>→</span></a>
             <button className="button ghost" onClick={() => setResumeMessage(true)}>Resume <span>↗</span></button>
           </div>
           {resumeMessage && <p className="resume-note">Resume available on request. <a href="mailto:gajanrajah@protonmail.com?subject=Resume%20request">Email Gajan</a>.</p>}
@@ -203,7 +205,7 @@ export default function Home() {
 
       <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system, not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
 
-      <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><small>© 2026 Gajan Rajah</small></footer>
+      <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><nav className="footer-links" aria-label="Footer navigation"><Link href="/">DevOps portfolio</Link><Link href="/tools">Free DevOps tools</Link><a href="#work">Selected projects</a><a href="#about">Experience</a></nav><small>© 2026 Gajan Rajah <span aria-hidden="true">·</span> <Link href="/workouts">Workout Schedule</Link></small></footer>
       {showBackToTop && <a className="back-to-top" href="#site-top" aria-label="Back to top">↑</a>}
     </main>
   );

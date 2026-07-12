@@ -1,0 +1,25 @@
+# Gajan.dev
+
+> DevOps engineering portfolio and free browser-based developer tools.
+
+## Site owner
+
+Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrastructure automation, observability, and reliable delivery.
+
+## Portfolio
+
+- [Home](https://gajan.dev/): DevOps portfolio, technical experience, selected projects, skills, and certifications.
+- [Projects](https://gajan.dev/#work): OpenShift, cloud delivery, observability, and software projects.
+- [Experience](https://gajan.dev/#about): Professional DevOps and systems engineering background.
+
+## Developer tools
+
+- [Free DevOps Tools](https://gajan.dev/tools): Browser-based utilities for infrastructure and automation work.
+- [Cron Expression Generator](https://gajan.dev/tools/cron-expression-generator): Planned utility for creating and inspecting cron schedules.
+- [Kubernetes YAML Validator](https://gajan.dev/tools/kubernetes-yaml-validator): Planned utility for validating Kubernetes manifests.
+
+## Contact
+
+- [LinkedIn](https://www.linkedin.com/in/gajanrajah)
+- [GitHub](https://github.com/trikto/portfolio)
+- [Email](mailto:gajanrajah@protonmail.com)

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "../components/site-header";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Free DevOps Tools for Kubernetes and Automation | Gajan.dev",
   description: "Use free browser-based DevOps tools including a cron expression generator and Kubernetes YAML validator. No uploads or account required.",
-  alternates: { canonical: "https://gajan.dev/tools" },
-};
+  path: "/tools",
+  keywords: ["free developer tools", "browser-based developer tools", "Kubernetes YAML validator", "cron expression generator", "developer utilities"],
+});
 
 const tools = [
   { title: "Cron Expression Generator", description: "Create cron expressions, understand existing schedules and preview upcoming execution times.", action: "Open Cron Generator", href: "/tools/cron-expression-generator", icon: "◷" },
