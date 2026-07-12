@@ -1,10 +1,29 @@
-# Project notes
+# Project instructions
 
-- Vercel project `gajan-dev` is connected to GitHub repository `trikto/gajan.dev` on `main`.
-- The local checkout currently has a ChatGPT-hosted `origin` remote, so it is not the same GitHub checkout.
-- On 2026-07-12, renaming `trikto/gajan.dev` to `portfolio` was rejected because `trikto/portfolio` already exists; the current local `main` was force-pushed to that existing `trikto/portfolio` repo instead.
+## Deployment model
+
+- This repository is a native Next.js App Router application for Vercel.
+- The portfolio root route is `app/page.tsx`; the document shell is `app/layout.tsx`.
+- Vercel project: `gajan-dev`, connected to GitHub repository `trikto/portfolio` on `main`.
+- Vercel settings: Framework preset `Next.js`, build command `npm run build`, output directory unset, Node.js `22.x`.
+- Do not restore the ChatGPT Sites/Cloudflare vinext model, including Vite, Wrangler, Cloudflare bindings, `.openai/hosting.json`, virtual modules, or the custom `sites()` plugin.
+
+## Local verification
+
+- Install: `npm install`
+- Development: `npm run dev`
+- Production build: `npm run build`
+- Production server: `npm run start`
+- Lint: `npm run lint`
+
+## Migration record
+
+- Replaced vinext scripts with native `next dev`, `next build`, and `next start`.
+- Added `next.config.mjs` and removed the Vite/Cloudflare/Sites build wrapper.
+- Removed unused D1, R2, Wrangler, worker, Drizzle example, Sites preview, and vinext test scaffolding.
+- Preserved the portfolio content, styling, responsive behavior, animations, and App Router UI.
+- Migration was validated locally and was not deployed or pushed as part of the migration.
+
+## Product note
+
 - The Observability dashboard is a client-side simulator with seeded local data; it must not fetch Grafana or Prometheus data.
-- Vercel project `gajan-dev` was reconnected to GitHub repository `trikto/portfolio` on 2026-07-12.
-- Deleting `trikto/gajan.dev` remains pending because the active GitHub CLI token still lacks the `delete_repo` scope.
-- On 2026-07-12, `gajan.dev` redirected to `www.gajan.dev`, while `www.gajan.dev` returned Vercel `NOT_FOUND`; the latest `trikto/portfolio` deployment itself was `READY` and built successfully.
-- The latest alias reassignment did not resolve the 404; Vercel reported `www.gajan.dev` is not separately registered for removal, and explicit re-add was blocked by the tool usage limit.
