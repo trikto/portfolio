@@ -2,14 +2,6 @@
 
 import { useState } from "react";
 
-type Concept = "control" | "console" | "cloud";
-
-const concepts: { id: Concept; label: string; name: string; description: string }[] = [
-  { id: "control", label: "A", name: "DevOps Control Plane", description: "Calm, premium reliability posture" },
-  { id: "console", label: "B", name: "Deployment Console", description: "Delivery flow with terminal restraint" },
-  { id: "cloud", label: "C", name: "Cloud Operations Portfolio", description: "Editorial systems storytelling" },
-];
-
 const projects = [
   { name: "OpenShift Platform Engineering", environment: "PRODUCTION", stack: "OpenShift · Ceph · Velero · Ansible", detail: "Built resilient cluster environments, backup paths, storage, and operational guardrails for global client workloads.", signal: "Platform" },
   { name: "Homelab / gajan.dev", environment: "LAB", stack: "GKE · GitLab CI · Prometheus · Grafana", detail: "A personal learning platform for running Kubernetes workloads, observability, and cloud delivery experiments.", signal: "Observability" },
@@ -17,83 +9,46 @@ const projects = [
 ];
 
 const cases = [
-  ["Release safety", "Coordinated production releases and major-version upgrades with test plans, impact analysis, and documented rollback thinking."],
-  ["Fast recovery", "Automated patching and migration work with CI/CD and Ansible, reducing manual execution from hours to seconds."],
-  ["Reliable platforms", "Implemented monitoring, health checks, backups, and disaster-recovery approaches across clusters and databases."],
+  { title: "Major-version release safety", context: "Production systems required controlled major-version upgrades without losing operational confidence.", response: "Prepared impact analysis, testing steps, release procedures, and documentation before coordinating rollout work.", tools: "Release management · Linux · Documentation", outcome: "A repeatable, reviewable path for production change." },
+  { title: "Automation for patching and migrations", context: "Routine maintenance work created long manual execution paths.", response: "Implemented CI/CD workflows and Ansible automation for patching and migration activities.", tools: "Ansible · CI/CD · Bash", outcome: "Execution time reduced from hours to seconds." },
+  { title: "OpenShift platform delivery", context: "Internal and client environments needed practical cluster provisioning and resource planning.", response: "Delivered single-node, multi-node, on-premises, and K3s/OpenShift proof-of-concept environments.", tools: "OpenShift · Kubernetes · VMware", outcome: "Validated platform modules and modernization approaches before rollout." },
+  { title: "Observability from the cluster out", context: "Teams needed quicker visibility into service and infrastructure health.", response: "Configured Prometheus, Grafana, exporters, automated health checks, log management, and image-pruning scripts.", tools: "Prometheus · Grafana · Python · Bash", outcome: "A clearer operational signal for systems and data services." },
+  { title: "Backup and recovery design", context: "Cluster, namespace, and database workloads required durable recovery procedures.", response: "Automated backups and formed disaster-recovery strategies across clusters and databases.", tools: "Velero · MinIO · MySQL · YugabyteDB", outcome: "Recovery paths documented alongside day-to-day operations." },
+  { title: "Network and access hardening", context: "Distributed systems and telco workloads needed secure, reliable access boundaries.", response: "Managed network policies, routes, DNS, HAProxy, and access configuration across OpenShift and product environments.", tools: "NetworkPolicy · HAProxy · DNS · RHEL", outcome: "Stronger access control and clearer service connectivity." },
 ];
 
 const skills = ["Kubernetes", "OpenShift", "Docker", "GitOps", "CI/CD", "Ansible", "Prometheus", "Grafana", "AWS", "GCP", "Linux", "Python", "Bash", "Ceph", "Velero"];
 
-function Topology() {
-  return (
-    <svg className="topology" viewBox="0 0 680 300" role="img" aria-label="Abstract infrastructure topology with healthy services">
-      <path className="topology-line line-one" d="M90 154 C180 70 255 227 340 150 S488 58 588 132" />
-      <path className="topology-line line-two" d="M92 155 C195 257 268 84 340 150 S481 248 590 132" />
-      <path className="topology-line line-three" d="M340 150 L340 52 M340 150 L340 250" />
-      {[[90,154,"edge"],[340,52,"ci"],[340,150,"core"],[340,250,"data"],[590,132,"app"]].map(([x,y,name]) => (
-        <g className="topology-node" key={String(name)} transform={`translate(${x} ${y})`}>
-          <circle r="17" /><circle className="node-core" r="6" /><text y="37">{name}</text>
-        </g>
-      ))}
-      <circle className="topology-packet packet-one" r="5"><animateMotion dur="5s" repeatCount="indefinite" path="M90 154 C180 70 255 227 340 150 S488 58 588 132" /></circle>
-      <circle className="topology-packet packet-two" r="4"><animateMotion dur="7s" repeatCount="indefinite" path="M92 155 C195 257 268 84 340 150 S481 248 590 132" /></circle>
-    </svg>
-  );
+function FlowField() {
+  return <div className="flow-field" aria-hidden="true"><span /><span /><span /><i /><i /></div>;
 }
 
 export default function Home() {
-  const [concept, setConcept] = useState<Concept>("control");
   const [resumeMessage, setResumeMessage] = useState(false);
-  const current = concepts.find((item) => item.id === concept)!;
 
-  return (
-    <main className={`site concept-${concept}`}>
-      <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
-      <header className="nav">
-        <a className="wordmark" href="#top" aria-label="Gajan Rajah home">GR<span>/</span>OPS</a>
-        <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a></nav>
-        <a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a>
-      </header>
+  return <main className="site">
+    <FlowField />
+    <div className="utility"><span className="pulse" /> AVAILABLE FOR DEVOPS & SYSTEMS ENGINEERING <b>·</b> REMOTE / HYBRID <b>·</b> COLOMBO / KANDY</div>
+    <header className="nav">
+      <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a></nav>
+      <div className="header-actions"><a className="linkedin-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
+    </header>
 
-      <section id="top" className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">DEVOPS / CLOUD ENGINEER <span>01—26</span></p>
-          <h1>{concept === "console" ? <>Ship with <em>confidence.</em></> : concept === "cloud" ? <>Systems, made <em>legible.</em></> : <>Make the safe path the <em>fast path.</em></>}</h1>
-          <p className="lede">Gajan Rajah designs, automates, and operates cloud platforms—from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
-          <div className="hero-actions">
-            <a className="button primary" href="#work">Explore selected work <span>↓</span></a>
-            <button className="button ghost" onClick={() => setResumeMessage(true)}>Resume <span>↗</span></button>
-          </div>
-          {resumeMessage && <p className="resume-note">Resume available on request. <a href="mailto:gajanrajah@protonmail.com?subject=Resume%20request">Email Gajan</a>.</p>}
-        </div>
+    <section id="top" className="hero">
+      <div className="hero-copy"><p className="eyebrow">DEVOPS / CLOUD ENGINEER <span>01—26</span></p><h1>Systems, made <em>legible.</em></h1><p className="lede">Gajan Rajah designs, automates, and operates cloud platforms—from resilient OpenShift environments to calmer, more observable delivery workflows.</p><div className="hero-actions"><a className="button primary" href="#work">Explore selected work <span>↓</span></a><button className="button ghost" onClick={() => setResumeMessage(true)}>Resume <span>↗</span></button></div>{resumeMessage && <p className="resume-note">Resume available on request. <a href="mailto:gajanrajah@protonmail.com?subject=Resume%20request">Email Gajan</a>.</p>}</div>
+      <div className="hero-system"><div className="system-title"><span className="status"><i /> OPERATIONS OVERVIEW</span><span>UTC+05:30</span></div><div className="cloud-board"><div className="cloud-metric"><small>OPERATING MODE</small><strong>calm</strong><span>guardrails in place</span></div><div className="cloud-metric"><small>FOCUS</small><strong>ready</strong><span>delivery · recovery · clarity</span></div><div className="cloud-lanes"><div><i /><code>delivery-path</code><span>verified</span></div><div><i /><code>platform-state</code><span>healthy</span></div><div><i /><code>recovery-path</code><span>prepared</span></div></div></div></div>
+    </section>
 
-        {concept === "console" ? <Pipeline /> : <HeroSystem concept={concept} />}
-      </section>
+    <section id="work" className="section projects"><div className="section-heading"><p className="eyebrow">SELECTED DEPLOYMENTS</p><h2>Work that holds up<br />when it matters.</h2></div><div className="project-grid">{projects.map((project, index) => <article className="project-card" key={project.name}><div className="card-top"><span>{String(index + 1).padStart(2,"0")}</span><span className="status"><i /> {project.environment}</span></div><h3>{project.name}</h3><p>{project.detail}</p><footer><span>{project.signal}</span><code>{project.stack}</code></footer></article>)}</div></section>
 
-      <section className="concept-switcher" aria-label="Homepage concepts">
-        <div><p className="eyebrow">SELECTABLE PROTOTYPE</p><strong>{current.name}</strong><span>{current.description}</span></div>
-        <div className="concept-options">{concepts.map((item) => <button key={item.id} onClick={() => setConcept(item.id)} className={concept === item.id ? "selected" : ""}><b>{item.label}</b><span>{item.name}</span></button>)}</div>
-      </section>
+    <section id="cases" className="section case-section"><div className="section-heading"><p className="eyebrow">PRODUCTION TROUBLESHOOTING</p><h2>Prepared beats<br />heroic.</h2></div><div className="case-panel" tabIndex={0} aria-label="Scrollable production troubleshooting case studies"><div className="case-panel-intro"><p className="eyebrow">FIELD RECORDS</p><h3>Operational decisions, captured in context.</h3><p>Scroll through CV-derived examples of reliability, recovery, automation, and platform work.</p><span className="scroll-cue">SCROLL TO EXPLORE ↓</span></div><div className="case-list">{cases.map((item, index) => <article key={item.title}><span>0{index + 1}</span><div><h3>{item.title}</h3><dl><div><dt>Context</dt><dd>{item.context}</dd></div><div><dt>Response</dt><dd>{item.response}</dd></div><div><dt>Tools</dt><dd>{item.tools}</dd></div><div><dt>Outcome</dt><dd>{item.outcome}</dd></div></dl></div></article>)}</div></div></section>
 
-      <section id="work" className="section projects"><div className="section-heading"><p className="eyebrow">SELECTED DEPLOYMENTS</p><h2>Work that holds up<br />when it matters.</h2></div><div className="project-grid">{projects.map((project, index) => <article className="project-card" key={project.name}><div className="card-top"><span>{String(index + 1).padStart(2,"0")}</span><span className="status"><i /> {project.environment}</span></div><h3>{project.name}</h3><p>{project.detail}</p><footer><span>{project.signal}</span><code>{project.stack}</code></footer></article>)}</div></section>
+    <section id="about" className="section experience"><div><p className="eyebrow">EXPERIENCE</p><h2>Four years of<br />systems thinking.</h2></div><div className="timeline"><article><span>2026 — NOW</span><h3>DevOps / Systems Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2024 — 2026</span><h3>Associate DevOps / Cloud Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2021 — 2024</span><h3>DevOps & Backend Engineering</h3><p>hSenid Mobile Solutions · appiGo · IntendAble</p></article></div></section>
 
-      <section id="cases" className="section case-section"><div className="section-heading"><p className="eyebrow">PRODUCTION TROUBLESHOOTING</p><h2>Prepared beats<br />heroic.</h2></div><div className="case-list">{cases.map(([title, text], index) => <article key={title}><span>0{index + 1}</span><div><h3>{title}</h3><p>{text}</p></div><b>↗</b></article>)}</div></section>
+    <section className="section capability-grid"><article><p className="eyebrow">OPERATING STACK</p><div className="skill-cloud">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div></article><article><p className="eyebrow">CERTIFICATIONS</p><ul><li>Red Hat Certified OpenShift Administrator <span>2025</span></li><li>Red Hat System Administration I <span>2025</span></li><li>Containers & Kubernetes Essentials <span>2024</span></li><li>AWS Educate: Cloud 101 <span>2023</span></li></ul></article></section>
 
-      <section id="about" className="section experience"><div><p className="eyebrow">EXPERIENCE</p><h2>Four years of<br />systems thinking.</h2></div><div className="timeline"><article><span>2026 — NOW</span><h3>DevOps / Systems Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2024 — 2026</span><h3>Associate DevOps / Cloud Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2021 — 2024</span><h3>DevOps & Backend Engineering</h3><p>hSenid Mobile Solutions · appiGo · IntendAble</p></article></div></section>
+    <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system—not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
 
-      <section className="section capability-grid"><article><p className="eyebrow">OPERATING STACK</p><div className="skill-cloud">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div></article><article><p className="eyebrow">CERTIFICATIONS</p><ul><li>Red Hat Certified OpenShift Administrator <span>2025</span></li><li>Red Hat System Administration I <span>2025</span></li><li>Containers & Kubernetes Essentials <span>2024</span></li><li>AWS Educate: Cloud 101 <span>2023</span></li></ul></article></section>
-
-      <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system—not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
-
-      <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><small>© 2026 Gajan Rajah · Built as a private portfolio prototype</small></footer>
-    </main>
-  );
-}
-
-function HeroSystem({ concept }: { concept: Concept }) {
-  return <div className="hero-system"><div className="system-title"><span className="status"><i /> ALL SERVICES NOMINAL</span><span>UTC+05:30</span></div>{concept === "cloud" ? <Topology /> : <><div className="metric-row"><div><small>DEPLOY SUCCESS</small><strong>99.98<sup>%</sup></strong><span>last 30 days</span></div><div><small>SLO BUDGET</small><strong>98<sup>.7</sup></strong><span>remaining</span></div></div><div className="service-list">{["edge-gateway","checkout-api","cluster-control","metrics-store"].map((name, i) => <div key={name}><i /><code>{name}</code><span>{["12ms","48ms","healthy","3.2GB"][i]}</span></div>)}</div></>}</div>;
-}
-
-function Pipeline() {
-  return <div className="pipeline"><div className="terminal-head"><span /><span /><span /> <code>release/ops-2026.07</code></div><div className="terminal-body"><p><b>$</b> git push origin main</p><p className="muted">→ build started · commit 71d3f2c</p>{["validate","build image","scan","deploy","verify"].map((step, i) => <div className="pipe-step" key={step}><span>0{i+1}</span><strong>{step}</strong><i className={i === 3 ? "running" : ""}>{i === 3 ? "in progress" : "passed"}</i></div>)}<p className="cursor"><b>$</b> <i /></p></div></div>;
+    <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><small>© 2026 Gajan Rajah · Built as a private portfolio prototype</small></footer>
+  </main>;
 }
