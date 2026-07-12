@@ -75,7 +75,7 @@ function DashboardChart({ title, meta, path, tone = "cyan" }: { title: string; m
 function ObservabilityDashboard() {
   const statuses = [["API health", "NORMAL"], ["App Layer", "4 / 4 ready"], ["Database", "CONNECTED"], ["Backup", "VERIFIED"], ["Alerts", "0 OPEN"]];
   return <section className="section observability-section" aria-labelledby="observability-title">
-    <div className="section-heading"><div><p className="eyebrow">OBSERVABILITY SNAPSHOT</p><h2 id="observability-title">Signals before<br />surprises.</h2></div><span className="dashboard-simulation">STATIC PORTFOLIO SIMULATION</span></div>
+    <div className="section-heading"><div><p className="eyebrow">OBSERVABILITY</p><h2 id="observability-title">Signals before<br />surprises.</h2></div></div>
     <div className="dashboard-shell">
       <div className="dashboard-head"><div><strong>platform / overview</strong><span>illustrative environment</span></div><div className="dashboard-controls"><span>production-like</span><span>last 6 hours</span></div></div>
       <div className="dashboard-status-grid">{statuses.map(([label, value]) => <div className="dashboard-status" key={label}><span>{label}</span><strong>{value}</strong><i /></div>)}</div>

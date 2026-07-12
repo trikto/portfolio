@@ -30,7 +30,6 @@
 .certification-list li span { font-size:14px; line-height:1.35; }
 .certification-list li small { font-size:11px; }
 .observability-section { padding-top:72px; }
-.dashboard-simulation { color:var(--muted); font:10px var(--font-geist-mono),monospace; letter-spacing:.1em; }
 .dashboard-shell { padding:18px; border:1px solid rgba(111,195,236,.22); border-radius:12px; background:linear-gradient(145deg,rgba(9,18,29,.96),rgba(8,12,21,.92)); box-shadow:0 26px 80px rgba(0,0,0,.3); }
 .dashboard-head,.dashboard-status,.dashboard-gauge-head,.dashboard-chart-head,.chart-scale,.dashboard-events>div,.dashboard-events>div span { display:flex; align-items:center; justify-content:space-between; }
 .dashboard-head { padding-bottom:16px; border-bottom:1px solid var(--line); color:var(--muted); font:10px var(--font-geist-mono),monospace; letter-spacing:.08em; }.dashboard-head strong { display:block; color:var(--ink); font-size:12px; letter-spacing:.02em; }.dashboard-head span { margin-top:5px; }.dashboard-controls { display:flex; gap:8px; }.dashboard-controls span { padding:7px 9px; border:1px solid var(--line); border-radius:4px; }
