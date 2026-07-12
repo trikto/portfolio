@@ -29,8 +29,8 @@ function Topology() {
       ))}
       <circle className="topology-packet packet-one" r="5"><animateMotion dur="5s" repeatCount="indefinite" path="M90 154 C180 70 255 227 340 150" /></circle>
       <circle className="topology-packet packet-two" r="4"><animateMotion dur="7s" repeatCount="indefinite" path="M92 155 C195 257 268 84 340 150" /></circle>
-      <circle className="topology-packet packet-ci" r="5"><animateMotion dur="6s" repeatCount="indefinite" path="M340 52 L340 150" /></circle>
-      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="12s" begin="-3s" repeatCount="indefinite" path="M340 150 L340 250" /></circle>
+      <circle className="topology-packet packet-ci" r="5"><animateMotion dur="5s" repeatCount="indefinite" path="M340 52 L340 150" /></circle>
+      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="4s" begin="-3s" repeatCount="indefinite" path="M340 150 L340 250" /></circle>
     </svg>
   );
 }
