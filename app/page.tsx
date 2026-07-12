@@ -1,6 +1,51 @@
 "use client";
 
-import { useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useState, type PointerEvent as ReactPointerEvent } from "react";
+
+const HERO_WORDS = ["reliable", "observable", "resilient", "repeatable"];
+
+function HeroWord() {
+  const [wordIndex, setWordIndex] = useState(0);
+  const [visibleLength, setVisibleLength] = useState(HERO_WORDS[0].length);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const word = HERO_WORDS[wordIndex];
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setReduceMotion(mediaQuery.matches);
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      return;
+    }
+
+    const isPaused = !isDeleting && visibleLength === word.length;
+    const timeout = window.setTimeout(() => {
+      if (isDeleting) {
+        if (visibleLength > 0) {
+          setVisibleLength((length) => length - 1);
+        } else {
+          setIsDeleting(false);
+          setWordIndex((index) => (index + 1) % HERO_WORDS.length);
+        }
+      } else if (visibleLength < word.length) {
+        setVisibleLength((length) => length + 1);
+      } else {
+        setIsDeleting(true);
+      }
+    }, isPaused ? 1500 : isDeleting ? 55 : 85);
+
+    return () => window.clearTimeout(timeout);
+  }, [isDeleting, reduceMotion, visibleLength, word]);
+
+  const displayedWord = reduceMotion ? word : word.slice(0, visibleLength);
+  return <span className="hero-word" aria-label={word}>{displayedWord}<span className="hero-word-cursor" aria-hidden="true" /></span>;
+}
 
 const projects = [
   { name: "OpenShift Platform Engineering", environment: "PRODUCTION", stack: "OpenShift · Ceph · Velero · Ansible", detail: "Built resilient cluster environments, backup paths, storage, and operational guardrails for global client workloads.", signal: "Platform" },
@@ -122,7 +167,7 @@ export default function Home() {
       <section id="top" className="hero">
         <div className="hero-copy">
           <p className="eyebrow hero-eyebrow" aria-hidden="true" />
-          <h1>Systems, made <em>reliable.</em></h1>
+          <h1>Systems made <em><HeroWord /></em></h1>
           <p className="lede">I design, automate, and operate cloud platforms from resilient OpenShift environments to calmer, more observable delivery workflows.</p>
           <div className="hero-actions">
             <a className="button primary" href="#work">Explore selected work <span>↓</span></a>

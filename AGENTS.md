@@ -22,7 +22,9 @@
 - Added `next.config.mjs` and removed the Vite/Cloudflare/Sites build wrapper.
 - Removed unused D1, R2, Wrangler, worker, Drizzle example, Sites preview, and vinext test scaffolding.
 - Preserved the portfolio content, styling, responsive behavior, animations, and App Router UI.
-- Migration was validated locally and was not deployed or pushed as part of the migration.
+- Migration was validated locally and deployed to Vercel on 2026-07-12.
+- The Vercel project was set to the Next.js preset with `npm run build`, the default Next.js output directory, and Node.js 22.x; `https://gajan.dev` returned HTTP 200 after the fresh production deployment.
+- The hero headline rotates `reliable`, `observable`, `resilient`, and `repeatable` after the static text `Systems made`; preserve the typewriter cursor and reduced-motion behavior when editing it.
 
 ## Product note
 
