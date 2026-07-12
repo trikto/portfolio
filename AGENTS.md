@@ -26,6 +26,7 @@
 - The Vercel project was set to the Next.js preset with `npm run build`, the default Next.js output directory, and Node.js 22.x; `https://gajan.dev` returned HTTP 200 after the fresh production deployment.
 - The hero headline rotates `reliable`, `observable`, `resilient`, and `repeatable` after the static text `Systems made`; preserve the typewriter cursor and reduced-motion behavior when editing it.
 - The navbar includes LinkedIn, GitHub, and Contact actions; the back-to-top control is revealed by navbar visibility and returns to `#site-top` so the navbar is visible.
+- The favicon uses the same green service dot as the infrastructure topology diagram.
 
 ## Product note
 
