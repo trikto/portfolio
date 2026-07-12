@@ -34,7 +34,7 @@ function Topology() {
       <circle className="topology-packet packet-ci" r="5"><animateMotion dur="5s" repeatCount="indefinite" path="M340 52 L340 150" /></circle>
       <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1.5s" repeatCount="indefinite" path="M340 250 C390 230 390 170 340 150" /></circle>
       <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-0.5s" repeatCount="indefinite" path="M340 150 L340 250" /></circle>
-      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1s" repeatCount="indefinite" path="M340 150 S488 58 588 132" /></circle>
+      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1s" repeatCount="indefinite" path="M340 150 C425 73 488 58 588 132" /></circle>
       <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1.5s" repeatCount="indefinite" path="M340 250 C430 250 510 188 590 132" /></circle>
     </svg>
   );
