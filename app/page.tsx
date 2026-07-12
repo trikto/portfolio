@@ -22,6 +22,7 @@ function Topology() {
       <path className="topology-line line-one" d="M90 154 C180 70 255 227 340 150 S488 58 588 132" />
       <path className="topology-line line-two" d="M92 155 C195 257 268 84 340 150 S481 248 590 132" />
       <path className="topology-line line-three" d="M340 150 L340 52 M340 150 L340 250" />
+      <path className="topology-line line-four" d="M340 150 L340 250" />
       {[[90,154,"edge"],[340,52,"ci"],[340,150,"app"],[340,250,"data"],[590,132,"operations"]].map(([x,y,name]) => (
         <g className="topology-node" key={String(name)} transform={`translate(${x} ${y})`}>
           <circle r="17" /><circle className="node-core" r="6" /><text y="37">{name}</text>
