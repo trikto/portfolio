@@ -22,16 +22,16 @@ function Topology() {
       <path className="topology-line line-one" d="M90 154 C180 70 255 227 340 150 S488 58 588 132" />
       <path className="topology-line line-two" d="M92 155 C195 257 268 84 340 150 S481 248 590 132" />
       <path className="topology-line line-three" d="M340 150 L340 52 M340 150 L340 250" />
-      <path className="topology-line line-four" d="M340 150 L340 250" />
+      <path className="topology-line line-four" d="M340 150 C390 170 390 230 340 250" />
       {[[90,154,"edge"],[340,52,"ci"],[340,150,"app"],[340,250,"data"],[590,132,"operations"]].map(([x,y,name]) => (
         <g className="topology-node" key={String(name)} transform={`translate(${x} ${y})`}>
           <circle r="17" /><circle className="node-core" r="6" /><text y="37">{name}</text>
         </g>
       ))}
       <circle className="topology-packet packet-one" r="5"><animateMotion dur="5s" repeatCount="indefinite" path="M90 154 C180 70 255 227 340 150" /></circle>
-      <circle className="topology-packet packet-two" r="4"><animateMotion dur="7s" repeatCount="indefinite" path="M92 155 C195 257 268 84 340 150" /></circle>
+      <circle className="topology-packet packet-two" r="4"><animateMotion dur="7s" repeatCount="indefinite" path="M340 150 C268 84 195 257 92 155" /></circle>
       <circle className="topology-packet packet-ci" r="5"><animateMotion dur="5s" repeatCount="indefinite" path="M340 52 L340 150" /></circle>
-      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1.5s" repeatCount="indefinite" path="M340 150 L340 250" /></circle>
+      <circle className="topology-packet packet-amber" r="5"><animateMotion dur="2s" begin="-1.5s" repeatCount="indefinite" path="M340 250 C390 230 390 170 340 150" /></circle>
     </svg>
   );
 }
