@@ -43,7 +43,6 @@ export default function Home() {
     <main className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
       <header className="nav">
-        <a className="wordmark" href="#top" aria-label="Gajan Rajah home">GR<span>/</span>OPS</a>
         <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a></nav>
         <a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a>
       </header>
