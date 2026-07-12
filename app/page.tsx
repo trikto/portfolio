@@ -170,7 +170,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="site concept-cloud">
+    <main id="site-top" className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
       <header ref={navRef} className="nav">
         <nav aria-label="Primary navigation"><a href="#work">Work</a><a href="#cases">Case studies</a><a href="#about">Experience</a><a href="#writing">Writing</a><a href="https://docs.google.com/spreadsheets/d/10q8vRpSrqYr7Rvx2kRfwmF9hYMBTWow8cd2c_xWUFRw" target="_blank" rel="noreferrer">Workouts</a></nav>
@@ -204,7 +204,7 @@ export default function Home() {
       <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system, not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
 
       <footer className="footer"><div><p className="eyebrow">NEXT DEPLOYMENT</p><h2>Let’s make your<br /><em>platform calmer.</em></h2></div><a className="button primary" href="mailto:gajanrajah@protonmail.com">Start a conversation <span>↗</span></a><small>© 2026 Gajan Rajah</small></footer>
-      {showBackToTop && <a className="back-to-top" href="#top" aria-label="Back to top">↑</a>}
+      {showBackToTop && <a className="back-to-top" href="#site-top" aria-label="Back to top">↑</a>}
     </main>
   );
 }
