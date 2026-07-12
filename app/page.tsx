@@ -8,7 +8,6 @@ const projects = [
   { name: "Zelvo", environment: "LIVE", stack: "Docker · GCP · NeonDB · TypeScript", detail: "Receipt-aware expense tracking application deployed with a practical cloud delivery stack.", signal: "Product" },
   { name: "NuBred", environment: "CLIENT", stack: "React · Node.js · Docker · NeonDB · Hetzner", detail: "Agriculture and plant variety management system delivered with a modern web and cloud stack.", signal: "Delivery" },
   { name: "NoteMate", environment: "BUILD", stack: "React Native · Spring Boot · AWS · Kubernetes", detail: "AI-powered note taking platform combining voice processing, cloud services, CI/CD, and observability.", signal: "Systems" },
-  { name: "Accommodate", environment: "BUILD", stack: "HTML · CSS · JavaScript · PHP · MySQL", detail: "Accommodation discovery platform with payments and mapping integrations for students and professionals.", signal: "Web platform" },
 ];
 
 const cases = [

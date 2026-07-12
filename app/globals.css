@@ -25,4 +25,8 @@
 .certification-list { max-height:280px; overflow-y:auto; padding-right:10px; scrollbar-color:rgba(241,181,99,.65) transparent; }
 .certification-list li { display:flex; flex-direction:column; gap:5px; }
 .certification-list li small { color:var(--muted); font:10px var(--font-geist-mono),monospace; }
+.skill-cloud span { transition:color .2s,background .2s,border-color .2s,box-shadow .2s; }
+.skill-cloud span:hover { color:#10131d; background:var(--warn); border-color:var(--warn); box-shadow:0 0 16px rgba(240,189,103,.28); }
+.certification-list li span { font-size:14px; line-height:1.35; }
+.certification-list li small { font-size:11px; }
 @media (max-width:800px) { .hero { min-height:auto; } }
