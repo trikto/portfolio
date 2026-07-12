@@ -5,5 +5,5 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const metadata: Metadata = { title: "Gajan Rajah — DevOps / Cloud Engineer", description: "A private portfolio prototype for Gajan Rajah, DevOps and Cloud Engineer." };
+export const metadata: Metadata = { title: "Gajan Rajah - DevOps / Cloud Engineer", description: "A private portfolio prototype for Gajan Rajah, DevOps and Cloud Engineer." };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body></html>; }
