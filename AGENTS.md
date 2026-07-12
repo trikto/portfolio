@@ -6,3 +6,5 @@
 - The Observability dashboard is a client-side simulator with seeded local data; it must not fetch Grafana or Prometheus data.
 - Vercel project `gajan-dev` was reconnected to GitHub repository `trikto/portfolio` on 2026-07-12.
 - Deleting `trikto/gajan.dev` remains pending because the active GitHub CLI token still lacks the `delete_repo` scope.
+- On 2026-07-12, `gajan.dev` redirected to `www.gajan.dev`, while `www.gajan.dev` returned Vercel `NOT_FOUND`; the latest `trikto/portfolio` deployment itself was `READY` and built successfully.
+- The latest alias reassignment did not resolve the 404; Vercel reported `www.gajan.dev` is not separately registered for removal, and explicit re-add was blocked by the tool usage limit.
