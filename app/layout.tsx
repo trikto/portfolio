@@ -8,7 +8,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  ...pageMetadata({ title: "Gajan Rajah | DevOps and Cloud Engineer", description: "DevOps engineer portfolio covering cloud engineering, Linux, Kubernetes, AWS, infrastructure automation, and observability.", path: "/", keywords: ["DevOps engineer", "cloud engineering", "infrastructure automation", "Linux", "Kubernetes", "AWS", "DevOps portfolio"] }),
+  ...pageMetadata({ title: "Gajan Rajah | DevOps and Cloud Engineer", description: "DevOps engineer portfolio covering cloud engineering, Linux, Kubernetes, AWS, infrastructure automation, and observability.", path: "/" }),
   icons: { icon: "/favicon.svg" },
 };
 

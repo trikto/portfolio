@@ -40,3 +40,4 @@
 - Added native Next.js sitemap, robots, llms.txt, centralized canonical metadata, and non-indexable redirects for legacy tool URLs on 2026-07-12.
 - Updated the header GitHub button to link to the `trikto` profile on 2026-07-12.
 - Corrected the topology diagram label from `ci` to `CI` on 2026-07-12.
+- Migrated browser tool SEO routes to `/cron` and `/yaml`, with permanent legacy redirects, on 2026-07-13.

@@ -7,12 +7,11 @@ export const metadata: Metadata = pageMetadata({
   title: "Free DevOps Tools for Kubernetes and Automation | Gajan.dev",
   description: "Use free browser-based DevOps tools including a cron expression generator and Kubernetes YAML validator. No uploads or account required.",
   path: "/tools",
-  keywords: ["free developer tools", "browser-based developer tools", "Kubernetes YAML validator", "cron expression generator", "developer utilities"],
 });
 
 const tools = [
-  { title: "Cron Expression Generator", description: "Create cron expressions, understand existing schedules and preview upcoming execution times.", action: "Open Cron Generator", href: "/tools/cron-expression-generator", icon: "◷" },
-  { title: "Kubernetes YAML Validator", description: "Validate Kubernetes manifests, detect configuration problems and review reliability and security warnings.", action: "Open YAML Validator", href: "/tools/kubernetes-yaml-validator", icon: "✓" },
+  { title: "Cron Expression Validator", description: "Validate cron expressions, understand each field, and preview upcoming execution times.", action: "Cron Expression Validator", href: "/cron", icon: "◷" },
+  { title: "YAML Validator and Formatter", description: "Validate, format, and troubleshoot YAML syntax directly in the browser.", action: "YAML Validator and Formatter", href: "/yaml", icon: "✓" },
 ];
 
 export default function ToolsPage() {
