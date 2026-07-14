@@ -46,3 +46,12 @@
 - Changed GitHub repository visibility to private on 2026-07-14.
 - CodeRabbit CLI review could not run locally on 2026-07-14 because its installer does not support Git Bash on Windows; use a supported shell/OS for CodeRabbit reviews.
 - Replaced the `/cron` minute-by-minute preview scan with Croner and a 250 ms client-side debounce on 2026-07-14; preserve immediate validation and the explicit updating-preview state.
+- Identified the browser search-result icon as the site favicon (also called the site icon) on 2026-07-14.
+- Confirmed the favicon is declared in `app/layout.tsx` and served from `public/favicon.svg`; a generic globe in Google results indicates Google’s favicon cache/index has not refreshed, not a missing local declaration, on 2026-07-14.
+- Confirmed the old Google Search description is absent from the current homepage source; refresh it through Search Console URL Inspection and Request indexing, with Removals as the temporary option, on 2026-07-14.
+- Verified Google Search now shows the current title and DevOps portfolio description; the generic globe favicon is still pending Google’s favicon refresh, on 2026-07-14.
+- Documented the homepage search title and description source in `app/layout.tsx:11`, resolved through the shared `pageMetadata` helper in `lib/site.ts:9-10`, on 2026-07-14.
+- Verified favicon crawling is not blocked by `robots.ts`; `/` and `/favicon.svg` are publicly allowed, so the remaining Google globe is an independent favicon cache/processing delay, on 2026-07-14.
+- Clarified that this portfolio uses Next.js as the framework and React as its UI library/runtime; they are complementary rather than alternatives, on 2026-07-14.
+- Replaced the four Cron UI em dashes with the requested hyphen/comma wording on 2026-07-14.
+- Confirmed Next.js is a React framework, so this project’s Next.js application necessarily uses React, on 2026-07-14.
