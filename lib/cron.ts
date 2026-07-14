@@ -1,3 +1,5 @@
+import { Cron } from "croner";
+
 export type CronFields = [string, string, string, string, string];
 export type CronError = { field: number; message: string };
 const ranges = [[0, 59], [0, 23], [1, 31], [1, 12], [0, 7]] as const;
@@ -31,21 +33,7 @@ export function explainCron(fields: CronFields): string {
   if (minute.startsWith("*/") && hour === "*" && dom === "*" && month === "*" && dow === "*") return `Every ${minute.slice(2)} minutes`;
   return `${time} when the schedule matches`;
 }
-function dateParts(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone, hourCycle: "h23", weekday: "short", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }).formatToParts(date);
-  const value = (type: string) => Number(parts.find((part) => part.type === type)?.value);
-  return { minute: value("minute"), hour: value("hour"), day: value("day"), month: value("month"), weekday: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.find((part) => part.type === "weekday")?.value ?? "") };
-}
 export function upcomingRuns(fields: CronFields, timeZone: string, from = new Date()): Date[] {
   if (validateCron(fields).length) return [];
-  const allowed = fields.map((field, index) => values(field, ranges[index][0], ranges[index][1], index === 4)!) as number[][];
-  const start = new Date(from); start.setSeconds(0, 0); start.setMinutes(start.getMinutes() + 1);
-  const result: Date[] = [];
-  // ponytail: minute scan handles browser time zones; replace with a jump parser only if profiling shows it matters.
-  for (let time = start.getTime(), limit = time + 366 * 86400000; time < limit && result.length < 5; time += 60000) {
-    const current = dateParts(new Date(time), timeZone), dayMatches = allowed[2].includes(current.day), weekdayMatches = allowed[4].includes(current.weekday);
-    const dayOk = fields[2] === "*" || fields[4] === "*" ? dayMatches && weekdayMatches : dayMatches || weekdayMatches;
-    if (allowed[0].includes(current.minute) && allowed[1].includes(current.hour) && dayOk && allowed[3].includes(current.month)) result.push(new Date(time));
-  }
-  return result;
+  return new Cron(cronExpression(fields), { timezone: timeZone, mode: "5-part", paused: true }).nextRuns(5, from);
 }
