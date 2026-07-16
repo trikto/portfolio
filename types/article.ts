@@ -11,5 +11,5 @@ export type Article = {
 
 export type ArticleFeed = {
   articles: Article[];
-  source: "medium" | "fallback";
+  source: "medium" | "catalog";
 };

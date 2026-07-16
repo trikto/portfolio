@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import { fallbackArticles } from "./articles-fallback.ts";
+import catalogData from "../data/articles.json" with { type: "json" };
 import type { Article, ArticleFeed } from "../types/article.ts";
 
 export const MEDIUM_PROFILE_URL = "https://trikto.medium.com";
@@ -8,6 +8,8 @@ export const MEDIUM_FEED_URL = `${MEDIUM_PROFILE_URL}/feed`;
 type FeedItem = Record<string, unknown>;
 
 const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: false, trimValues: true });
+const catalogArticles = catalogData as Article[];
+const defaultDescription = "Read the full article on Medium.";
 
 function list<T>(value: T | T[] | undefined): T[] {
   return value === undefined ? [] : Array.isArray(value) ? value : [value];
@@ -36,7 +38,7 @@ function plainText(html: string): string {
 }
 
 function excerpt(value: string, length = 190): string {
-  if (!value) return "Read the full article on Medium.";
+  if (!value) return defaultDescription;
   if (value.length <= length) return value;
   const shortened = value.slice(0, length + 1);
   return `${shortened.slice(0, shortened.lastIndexOf(" ") > length / 2 ? shortened.lastIndexOf(" ") : length).trim()}…`;
@@ -102,6 +104,24 @@ export function parseMediumFeed(xml: string): Article[] {
   return articles.sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt));
 }
 
+export function mergeArticles(saved: Article[], incoming: Article[]): Article[] {
+  const merged = new Map(saved.map((article) => [article.slug, article]));
+
+  for (const article of incoming) {
+    const current = merged.get(article.slug);
+    merged.set(article.slug, {
+      ...current,
+      ...article,
+      description: current && article.description === defaultDescription ? current.description : article.description,
+      image: article.image ?? current?.image,
+      readingTime: article.readingTime ?? current?.readingTime,
+      categories: article.categories?.length ? article.categories : current?.categories,
+    });
+  }
+
+  return [...merged.values()].sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt));
+}
+
 export async function getMediumArticles(): Promise<ArticleFeed> {
   try {
     const response = await fetch(MEDIUM_FEED_URL, {
@@ -109,9 +129,9 @@ export async function getMediumArticles(): Promise<ArticleFeed> {
       next: { revalidate: 3600 },
     });
     if (!response.ok) throw new Error(`Medium feed returned ${response.status}.`);
-    return { articles: parseMediumFeed(await response.text()), source: "medium" };
+    return { articles: mergeArticles(catalogArticles, parseMediumFeed(await response.text())), source: "medium" };
   } catch (error) {
-    console.error("Unable to load Medium articles; using the local fallback.", error);
-    return { articles: [...fallbackArticles].sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt)), source: "fallback" };
+    console.error("Unable to load Medium articles; using the saved catalog.", error);
+    return { articles: mergeArticles(catalogArticles, []), source: "catalog" };
   }
 }

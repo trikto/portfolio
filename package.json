@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
-    "test:medium": "node --experimental-strip-types --test tests/medium.test.ts"
+    "test:medium": "node --experimental-strip-types --test tests/medium.test.ts",
+    "sync:medium": "node --experimental-strip-types scripts/sync-medium-articles.ts"
   },
   "dependencies": {
     "croner": "^10.0.1",

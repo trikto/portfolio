@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseMediumFeed } from "../lib/medium.ts";
+import catalogData from "../data/articles.json" with { type: "json" };
+import { mergeArticles, parseMediumFeed } from "../lib/medium.ts";
+import type { Article } from "../types/article.ts";
+
+const catalog = catalogData as Article[];
+
+test("the Medium export catalog contains 18 valid, unique articles", () => {
+  assert.equal(catalog.length, 18);
+  assert.equal(new Set(catalog.map((article) => article.slug)).size, 18);
+  assert.equal(catalog.filter((article) => !article.image).length, 4);
+
+  for (const article of catalog) {
+    assert.ok(article.title);
+    assert.ok(article.description);
+    assert.match(article.slug, /^[a-z0-9][a-z0-9-]*$/i);
+    assert.equal(new URL(article.url).protocol, "https:");
+    assert.ok(Number.isFinite(Date.parse(article.publishedAt)));
+  }
+
+  assert.deepEqual(catalog, [...catalog].sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt)));
+});
 
 test("normalizes, validates, and sorts Medium RSS articles", () => {
   const longBody = Array.from({ length: 401 }, () => "word").join(" ");
@@ -23,7 +43,49 @@ test("normalizes, validates, and sorts Medium RSS articles", () => {
   assert.match(articles[1].description, /…$/);
 });
 
-test("accepts an empty feed and rejects a malformed feed", () => {
+test("merges new feed entries without losing saved metadata or old articles", () => {
+  const saved: Article = {
+    title: "Saved title",
+    description: "Saved description",
+    url: "https://trikto.medium.com/saved-article-abc123",
+    slug: "saved-article-abc123",
+    image: "https://miro.medium.com/saved.png",
+    publishedAt: "2025-01-01T00:00:00.000Z",
+    readingTime: "4 min read",
+    categories: ["DevOps"],
+  };
+  const incoming: Article = {
+    title: "Updated title",
+    description: "Read the full article on Medium.",
+    url: "https://trikto.medium.com/saved-article-abc123?source=rss",
+    slug: saved.slug,
+    publishedAt: "2026-01-01T00:00:00.000Z",
+  };
+  const newlyPublished: Article = {
+    title: "New article",
+    description: "New description",
+    url: "https://trikto.medium.com/new-article-def456",
+    slug: "new-article-def456",
+    publishedAt: "2026-02-01T00:00:00.000Z",
+  };
+
+  const persisted = mergeArticles([saved], [incoming, newlyPublished]);
+  const updated = persisted.find((article) => article.slug === saved.slug);
+  assert.equal(persisted.length, 2);
+  assert.equal(updated?.title, "Updated title");
+  assert.equal(updated?.description, saved.description);
+  assert.equal(updated?.image, saved.image);
+  assert.equal(updated?.readingTime, saved.readingTime);
+  assert.deepEqual(updated?.categories, saved.categories);
+
+  const afterFeedRemoval = mergeArticles(persisted, []);
+  assert.deepEqual(afterFeedRemoval, persisted);
+  assert.ok(afterFeedRemoval.some((article) => article.slug === newlyPublished.slug));
+});
+
+test("accepts an empty feed and rejects malformed input without mutating saved data", () => {
+  const before = structuredClone(catalog);
   assert.deepEqual(parseMediumFeed("<rss><channel /></rss>"), []);
   assert.throws(() => parseMediumFeed("<not-rss />"), /RSS channel/);
+  assert.deepEqual(catalog, before);
 });
