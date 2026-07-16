@@ -6,9 +6,9 @@ import type { Article } from "../types/article.ts";
 
 const catalog = catalogData as Article[];
 
-test("the Medium export catalog contains 14 valid, unique articles and no comments", () => {
-  assert.equal(catalog.length, 14);
-  assert.equal(new Set(catalog.map((article) => article.slug)).size, 14);
+test("the Medium export catalog contains 13 selected, unique articles and no comments", () => {
+  assert.equal(catalog.length, 13);
+  assert.equal(new Set(catalog.map((article) => article.slug)).size, 13);
   assert.equal(catalog.filter((article) => !article.image).length, 0);
   const commentSlugs = [
     "well-religion-and-logic-never-coexist-do-they-4a0e241af1d4",
@@ -17,6 +17,7 @@ test("the Medium export catalog contains 14 valid, unique articles and no commen
     "this-works-and-thanks-a-lot-be597d5fa9b6",
   ];
   assert.ok(commentSlugs.every((slug) => !catalog.some((article) => article.slug === slug)));
+  assert.ok(!catalog.some((article) => article.slug === "what-is-the-meaning-of-life-a-new-perspective-to-start-living-62dd1434ae57"));
 
   for (const article of catalog) {
     assert.ok(article.title);
