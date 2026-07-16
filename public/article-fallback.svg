@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title description">
+  <title id="title">Gajan.dev article cover</title>
+  <desc id="description">Abstract infrastructure paths connecting a healthy service node.</desc>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f1122"/><stop offset="1" stop-color="#18283a"/></linearGradient><linearGradient id="line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#5de1bd"/></linearGradient></defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <path d="M120 460C300 120 500 560 690 290S980 160 1090 260" fill="none" stroke="url(#line)" stroke-width="5" opacity=".7"/>
+  <path d="M120 460C360 610 480 210 690 290" fill="none" stroke="#5ea7ff" stroke-width="3" opacity=".45"/>
+  <circle cx="120" cy="460" r="18" fill="#0f1122" stroke="#a78bfa" stroke-width="4"/><circle cx="690" cy="290" r="25" fill="#0f1122" stroke="#5de1bd" stroke-width="5"/><circle cx="1090" cy="260" r="18" fill="#0f1122" stroke="#5ea7ff" stroke-width="4"/>
+  <circle cx="690" cy="290" r="8" fill="#5de1bd"/>
+  <text x="80" y="105" fill="#f1f2fa" font-family="Arial, sans-serif" font-size="44" font-weight="700">gajan<tspan fill="#a78bfa">.dev</tspan></text>
+  <text x="82" y="150" fill="#9296aa" font-family="monospace" font-size="19" letter-spacing="4">FIELD NOTES</text>
+</svg>

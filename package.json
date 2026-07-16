@@ -9,10 +9,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern .next",
+    "test:medium": "node --experimental-strip-types --test tests/medium.test.ts"
   },
   "dependencies": {
     "croner": "^10.0.1",
+    "fast-xml-parser": "^5.10.1",
     "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6"

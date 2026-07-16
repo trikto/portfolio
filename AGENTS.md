@@ -34,6 +34,10 @@
 
 ## Recent changes
 
+- Added server-rendered Medium article previews to the homepage and `/blog` on 2026-07-16; fetch `https://trikto.medium.com/feed` through `lib/medium.ts` with one-hour revalidation and use only verified real entries in the local fallback.
+- Article cards share `/blog/<medium-slug>` URLs that permanently redirect to `https://trikto.medium.com/<medium-slug>`; keep Medium as the canonical full-article host and do not add rendered local article pages.
+- Reuse the shared article grid/card components and shared site footer for future article UI changes; preserve fixed image aspect ratios, local image fallback, newest-first sorting, and the three-card homepage limit.
+
 - Removed the redundant footer navigation links on 2026-07-12; retain only the copyright-area Workout Schedule link.
 - Added a discreet footer link and minimal `/workouts` schedule page on 2026-07-12; keep workout content secondary to the DevOps portfolio and out of primary navigation.
 - Added the `/tools` directory and placeholder routes for planned browser-based DevOps utilities on 2026-07-12.
