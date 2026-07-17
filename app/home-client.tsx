@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { BackToTop } from "./components/back-to-top";
+import { SocialLinks } from "./components/social-links";
 import {
   siAnsible,
   siArgo,
@@ -228,26 +230,14 @@ function ObservabilityDashboard() {
 
 export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
   const [resumeMessage, setResumeMessage] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
-  const navRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      setShowBackToTop(!entry.isIntersecting);
-    });
-    observer.observe(nav);
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <main id="site-top" className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK</div>
-      <header id="site-nav" ref={navRef} className="nav">
+      <header id="site-nav" className="nav">
         <nav aria-label="Primary navigation"><a href="#top">Home</a><a href="#about">Experience</a><a href="#work">Projects</a><Link href="/blog">Articles</Link><a href="/tools">Tools</a><a href="mailto:gajanrajah@protonmail.com">Contact</a></nav>
         <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="https://github.com/trikto" target="_blank" rel="noreferrer">GitHub <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
+        <SocialLinks className="nav-actions" />
       </header>
 
       <section id="top" className="hero">
@@ -280,7 +270,7 @@ export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
       <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system, not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
 
       <SiteFooter />
-      {showBackToTop && <a className="back-to-top" href="#site-top" aria-label="Back to top">↑</a>}
+      <BackToTop />
     </main>
   );
 }

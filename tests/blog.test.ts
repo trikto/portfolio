@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -18,6 +18,12 @@ import {
 import { loadMediumExport, shouldSkipExisting, substantial } from "../scripts/import-medium-posts.mjs";
 
 const catalog = catalogData as Array<{ slug: string; title: string }>;
+
+test("article prose keeps Markdown list markers", async () => {
+  const styles = await readFile(path.join(process.cwd(), "app", "globals.css"), "utf8");
+  assert.match(styles, /\.article-prose ul\s*\{\s*list-style\s*:\s*disc/);
+  assert.match(styles, /\.article-prose ol\s*\{\s*list-style\s*:\s*decimal/);
+});
 
 function source(overrides: Record<string, unknown> = {}, body = "A useful local article body.") {
   const values: Record<string, unknown> = {
