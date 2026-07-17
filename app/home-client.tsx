@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { BackToTop } from "./components/back-to-top";
 import { SocialLinks } from "./components/social-links";
 import {
@@ -133,6 +133,78 @@ const skills: Skill[] = [
   { name: "Mongoose", icon: siMongoose },
 ];
 
+type ExperienceRole = { title: string; period: string; points: string[] };
+type Experience = { period: string; title: string; company: string; roles: ExperienceRole[] };
+
+const experiences: Experience[] = [
+  {
+    period: "2026 - NOW",
+    title: "DevOps / Systems Engineer",
+    company: "hSenid Mobile Solutions",
+    roles: [{ title: "DevOps / Systems Engineer", period: "April 2026 - Present", points: [
+      "Ensured the proper functioning of systems, including telco CPaaS products.",
+      "Resolved incidents and troubleshot issues to maintain high availability.",
+      "Updated release files and managed deployments for low-downtime feature rollouts.",
+      "Collaborated on architectural improvements and security hardening for distributed systems and cloud services.",
+      "Maintained system documentation for collaboration.",
+      "Implemented major production version upgrades with testing, procedure documentation, and impact analysis.",
+      "Managed network policies in telco products and OpenShift environments for secure access.",
+    ] }],
+  },
+  {
+    period: "2024 - 2026",
+    title: "Associate DevOps / Cloud Engineer",
+    company: "hSenid Mobile Solutions",
+    roles: [
+      { title: "Associate DevOps / Cloud Engineer", period: "November 2024 - March 2026", points: [
+        "Managed production releases and resolved critical issues through coordinated UAT and troubleshooting.",
+        "Architected internal OpenShift cloud environments for VM provisioning, resource management, and resilience.",
+        "Implemented CI/CD pipelines and Ansible automation, reducing patching and migration work from hours to seconds.",
+        "Deployed resilient infrastructure with Ceph storage, multi-level backups, and network bonding.",
+        "Executed OpenShift cluster deployments, POCs, and R&D for global-client modules including PostgreSQL and Elasticsearch.",
+        "Led feasibility studies and technical demos, turning requirements into actionable effort estimates.",
+      ] },
+      { title: "Trainee DevOps / Cloud Engineer", period: "February 2024 - October 2024", points: [
+        "Provisioned single-node, multi-node, on-premises, and K3s OpenShift environments for R&D and client deployments.",
+        "Ran POCs and client discussions on provisioning, resource allocation, modernization, VMware migrations, networking, and storage.",
+        "Implemented Prometheus and Grafana observability, automated health checks, log management, and image pruning scripts.",
+        "Automated cluster, database, and namespace backups with Velero and MinIO, and formulated disaster-recovery strategies.",
+        "Configured HAProxy, MITM servers, routes, and DNS entries for cluster performance and access.",
+        "Worked with Red Hat support on troubleshooting, performance optimization, and highly available pre-production environments.",
+        "Documented procedures, maintained version control, ran knowledge-transfer sessions, and managed task estimates.",
+      ] },
+    ],
+  },
+  {
+    period: "2021 - 2024",
+    title: "DevOps & Backend Engineering",
+    company: "hSenid Mobile Solutions · appiGo · IntendAble",
+    roles: [
+      { title: "Back End Developer, IntendAble (Freelance)", period: "December 2023 - February 2024", points: [
+        "Built Python and Selenium automation scripts for task automation and data scraping.",
+        "Built JavaScript scripts to upload local data automatically to a cloud location.",
+        "Provisioned EC2, RDS, VPC, ACL, and security-rule configurations for developer requirements.",
+      ] },
+      { title: "Trainee DevOps Engineer, appiGo (Remote)", period: "April 2022 - October 2022", points: [
+        "Monitored EC2 instances and applied releases with Xshell and Postman.",
+        "Managed MySQL, PostgreSQL, and MongoDB databases for consistency and reduced redundancy.",
+        "Managed e-commerce web-store configurations through the admin panel.",
+        "Updated configuration, troubleshooting, and debugging documentation.",
+      ] },
+      { title: "Trainee DevOps Engineer, hSenid Mobile Solutions (Internship)", period: "June 2021 - April 2022", points: [
+        "Monitored EC2 instances and applied releases with Xshell and Postman.",
+        "Managed MySQL, PostgreSQL, and MongoDB databases for consistency and reduced redundancy.",
+        "Automated MongoDB message-store cleanup when storage thresholds were reached.",
+        "Automated EC2 compliance audits against company standards.",
+        "Conducted implementation audits for EC2 configuration standards and requirements.",
+        "Managed e-commerce web-store configurations through the admin panel.",
+        "Worked with and monitored highly available RHEL pcs clusters.",
+        "Conducted knowledge-transfer sessions for team members.",
+      ] },
+    ],
+  },
+];
+
 function SkillLogo({ skill }: { skill: Skill }) {
   if (skill.icon) {
     return <span className="skill-logo" aria-hidden="true"><svg viewBox="0 0 24 24" style={{ color: `#${skill.icon.hex}` }}><path d={skill.icon.path} fill="currentColor" /></svg></span>;
@@ -230,6 +302,17 @@ function ObservabilityDashboard() {
 
 export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
   const [resumeMessage, setResumeMessage] = useState(false);
+  const [activeExperience, setActiveExperience] = useState<Experience | null>(null);
+  const experienceDialogRef = useRef<HTMLDialogElement>(null);
+  const experienceTriggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (activeExperience) {
+      experienceDialogRef.current?.showModal();
+    }
+  }, [activeExperience]);
+
+  const closeExperience = () => experienceDialogRef.current?.close();
 
   return (
     <main id="site-top" className="site concept-cloud">
@@ -263,7 +346,9 @@ export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
 
       <section id="cases" className="section case-section"><div className="section-heading"><p className="eyebrow">PRODUCTION TROUBLESHOOTING</p><h2>Prepared beats<br />heroic.</h2></div><div className="case-list">{cases.map(([title, text], index) => <article key={title}><span>{String(index + 1).padStart(2,"0")}</span><div><h3>{title}</h3><p>{text}</p></div></article>)}</div></section>
 
-      <section id="about" className="section experience"><div><p className="eyebrow">EXPERIENCE</p><h2>Four years of<br />systems thinking.</h2></div><div className="timeline"><article><span>2026 - NOW</span><h3>DevOps / Systems Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2024 - 2026</span><h3>Associate DevOps / Cloud Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2021 - 2024</span><h3>DevOps & Backend Engineering</h3><p>hSenid Mobile Solutions · appiGo · IntendAble</p></article></div></section>
+      <section id="about" className="section experience"><div><p className="eyebrow">EXPERIENCE</p><h2>Four years of<br />systems thinking.</h2></div><div className="timeline">{experiences.map((experience) => <button className="experience-trigger" type="button" key={experience.period} onClick={(event) => { experienceTriggerRef.current = event.currentTarget; setActiveExperience(experience); }}><span>{experience.period}</span><h3>{experience.title}</h3><p>{experience.company}</p><small>View experience <b aria-hidden="true">→</b></small></button>)}</div></section>
+
+      <dialog ref={experienceDialogRef} className="experience-dialog" aria-labelledby="experience-dialog-title" onClose={() => { setActiveExperience(null); experienceTriggerRef.current?.focus(); }} onMouseDown={(event) => { if (event.target === event.currentTarget) closeExperience(); }}>{activeExperience && <div className="experience-dialog-content"><div className="experience-dialog-head"><div><p className="eyebrow">EXPERIENCE</p><h2 id="experience-dialog-title">{activeExperience.title}</h2><p>{activeExperience.company} · {activeExperience.period}</p></div><button type="button" aria-label="Close experience details" onClick={closeExperience}>×</button></div>{activeExperience.roles.map((role) => <section className="experience-role" key={role.title}><h3>{role.title}</h3><p>{role.period}</p><ul>{role.points.map((point) => <li key={point}>{point}</li>)}</ul></section>)}</div>}</dialog>
 
       <section className="section capability-grid"><article><p className="eyebrow">OPERATING STACK</p><div className="skill-cloud">{skills.map((skill) => <span key={skill.name}><SkillLogo skill={skill} />{skill.name}</span>)}</div></article><article className="certification-card"><p className="eyebrow">CERTIFICATIONS</p><ul className="certification-list">{certifications.map(([name, issuer, year]) => <li key={name}><span>{name}</span><small>{issuer} · {year}</small></li>)}</ul></article></section>
 

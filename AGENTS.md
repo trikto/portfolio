@@ -36,17 +36,18 @@
 
 ## Recent changes
 
-- Added LinkedIn, GitHub, and Contact marks alongside their text links in the homepage and shared headers, and added the same compact link row to the shared footer on 2026-07-17.
+- Added LinkedIn, GitHub, and Contact marks alongside their text links in the homepage and shared headers, and added the same compact link row to the shared footer on 2026-07-17; the GitHub mark uses theme ink for dark-mode visibility.
 - Added official-color technology logos to all 28 homepage Operating Stack pills on 2026-07-17; generic categories use representative GitHub Actions, Argo, OWASP, and Kali Linux marks while preserving every label and its order.
 - Replaced the runtime Medium feed and redirect model with repository-owned MDX under `content/blog/` on 2026-07-17; `gajan.dev` is canonical and Medium is only an optional secondary link.
 - Article MDX lists explicitly restore `disc` and `decimal` markers within `.article-prose`, with a blog-test guard against regressions, on 2026-07-17.
+- Article-page hero and embedded MDX images render at their source aspect ratio; keep card covers fixed at `16:9` with `object-fit: cover`, on 2026-07-17.
 - Blog metadata and content are validated synchronously through `lib/blog.ts`; public listings, static parameters, related posts, and the sitemap always exclude drafts and sort published articles newest-first.
 - Reuse the shared article grid/card components and shared site footer for future article UI changes; preserve fixed image aspect ratios, local image fallback, internal article links, newest-first sorting, and the three-card homepage limit.
 - Keep the 13 identifier-bearing article slugs and their local `/blog/<slug>` routes stable. `data/articles.json` is the verified 13-item import manifest only and must not drive runtime rendering.
 - Keep article images under `public/blog/<slug>/` and reference them with local paths. Do not restore a Medium image allow-list, runtime feed request, blanket article redirect, or scheduled Medium sync workflow.
 - Use `scripts/import-medium-posts.mjs` only for migration/recovery. Default imports skip existing MDX, `--overwrite` replaces imported articles and generated images, and `--export` accepts a Medium export ZIP or directory as the final fallback.
 - Blog light/dark styling is scoped to `.blog-page` with `prefers-color-scheme`; do not change the rest of the portfolio theme.
-- The homepage and article pages share the navigation-observed back-to-top control; keep its `#site-top` target and reveal behavior consistent across both.
+- The homepage, `/blog` index, and article pages share the navigation-observed back-to-top control; keep its `#site-top` target and reveal behavior consistent across all three.
 
 - Removed the redundant footer navigation links on 2026-07-12; retain only the copyright-area Workout Schedule link.
 - Added a discreet footer link and minimal `/workouts` schedule page on 2026-07-12; keep workout content secondary to the DevOps portfolio and out of primary navigation.
@@ -68,4 +69,5 @@
 - Verified favicon crawling is not blocked by `robots.ts`; `/` and `/favicon.svg` are publicly allowed, so the remaining Google globe is an independent favicon cache/processing delay, on 2026-07-14.
 - Clarified that this portfolio uses Next.js as the framework and React as its UI library/runtime; they are complementary rather than alternatives, on 2026-07-14.
 - Replaced the four Cron UI em dashes with the requested hyphen/comma wording on 2026-07-14.
+- Added homepage experience-detail dialogs backed by the CV responsibilities on 2026-07-17; preserve native dialog keyboard, backdrop, and focus-return behavior when editing this section.
 - Confirmed Next.js is a React framework, so this project’s Next.js application necessarily uses React, on 2026-07-14.

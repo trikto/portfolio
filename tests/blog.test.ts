@@ -25,6 +25,16 @@ test("article prose keeps Markdown list markers", async () => {
   assert.match(styles, /\.article-prose ol\s*\{\s*list-style\s*:\s*decimal/);
 });
 
+test("article-page images retain their source proportions while card covers stay fixed", async () => {
+  const styles = await readFile(path.join(process.cwd(), "app", "globals.css"), "utf8");
+  assert.match(styles, /\.article-hero-image img\s*\{\s*display:block;\s*width:100%;\s*height:auto;/);
+  assert.doesNotMatch(styles, /\.article-hero-image\s*\{[^}]*aspect-ratio/);
+  assert.doesNotMatch(styles, /\.article-hero-image img\s*\{[^}]*object-fit/);
+  assert.match(styles, /\.article-prose img\s*\{[^}]*max-width:100%;\s*height:auto;/);
+  assert.match(styles, /\.article-cover\s*\{[^}]*aspect-ratio:16\/9/);
+  assert.match(styles, /\.article-cover img\s*\{[^}]*object-fit:cover/);
+});
+
 function source(overrides: Record<string, unknown> = {}, body = "A useful local article body.") {
   const values: Record<string, unknown> = {
     title: "Test article",
