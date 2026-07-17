@@ -1,7 +1,7 @@
 import { siGithub, type SimpleIcon } from "simple-icons";
 
 function BrandIcon({ icon }: { icon: SimpleIcon }) {
-  return <svg aria-hidden="true" className="social-icon" viewBox="0 0 24 24"><path d={icon.path} fill={`#${icon.hex}`} /></svg>;
+  return <svg aria-hidden="true" className="social-icon" viewBox="0 0 24 24"><path d={icon.path} fill="var(--ink)" /></svg>;
 }
 
 function MailIcon() {
