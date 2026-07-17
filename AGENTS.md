@@ -70,4 +70,5 @@
 - Clarified that this portfolio uses Next.js as the framework and React as its UI library/runtime; they are complementary rather than alternatives, on 2026-07-14.
 - Replaced the four Cron UI em dashes with the requested hyphen/comma wording on 2026-07-14.
 - Added homepage experience-detail dialogs backed by the CV responsibilities on 2026-07-17; preserve native dialog keyboard, backdrop, and focus-return behavior when editing this section.
+- Centered the experience dialog explicitly and restored visible CV bullet markers after Tailwind reset them on 2026-07-17.
 - Confirmed Next.js is a React framework, so this project’s Next.js application necessarily uses React, on 2026-07-14.
