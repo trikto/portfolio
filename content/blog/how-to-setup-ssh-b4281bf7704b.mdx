@@ -1,0 +1,74 @@
+---
+title: "How to setup SSH?"
+description: "If you want to setup SSH to remotely connect to machines then this guide is for you:"
+publishedAt: "2026-01-03"
+updatedAt: "2026-01-03"
+author: "Gajan Rajah"
+tags:
+  - "linux"
+  - "ssh"
+coverImage: "/blog/how-to-setup-ssh-b4281bf7704b/cover.png"
+mediumUrl: "https://trikto.medium.com/how-to-setup-ssh-b4281bf7704b"
+draft: false
+---
+
+If you want to setup SSH to remotely connect to machines then this guide is for you:
+
+Execute the below command to generate the SSH key pair:
+
+```
+ssh-keygen -t rsa -f <path_to_your_key>/<name_of_your_SSH_key> -C <your_username>
+```
+
+You can add a passphrase for an added layer of security but this is optional.
+
+You need two keys to establish the SSH connection:
+
+> Private Key: Used by the user to securely authenticate to the remote server
+
+> Public Key: Placed in the remote server
+
+Copy the contents of the public key (*public key is the key file with the .pub extension*).
+
+Execute the below commands in order to create the necessary directories and assign the permissions.
+
+```
+mkdir -p ~/.ssh
+echo "PASTE_YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+```
+
+Now you can SSH to the remote server and verify using the below command:
+
+```
+ssh username@remote_host_ip
+```
+
+For added security you can
+
+> Disable password based login
+
+> Disable root login
+
+If you wanna go ahead, then edit the sshd\_config file:
+
+```
+sudo vim /etc/ssh/sshd_config
+```
+
+Make sure that these three lines are present
+
+> PasswordAuthentication no
+
+> PubkeyAuthentication yes
+
+> PermitRootLogin no
+
+Restart the service
+
+```
+sudo systemctl restart ssh
+```
+
+Now you can securely connect to your system!

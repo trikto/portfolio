@@ -1,0 +1,83 @@
+---
+title: "How to move/migrate Steam games from one PC to another"
+description: "If you are moving or upgrading to a new PC, you might also want to move the existing games without the hassle of downloading all the games again in the new PC. Or you might want to copy the…"
+publishedAt: "2025-04-15"
+updatedAt: "2025-04-15"
+author: "Gajan Rajah"
+tags:
+  - "mortal-kombat-11"
+  - "steam"
+  - "games"
+coverImage: "/blog/how-to-move-migrate-steam-games-from-one-pc-to-another-39d09dd1dfa9/cover.jpg"
+mediumUrl: "https://trikto.medium.com/how-to-move-migrate-steam-games-from-one-pc-to-another-39d09dd1dfa9"
+draft: false
+---
+
+If you are moving or upgrading to a new PC, you might also want to move the existing games without the hassle of downloading all the games again in the new PC. Or you might want to copy the games in Steam from your friend’s computer to yours to avoid the trouble of downloading them.
+
+For the sake of simplicity, the source PC from where the games will be copied, will be called as PC A. The destination PC to where the games will be pasted to, will be called as PC B.
+
+#### In PC A, locate the steam installation folder.
+
+1.  Open Steam
+2.  Go to the Library tab
+3.  Locate the game that you want to copy.
+4.  Now, right click it and click properties.
+5.  Click the “Installed Files” tab in the left side pane.
+6.  Click “Browse”
+
+This will open the location of the game files in your file explorer.
+
+Usually this location is
+
+> `C:\Program Files (x86)\Steam\steamapps\common\<game_name>`
+
+This is the folder that you need to copy.
+
+Copy this folder to an external storage location like an external disk.
+
+#### Now install Steam in PC B.
+
+Search the game in the store and buy it if it is a paid game.
+
+After purchasing, the download will be initiated.
+
+Stop/pause the download after choosing to inspect the download progress.
+
+![How to move/migrate Steam games from one PC to another image 2](/blog/how-to-move-migrate-steam-games-from-one-pc-to-another-39d09dd1dfa9/image-02.png)
+
+Now go to the installation location in PC B.
+
+> C:\\Program Files (x86)\\Steam\\steamapps\\downloading
+
+If there’s only one folder named with a number, you can safely delete it.
+
+**Optional:** If not, go to the Steam store and search for your game. Now, right click and click “Copy Page URL”. Paste it in a text editor like Notepad. The link should be something like this
+
+> [https://store.steampowered.com/app/976310/Mortal\_Kombat\_11/](https://store.steampowered.com/app/976310/Mortal_Kombat_11/)
+
+Delete the folder with the name which is as same as the one in the link.
+
+#### Remember the copied game files to an external disk from PC A?
+
+Copy them to this location:
+
+> `C:\Program Files (x86)\Steam\steamapps\common\<game_name>`
+
+Next locate the *executable application file* of the game to start running the game, because launching from Steam will most probably start to initiate the game file download again.
+
+Most probably it will be present under the *Binaries* folder.
+
+In my case it was:
+
+> C:\\Program Files (x86)\\Steam\\steamapps\\common\\Mortal Kombat 11\\Binaries\\Retail\\MK11.exe
+
+Create a shortcut for this executable file, and move this shortcut to your desktop.
+
+Now you can open and run the game using this shortcut and it syncs with Steam.
+
+Enjoy your game!
+
+References (“also have a look at”):
+
+<a href="https://medium.com/media/becdb8fc2cbbb3aaeef728bff754ca02/href">https://medium.com/media/becdb8fc2cbbb3aaeef728bff754ca02/href</a>

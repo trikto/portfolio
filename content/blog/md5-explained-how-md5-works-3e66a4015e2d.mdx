@@ -1,0 +1,134 @@
+---
+title: "MD5 explained / How MD5 works?"
+description: "An easy to understand simple explanation on how MD5 works."
+publishedAt: "2024-01-24"
+updatedAt: "2024-01-24"
+author: "Gajan Rajah"
+tags:
+  - "MD5"
+  - "Cryptography"
+  - "Hashing"
+coverImage: "/blog/md5-explained-how-md5-works-3e66a4015e2d/cover.png"
+mediumUrl: "https://medium.com/@trikto/md5-explained-how-md5-works-3e66a4015e2d"
+draft: false
+---
+
+An easy to understand simple explanation on how MD5 works.
+
+## Padding
+
+The data in bit format should be 64 bits short of a 512 bit multiple.
+
+
+![MD5 explained / How MD5 works? image 1](/blog/md5-explained-how-md5-works-3e66a4015e2d/image-01.png)
+
+E.g. — Assume that your data consists of 1000 bits.
+
+The nearest multiple of 512 is 1024.
+
+Now let’s check if 1024 satisfies the above mentioned condition.
+
+1024–64 = 960 which is less than 1000 bits but we need at least 1000 bits to store our data.
+
+Moving on to the next multiple which is 1536.
+
+1536–64 = 1472
+
+Adding padding bits to 1000 to make it 1472.
+
+1472 + 64 = 1536 (which is a multiple of 512)
+
+Now the condition has been satisfied.
+
+## Appending
+
+Now express the length of the initial input string in terms of 64 bits.
+
+
+![MD5 explained / How MD5 works? image 2](/blog/md5-explained-how-md5-works-3e66a4015e2d/image-02.png)
+
+This string is going to be hashed.
+
+## Initializing
+
+Divide the above string into 512 bit blocks.
+
+Initialize four different buffers named A, B, C and D.
+
+Each buffer is 32 bits and initialized as follows:
+
+> A = 01 23 45 67
+> 
+> B = 89 ab cd ef
+> 
+> C = fe dc ba 98
+> 
+> D = 76 54 32 10
+
+## Processing
+
+Take each 512 bit block and further divide into 16-bit blocks (each 16-bit block will contain 32 bits such that 16 x 32 = 512).
+
+Each 16-bit block is assigned its own number ranging from M0 to M15.
+
+An example is given below:
+
+> M0–01010100 01101000 01100101 01111001  
+> M1–00100000 01100001 01110010 01100101  
+> M2–00100000 01100100 01100101 01110100  
+> M3–01100101 01110010 01101101 01101001  
+> M4–01101110 01101001 01110011 01110100  
+> M5–01101001 01100011 10000000 00000000  
+> M6–00000000 00000000 00000000 00000000  
+> M7–00000000 00000000 00000000 00000000  
+> M8–00000000 00000000 00000000 00000000  
+> M9–00000000 00000000 00000000 00000000  
+> M10–00000000 00000000 00000000 00000000  
+> M11–00000000 00000000 00000000 00000000  
+> M12–00000000 00000000 00000000 00000000  
+> M13–00000000 00000000 00000000 00000000  
+> M14–00000000 00000000 00000000 00000000  
+> M15–00000000 00000000 00000000 10110000
+
+These numbers are also used in hexadecimal format.
+
+Four rounds of operations are carried out on the 512-bit block.
+
+Each round consists of 16 operations.
+
+4 x 16 = 64 operations per 512-bit block.
+
+An array K on constant values is created after deriving the values from a formula.
+
+### Each operation round utilizes all the sub-blocks, buffers and the constant array values.
+
+
+![An abstract representation of the processing](/blog/md5-explained-how-md5-works-3e66a4015e2d/cover.png)
+
+*An abstract representation of the processing*
+
+Subsequent adding operations of output to buffer input form new buffer values.
+
+This eventually results in the final buffer value which is the hash.
+
+For more info and to get an in-depth understanding:
+
+[
+
+## The MD5 algorithm (with examples) | Comparitech
+
+### In this article, we discuss the underlying processes of the MD5 algorithm and how the math behind the MD5 hash function…
+
+www.comparitech.com
+
+](https://www.comparitech.com/blog/information-security/md5-algorithm-with-examples/)
+
+[
+
+## MD5 Hash Algorithm in Cryptography: Here's Everything You Should Know
+
+### MD5 Algorithm is a hashing algorithm that prevents producing repeated as signs. Learn how the algorithm works to…
+
+www.simplilearn.com
+
+](https://www.simplilearn.com/tutorials/cyber-security-tutorial/md5-algorithm)

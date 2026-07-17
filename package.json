@@ -10,16 +10,24 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
-    "test:medium": "node --experimental-strip-types --test tests/medium.test.ts",
-    "sync:medium": "node --experimental-strip-types scripts/sync-medium-articles.ts"
+    "typecheck": "tsc --noEmit",
+    "test:blog": "node --experimental-strip-types --test tests/blog.test.ts",
+    "import:medium": "node scripts/import-medium-posts.mjs"
   },
   "dependencies": {
+    "adm-zip": "^0.6.0",
+    "cheerio": "^1.2.0",
     "croner": "^10.0.1",
     "fast-xml-parser": "^5.10.1",
+    "gray-matter": "^4.0.3",
     "next": "16.2.6",
+    "next-mdx-remote": "^6.0.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "simple-icons": "^16.26.0"
+    "remark-gfm": "^4.0.1",
+    "simple-icons": "^16.26.0",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.2.1",

@@ -1,7 +1,7 @@
 import { HomeClient } from "./home-client";
 import { LatestArticles } from "./components/articles/latest-articles";
-import { getMediumArticles } from "../lib/medium";
+import { getPublishedPosts } from "../lib/blog";
 
-export default async function Home() {
-  return <HomeClient latestArticles={<LatestArticles feed={await getMediumArticles()} />} />;
+export default function Home() {
+  return <HomeClient latestArticles={<LatestArticles posts={getPublishedPosts()} />} />;
 }

@@ -1,0 +1,110 @@
+---
+title: "How to setup Nginx to host your website?"
+description: "If you want to host your website with a lightweight web server, then Nginx is your solution."
+publishedAt: "2026-01-03"
+updatedAt: "2026-01-03"
+author: "Gajan Rajah"
+tags:
+  - "nginx"
+  - "linux"
+coverImage: "/blog/how-to-setup-nginx-to-host-your-website-38ea7db1b58d/cover.png"
+mediumUrl: "https://trikto.medium.com/how-to-setup-nginx-to-host-your-website-38ea7db1b58d"
+draft: false
+---
+
+If you want to host your website with a lightweight web server, then Nginx is your solution.
+
+First install Nginx using the package manager.
+
+Update the package manager repository metadata:
+
+```
+sudo apt update
+```
+
+Install Nginx and start the service:
+
+```
+sudo apt install nginx -y
+
+sudo systemctl status nginx
+```
+
+Your website will reside in:
+
+> `/var/www/<domain_name>/html`
+
+Replace **`<domain_name>`** with your actual domain name.
+
+So we will create a folder there:
+
+```
+sudo mkdir -p /var/www/gajan.dev/html
+```
+
+Assign the necessary permissions to that folder:
+
+```
+sudo chown -R $USER:$USER /var/www/gajan.dev/html
+```
+
+Place all your website files in this location:
+
+> `/var/www/<domain_name>/html/`
+
+Now we will edit the configuration file:
+
+```
+sudo vim /etc/nginx/sites-available/<domain_name>
+```
+
+Paste the following content inside the configuration file:
+
+```
+server {
+    listen 80;
+    server_name <domain_name> www.<domain_name>;
+    root /var/www/<domain_name>/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+This instructs the server to:
+
+-   Listen on port 80
+-   The domain names served here are `<domain_name>` and `www.<domain_name>`.
+-   The website files are placed in the location which follow root
+-   index.html is the index of your website
+-   The location block instructs the server on how different paths should be handled:
+
+> Look for the exact file ($uri).
+
+> If not found, look for a directory ($uri/).
+
+> If still not found, fall back to index.html
+
+We will enable the above site by creating a symbolic link:
+
+```
+sudo ln -s /etc/nginx/sites-available/<domain_name> /etc/nginx/sites-enabled/
+```
+
+Check Nginx if there are any errors in the configurations done above:
+
+```
+sudo nginx -t 
+```
+
+Now restart Nginx
+
+```
+sudo systemctl restart nginx
+```
+
+Now you should be able to reach your website when you access your domain name through your web browser.
+
+> Note that DNS mapping should be done to the public IP address of your server, so that your server is reached when someone clicks your domain name.

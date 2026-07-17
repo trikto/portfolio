@@ -1,0 +1,97 @@
+---
+title: "Linux not suspending issue fixed"
+description: "Click here to view the original post."
+publishedAt: "2024-07-13"
+updatedAt: "2024-07-13"
+author: "Gajan Rajah"
+tags:
+  - "Linux"
+  - "Ubuntu"
+  - "Suspend"
+  - "Fix"
+  - "Ubuntu 22 04"
+coverImage: "/blog/linux-not-suspending-issue-fixed-ca2b943c59df/cover.png"
+mediumUrl: "https://medium.com/@trikto/linux-not-suspending-issue-fixed-ca2b943c59df"
+draft: false
+---
+
+[Click here to view the original post.](https://forums.linuxmint.com/viewtopic.php?t=337938)
+
+First of all to gain a thorough understanding about the issue, let’s cover all ACPI sleep states (S0 to S5):
+
+1.  **S0 State (Working state)**
+
+-   This is the normal operating state of the computer.
+-   The CPU is fully powered and executing instructions.
+-   All peripherals and components are operational.
+-   Power consumption is at its highest in this state as the system is actively running.
+
+2\. **S1 State (Standby)**:
+
+-   Also known as the “Standby state” or “Suspend to RAM.”
+-   In S1, the CPU stops executing instructions to save power.
+-   The CPU maintains its state (registers and cache) so it can quickly resume processing.
+-   Power is still supplied to RAM and some other components.
+-   This state allows for a quick wake-up time (usually a few seconds).
+-   Power consumption is reduced compared to S0, but not as low as deeper sleep states.
+
+3\. **S2 State (Sleep)**:
+
+-   Also known as the “Sleep state” or “Suspend to RAM.”
+-   S2 builds upon S1 by further reducing power consumption.
+-   In S2, more components are powered down compared to S1.
+-   The CPU is powered down, and its state (registers and cache) is saved to RAM.
+-   This state consumes less power than S1.
+-   It takes longer to wake up from S2 compared to S1 (typically several seconds to resume).
+
+4\. **S3 State (Standby)**:
+
+-   Also known as the “Standby state” or “Suspend to RAM.”
+-   S3 is a deeper sleep state where most components are powered down.
+-   The CPU is powered off, and its state (registers and cache) is saved to RAM.
+-   RAM remains powered to retain data, but other components such as the CPU and peripherals are in a low-power state or completely powered off.
+-   This state consumes significantly less power than S2.
+-   It takes longer to wake up from S3 compared to S1 and S2 (typically several seconds to resume).
+
+5\. **S4 State (Hibernate)**:
+
+-   Also known as the “Hibernate state” or “Suspend to Disk.”
+-   In S4, the system saves the current state (including the contents of RAM) to the hard disk or another non-volatile storage device.
+-   The system then completely powers off, consuming no power except for a small amount needed to monitor the power button or other wake-up triggers.
+-   This state is useful for longer periods of inactivity as it allows the system to save its state indefinitely without requiring continuous power.
+-   Resume from S4 (hibernate) state is slower than from S1 to S3 because it involves reading the saved state from disk back into RAM.
+
+6\. **S5 State (Soft Off)**:
+
+-   Also known as the “Soft Off state” or “Mechanical Off.”
+-   S5 is the state where the system is completely powered off.
+-   No power is supplied to the system except for minimal circuitry to detect and respond to the power button press or other wake-up events.
+-   The state of the system and any running applications or data is not preserved; it requires a full boot process to resume operation.
+-   This state consumes the least amount of power since the system is essentially turned off.
+
+These ACPI sleep states (S0 to S5) allow a computer system to manage power consumption based on its activity level, balancing the need for immediate responsiveness with power savings during periods of inactivity.
+
+## Fix explained
+
+Below mentioned steps are for Ubuntu 22.04. If you are using a different distro, please update your commands accordingly.
+
+
+![Linux not suspending issue fixed image 1](/blog/linux-not-suspending-issue-fixed-ca2b943c59df/cover.png)
+
+By default when you click on suspend, the system goes to the [S0 standby state](https://discussion.fedoraproject.org/t/please-improve-the-s0ix-experience-under-linux/79113?replies_to_post_number=8).
+
+To manually override this, execute the following steps:
+
+> sudo vim /etc/default/grub
+
+Press i to go to insert mode and add the following line:
+
+> GRUB\_CMDLINE\_LINUX\_DEFAULT=“mem\_sleep\_default=deep”
+
+If some values already exist for the above variable, include the configuration as a space separated value along with the other configurations.
+
+> sudo update-grub
+> 
+> sudo reboot now
+
+This will fix your issue. But if your issue still persists, check your BIOS settings with regard to power states.

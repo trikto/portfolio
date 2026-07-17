@@ -1,0 +1,63 @@
+---
+title: "What is GitOps and why do you need it?"
+description: "If you are learning or working in the cloud, chances are that you might have heard about GitOps. So what is GitOps?"
+publishedAt: "2025-12-26"
+updatedAt: "2025-12-26"
+author: "Gajan Rajah"
+tags:
+  - "kubernetes"
+  - "devops"
+  - "gitops"
+  - "cloud-computing"
+  - "git"
+coverImage: "/blog/what-is-gitops-and-why-do-you-need-it-a9a42f187497/cover.png"
+mediumUrl: "https://trikto.medium.com/what-is-gitops-and-why-do-you-need-it-a9a42f187497"
+draft: false
+---
+
+If you are learning or working in the cloud, chances are that you might have heard about GitOps. So what is **GitOps**?
+
+Before let’s get into a short introduction about *IaC (Infrastructure as Code)*
+
+Entire infrastructures like AWS environments are managed through code. The infrastructure is defined using code. What needs to be built and how it needs to be built in the infrastructure is defined here. Tools like Terraform and Ansible help us.
+
+> It’s the blueprint.
+
+We can version control them in Git and track changes and have a centralized location where everyone has access to it.
+
+But here come the problems:
+
+1.  No pull requests
+2.  Directly merging to main without reviews
+3.  No code reviews/collaboration
+4.  No automated tests (invalid YAML files could be present)
+5.  Everyone has access to the infrastructure and they can apply the changes from their local machine.
+6.  Nobody knows who executed what on the remote servers.
+7.  Mistakes in the files will be only found out once they are applied.
+
+**GitOps** comes to solve these problems. It treats the IaC the same way Application as Code is treated.
+
+1.  IaC is stored on a Git repository.
+2.  Branch out to a new branch and work on the changes.
+3.  The changes are validated by a CI pipeline which validates the configuration files and runs automated tests.
+4.  Other team members can approve the final changes.
+5.  Then a CD pipeline deploys it to the infrastructure.
+
+GitOps has two ways of deployment to the infrastructure.
+
+1.  Push Deployment
+2.  Pull Deployment
+
+Push deployment is the usual concept where the changes are pushed to the intended environment from the repository.
+
+Pull deployment is where an agent is installed in the environment which pulls the changes from the Git repository.
+
+> The agent monitors and compares the desired state from the Git repository with the actual state in the environment where it’s running. If it notices any changes, it will pull the changes and make the actual state transition to the desired state.
+
+Examples of pull based GitOps tools are *FluxCD* and *ArgoCD*.
+
+**Rollbacks**: If you changes break the running environment, you can simply revert to the last working state by using git revert and rolling back.
+
+Increases **security** because many team members don’t need direct access to environments to make changes, because it’s only the CD pipeline that’s going to make the changes. Anybody can propose changes by pull requests in the Git repository.
+
+> GitOps workflows are definitely recommended to optimize your workflow, so you should be trying them out.

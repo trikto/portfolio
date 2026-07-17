@@ -1,0 +1,58 @@
+---
+title: "Cloning docker images between repositories without downloading them"
+description: "If you have a slow internet connection or are limited on bandwidth quota and want to clone docker images between repositories without downloading them to your local machine, then this guide…"
+publishedAt: "2025-12-28"
+updatedAt: "2025-12-28"
+author: "Gajan Rajah"
+tags:
+  - "skopeo"
+  - "gitlab"
+  - "docker"
+  - "containers"
+  - "ci-cd-pipeline"
+coverImage: "/blog/cloning-docker-images-between-repositories-without-downloading-them-413a636536ce/cover.png"
+mediumUrl: "https://trikto.medium.com/cloning-docker-images-between-repositories-without-downloading-them-413a636536ce"
+draft: false
+---
+
+If you have a slow internet connection or are limited on bandwidth quota and want to clone docker images between repositories without downloading them to your local machine, then this guide is for you.
+
+As an intermediary platform we will use **GitLab** here.
+
+First of all create a private project using you GitLab account. Then under the left sidebar, go to *Settings* and click *CI/CD*.
+
+Then add two protected variables there. This will be your username and password for your docker repo login.
+
+> DOCKER\_HUB\_USERNAME
+
+> DOCKER\_HUB\_PASSWORD
+
+Now under the left sidebar, click Build and click Pipeline Editor, and paste the below code. (Replace the values denoted between &lt;&gt;)
+
+```
+stages:
+  - deploy
+
+clone_image:
+  stage: deploy
+  image:
+    name: quay.io/skopeo/stable:latest
+    entrypoint: [""]
+  variables:
+    SOURCE_IMAGE: "docker://docker.io/<SOURCE_REPO>/<IMAGE_NAME>:<TAG>"
+    DEST_IMAGE: "docker://docker.io/<DEST_REPO>/<IMAGE_NAME>:<TAG>"
+  script:
+    - |
+      skopeo copy \
+        --dest-creds "${DOCKER_HUB_USERNAME}:${DOCKER_HUB_PASSWORD}" \
+        "$SOURCE_IMAGE" \
+        "$DEST_IMAGE"
+```
+
+Click *Commit*, now your pipeline will start to run.
+
+After the successful execution, you will have the image cloned to your repo.
+
+![Cloning docker images between repositories without downloading them image 2](/blog/cloning-docker-images-between-repositories-without-downloading-them-413a636536ce/image-02.png)
+
+If you are cloning from a private repo, update the relevant skopeo commands.

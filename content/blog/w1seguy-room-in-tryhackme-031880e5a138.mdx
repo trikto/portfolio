@@ -1,0 +1,95 @@
+---
+title: "W1seGuy Room in TryHackMe"
+description: "I am keeping this simple, first of all you get access to the source code."
+publishedAt: "2025-11-19"
+updatedAt: "2026-01-04"
+author: "Gajan Rajah"
+tags:
+  - "tryhackme-writeup"
+  - "reverse-engineering"
+  - "tryhackme"
+  - "encryption"
+coverImage: "/blog/w1seguy-room-in-tryhackme-031880e5a138/cover.png"
+mediumUrl: "https://infosecwriteups.com/w1seguy-room-in-tryhackme-031880e5a138"
+draft: false
+---
+
+I am keeping this simple, first of all you get access to the source code.
+
+Download it and examine to get an understanding of what’s going on.
+
+The key points to note here are:
+
+1.  **Bitwise XOR encryption** is used and then the bytes are hex encoded.
+2.  The first flag is encrypted this way, and output to you when you connect to port *1337* of the machine.
+3.  A key value is randomly generated, which the server expects you to input. If input correctly, you get the second flag.
+
+```
+nc <machine_ip_address> 1337
+```
+
+The flaw with bitwise XOR encryption is that
+
+> Flag XOR Key = Xored\_value
+
+> Xored\_value XOR Flag= Key
+
+So the key is not really protected.
+
+We know that the key is of length 5 upon inspecting the source code. The bitwise XOR operation goes on for each character of the flag but you may remember that the key is of length 5. Now the flag length and the key length do not match. To overcome this issue, the key is repeatedly used for the XOR operation every time it’s characters run out during the operation.
+
+The first 4 characters of the flag are *THM&#123;* and the last character is *&#125;*.
+
+So if we perform the XOR operation on *THM&#123;* with the encrypted value, we get the first 4 characters of the key. I am taking a guess that the last character of the flag was used to encrypt *&#125;*.
+
+But first we need to decode the bytes from hex, and then perform the above operation to get the key. Input it to the server. And there you go with the second flag!
+
+Once you get the key, use the same XOR operation against the entire encrypted output (hex decode it) from the server. Now you get the decrypted value which is the first flag!
+
+Below is a script that I prepared to automate the entire process:
+
+```
+hex_string = input("Enter hex string: ")   # Take hex input from user
+
+hex_encoded = hex_string
+
+xored_original = bytes.fromhex(hex_encoded).decode('utf-8')
+
+def xor_encrypt(text):
+    if len(text) < 5:
+        raise ValueError("Input string must be at least 5 characters long.")
+
+    keys = ['T', 'H', 'M', '{','}']  # 4 keys for first 4 characters
+
+    output = []
+
+    # XOR first 4 characters
+    for i in range(4):
+        output.append(chr(ord(text[i]) ^ ord(keys[i])))
+
+    # XOR last character with }
+    last_char = text[-1]
+    output.append(chr(ord(last_char) ^ ord(keys[4])))
+
+    return "".join(output)
+
+# Key
+print(xor_encrypt(xored_original))
+
+key=xor_encrypt(xored_original)
+
+flag=xored_original
+xored=""
+for i in range(0,len(flag)):
+    xored += chr(ord(flag[i]) ^ ord(key[i%len(key)]))
+
+print(xored)
+```
+
+No, you can’t use the same key as below 😂 because it’s auto-generated to an arbitrary value every time.
+
+![W1seGuy Room in TryHackMe image 2](/blog/w1seguy-room-in-tryhackme-031880e5a138/image-02.png)
+
+* * *
+
+[W1seGuy Room in TryHackMe](https://infosecwriteups.com/w1seguy-room-in-tryhackme-031880e5a138) was originally published in [InfoSec Write-ups](https://infosecwriteups.com/) on Medium, where people are continuing the conversation by highlighting and responding to this story.

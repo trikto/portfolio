@@ -1,0 +1,50 @@
+---
+title: "TakeOver Room in TryHackMe"
+description: "Use ffuf with a comprehensive wordlist to enumerate the subdomains"
+publishedAt: "2025-11-21"
+updatedAt: "2025-11-21"
+author: "Gajan Rajah"
+tags:
+  - "tryhackme-writeup"
+  - "enumeration"
+  - "tryhackme"
+  - "subdomain"
+  - "ctf-writeup"
+coverImage: "/blog/takeover-room-in-tryhackme-23c045bb3644/cover.png"
+mediumUrl: "https://infosecwriteups.com/takeover-room-in-tryhackme-23c045bb3644"
+draft: false
+---
+
+Use ffuf with a comprehensive wordlist to enumerate the subdomains
+
+```
+curl -O -L <https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/dns-Jhaddix.txt>
+```
+
+```
+curl -O -L <https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-20000.txt>
+```
+
+The first is a very large wordlist but here we will use the second wordlist.
+
+```
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-20000.txt -u <https://10.65.182.21> -H "Host: FUZZ.futurevera.thm" -fs 0,4605
+```
+
+\-fs denotes that we are eliminating responses with 0 bytes and 4605 bytes. 4605 bytes is the response we get from the endpoint when we use any random string for the subdomain, meaning it’s not a valid subdomain.
+
+We get *blog* and *support*. We will add these subdomains to the /etc/hosts file
+
+Now we will do a directory scan with ffuf
+
+```
+fuf -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -u <https://support.futurevera.thm/FUZZ>
+```
+
+We get some outputs from the above scan, but they do not contain any useful info.
+
+So if we go to the subdomain *support.futurevera.thm* and inspect the certificate we can find an alt DNS name. When we visit this subdomain, we get an error mentioning that we cannot reach the specified redirected endpoint, but the redirected endpoint has the flag within it.
+
+* * *
+
+[TakeOver Room in TryHackMe](https://infosecwriteups.com/takeover-room-in-tryhackme-23c045bb3644) was originally published in [InfoSec Write-ups](https://infosecwriteups.com/) on Medium, where people are continuing the conversation by highlighting and responding to this story.

@@ -1,0 +1,68 @@
+---
+title: "How to obfuscate URL/form data parameters to bypass WAF for SQL injections?"
+description: "Disclaimer: This information is meant for learning purposes only. We strongly discourage any illegal activities, including unauthorized hacking. We do not endorse or take responsibility for…"
+publishedAt: "2023-11-27"
+updatedAt: "2024-01-17"
+author: "Gajan Rajah"
+tags:
+  - "Infosec"
+  - "Sql Injection"
+  - "Obfuscation"
+coverImage: "/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/cover.png"
+mediumUrl: "https://medium.com/@trikto/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b"
+draft: false
+---
+
+***Disclaimer: This information is meant for learning purposes only. We strongly discourage any illegal activities, including unauthorized hacking. We do not endorse or take responsibility for unethical practices. Users should act responsibly and within the law. The content providers are not liable for any consequences resulting from unethical or illegal actions based on this information. Please adhere to ethical standards and legal regulations.***
+
+
+
+*Credits: Thanks to kharaone and anshifmonz\_ for pointing this out to me.*
+
+## Context
+
+So I was working on the [Glacier CTF 2023](https://play.glacierctf.com/) [“Peak” web challenge](https://peak.web.glacierctf.com/) and tried to attempt SQL injections on the register and login page.
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 1](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/cover.png)
+
+But from the challenge description I assumed that they are implying the presence of a WAF here.
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 2](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-02.png)
+
+> Beware the silent guards that stand sentinel along the treacherous path, obstructing your ascent.
+
+
+![login](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-03.png)
+
+*login*
+
+
+![register](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-04.png)
+
+*register*
+
+Since there’s a WAF here, I tried to obfuscate the form data parameters sent through the request body.
+
+## Obfuscating the parameters
+
+Send your request to Burp Repeater
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 5](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-05.png)
+
+Highlight the code you wish to encode and right click it
+
+> Convert selection -> URL -> URL-encode all characters
+
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 6](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-06.png)
+
+Now your message is obfuscated!
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 7](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-07.png)
+
+But still you have another method left. You can use this [online tool](https://onlinetexttools.com/url-encode-text) too (make sure to check the “Escape All Text Characters” checkbox)
+
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 8](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-08.png)
+
+For more information about obfuscation checkout the [Portswigger lab](https://portswigger.net/web-security/essential-skills/obfuscating-attacks-using-encodings).
