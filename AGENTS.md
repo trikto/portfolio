@@ -36,6 +36,8 @@
 
 ## Recent changes
 
+- Added `AVAILABLE FOR FREELANCE PROJECTS` beside the existing homepage availability and location strip on 2026-07-18; retain the original availability wording and contact flow.
+
 - Added LinkedIn, GitHub, and Contact marks alongside their text links in the homepage and shared headers, and added the same compact link row to the shared footer on 2026-07-17; the GitHub mark uses theme ink for dark-mode visibility.
 - Added official-color technology logos to all 28 homepage Operating Stack pills on 2026-07-17; generic categories use representative GitHub Actions, Argo, OWASP, and Kali Linux marks while preserving every label and its order.
 - Replaced the runtime Medium feed and redirect model with repository-owned MDX under `content/blog/` on 2026-07-17; `gajan.dev` is canonical and Medium is only an optional secondary link.
