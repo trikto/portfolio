@@ -34,6 +34,7 @@
 
 ## Recent changes
 
+- Added official-color technology logos to the homepage Operating Stack pills on 2026-07-17; keep concept-only entries text-only and preserve all 28 labels and their order.
 - Added server-rendered Medium article previews to the homepage and `/blog` on 2026-07-16; fetch `https://trikto.medium.com/feed` through `lib/medium.ts` with one-hour revalidation and use only verified real entries in the local fallback.
 - Article cards share `/blog/<medium-slug>` URLs that permanently redirect to `https://trikto.medium.com/<medium-slug>`; keep Medium as the canonical full-article host and do not add rendered local article pages.
 - Reuse the shared article grid/card components and shared site footer for future article UI changes; preserve fixed image aspect ratios, local image fallback, newest-first sorting, and the three-card homepage limit.

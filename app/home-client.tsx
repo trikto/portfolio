@@ -1,6 +1,32 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import {
+  siAnsible,
+  siCeph,
+  siCloudflare,
+  siDocker,
+  siExpress,
+  siGnubash,
+  siGooglecloud,
+  siGrafana,
+  siHelm,
+  siKubernetes,
+  siLinux,
+  siMinio,
+  siMongodb,
+  siMongoose,
+  siMysql,
+  siNodedotjs,
+  siPrometheus,
+  siPython,
+  siRedhat,
+  siRedhatopenshift,
+  siRook,
+  siVmware,
+  type SimpleIcon,
+} from "simple-icons";
 import { SiteFooter } from "./components/site-footer";
 
 const HERO_WORDS = ["reliable", "observable", "resilient", "repeatable"];
@@ -67,7 +93,48 @@ const cases = [
   ["Security hardening", "Configured network policies, HAProxy, MITM servers, routes, DNS entries, ACLs, and security rules for safer platform access."],
 ];
 
-const skills = ["Bash", "Linux", "RHEL", "MongoDB", "Python", "MySQL", "OpenShift Virtualization", "VMware", "Kubernetes", "Docker", "CI/CD Pipelines", "AWS", "GCP", "Rook", "Ceph", "Ansible", "Prometheus", "Grafana", "Cloudflare", "Helm", "Velero", "MinIO", "GitOps", "Web App Security", "OSINT", "Node.js", "Express", "Mongoose"];
+type Skill = { name: string; icon?: SimpleIcon; logo?: string };
+
+const skills: Skill[] = [
+  { name: "Bash", icon: siGnubash },
+  { name: "Linux", icon: siLinux },
+  { name: "RHEL", icon: siRedhat },
+  { name: "MongoDB", icon: siMongodb },
+  { name: "Python", icon: siPython },
+  { name: "MySQL", icon: siMysql },
+  { name: "OpenShift Virtualization", icon: siRedhatopenshift },
+  { name: "VMware", icon: siVmware },
+  { name: "Kubernetes", icon: siKubernetes },
+  { name: "Docker", icon: siDocker },
+  { name: "CI/CD Pipelines" },
+  { name: "AWS", logo: "/stack-icons/aws.svg" },
+  { name: "GCP", icon: siGooglecloud },
+  { name: "Rook", icon: siRook },
+  { name: "Ceph", icon: siCeph },
+  { name: "Ansible", icon: siAnsible },
+  { name: "Prometheus", icon: siPrometheus },
+  { name: "Grafana", icon: siGrafana },
+  { name: "Cloudflare", icon: siCloudflare },
+  { name: "Helm", icon: siHelm },
+  { name: "Velero", logo: "/stack-icons/velero.svg" },
+  { name: "MinIO", icon: siMinio },
+  { name: "GitOps" },
+  { name: "Web App Security" },
+  { name: "OSINT" },
+  { name: "Node.js", icon: siNodedotjs },
+  { name: "Express", icon: siExpress },
+  { name: "Mongoose", icon: siMongoose },
+];
+
+function SkillLogo({ skill }: { skill: Skill }) {
+  if (skill.icon) {
+    return <span className="skill-logo" aria-hidden="true"><svg viewBox="0 0 24 24" style={{ color: `#${skill.icon.hex}` }}><path d={skill.icon.path} fill="currentColor" /></svg></span>;
+  }
+  if (skill.logo) {
+    return <span className="skill-logo" aria-hidden="true"><Image alt="" height={18} loading="eager" src={skill.logo} width={18} /></span>;
+  }
+  return null;
+}
 
 const certifications = [
   ["Advent of Cyber 2025", "TryHackMe", "2025"],
@@ -203,7 +270,7 @@ export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
 
       <section id="about" className="section experience"><div><p className="eyebrow">EXPERIENCE</p><h2>Four years of<br />systems thinking.</h2></div><div className="timeline"><article><span>2026 - NOW</span><h3>DevOps / Systems Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2024 - 2026</span><h3>Associate DevOps / Cloud Engineer</h3><p>hSenid Mobile Solutions</p></article><article><span>2021 - 2024</span><h3>DevOps & Backend Engineering</h3><p>hSenid Mobile Solutions · appiGo · IntendAble</p></article></div></section>
 
-      <section className="section capability-grid"><article><p className="eyebrow">OPERATING STACK</p><div className="skill-cloud">{skills.map((skill) => <span key={skill}>{skill}</span>)}</div></article><article className="certification-card"><p className="eyebrow">CERTIFICATIONS</p><ul className="certification-list">{certifications.map(([name, issuer, year]) => <li key={name}><span>{name}</span><small>{issuer} · {year}</small></li>)}</ul></article></section>
+      <section className="section capability-grid"><article><p className="eyebrow">OPERATING STACK</p><div className="skill-cloud">{skills.map((skill) => <span key={skill.name}><SkillLogo skill={skill} />{skill.name}</span>)}</div></article><article className="certification-card"><p className="eyebrow">CERTIFICATIONS</p><ul className="certification-list">{certifications.map(([name, issuer, year]) => <li key={name}><span>{name}</span><small>{issuer} · {year}</small></li>)}</ul></article></section>
 
       <section id="writing" className="section writing"><div><p className="eyebrow">TECHNICAL WRITING</p><h2>Make operations<br />repeatable.</h2></div><div className="writing-card"><span>FIELD NOTE / 001</span><h3>Operational docs that shorten the path from alert to action.</h3><p>Procedure writing, knowledge transfer, deployment notes, and impact analysis are part of the system, not an afterthought.</p><a href="mailto:gajanrajah@protonmail.com?subject=Technical%20writing">Request a writing sample →</a></div></section>
 
