@@ -90,14 +90,9 @@ const projects = [
 ];
 
 const cases = [
-  ["Release safety", "Coordinated production releases and major-version upgrades with test plans, impact analysis, and documented rollback thinking."],
-  ["Fast recovery", "Automated patching and migration work with CI/CD and Ansible, reducing manual execution from hours to seconds."],
-  ["Reliable platforms", "Implemented monitoring, health checks, backups, and disaster-recovery approaches across clusters and databases."],
-  ["Cluster delivery", "Provisioned single-node, multi-node, on-premises, and K3s OpenShift environments for research, demonstrations, and client deployments."],
-  ["Storage and migration", "Managed VMware cold and warm migrations, LVM, local storage, Ceph, Rook, NFS, PVC mapping, and network bonding."],
-  ["Observability and health", "Built Prometheus and Grafana monitoring with Node, MySQL, and YugabyteDB exporters, automated health checks, log management, and image pruning."],
-  ["Backup and recovery", "Automated cluster, database, and namespace backups with Velero and MinIO, then shaped disaster recovery procedures around those paths."],
-  ["Security hardening", "Configured network policies, HAProxy, MITM servers, routes, DNS entries, ACLs, and security rules for safer platform access."],
+  ["System documentation", "Maintained clear system documentation to support collaboration across teams."],
+  ["Production upgrades", "Implemented major production version upgrades with thorough testing, procedure documentation, and impact analysis."],
+  ["Secure network access", "Managed network policies across telco products and OpenShift environments to ensure secure access."],
 ];
 
 type Skill = { name: string; icon?: SimpleIcon; logo?: string };
@@ -143,8 +138,12 @@ const experiences: Experience[] = [
     company: "hSenid Mobile Solutions",
     roles: [{ title: "DevOps / Systems Engineer", period: "April 2026 - Present", points: [
       "Ensured the proper functioning of systems, including telco CPaaS products.",
-      "Resolved incidents and troubleshot issues to maintain high availability.",
-      "Updated release files and managed deployments for low-downtime feature rollouts.",
+      "Incorporated AI agents into daily workflows, built tools to automate redundant tasks, and educated the team on best practices.",
+      "Conducted internal audits across projects and teams to ensure ISO 27001:2022 compliance.",
+      "Led major platform upgrades from MongoDB 2 to MongoDB 7 and MySQL 5 to MySQL 8, with thorough impact analysis, testing, and low-downtime rollouts.",
+      "Updated system security policies to align with organizational and client requirements.",
+      "Troubleshot incidents to ensure high availability.",
+      "Updated release files and managed deployments to support low-downtime feature rollouts.",
       "Collaborated on architectural improvements and security hardening for distributed systems and cloud services.",
       "Maintained system documentation for collaboration.",
       "Implemented major production version upgrades with testing, procedure documentation, and impact analysis.",
@@ -331,9 +330,9 @@ export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
           <div className="hero-actions">
             <a className="button primary" href="#work">Explore selected work <span>↓</span></a>
             <a className="button ghost" href="/tools">Explore DevOps tools <span>→</span></a>
-            <button className="button ghost" onClick={() => setResumeMessage(true)}>Resume <span>↗</span></button>
+            <button className="button ghost" onClick={() => setResumeMessage(true)}>Resume/CV <span>↗</span></button>
           </div>
-          {resumeMessage && <p className="resume-note">Resume available on request. <a href="mailto:gajanrajah@protonmail.com?subject=Resume%20request">Email Gajan</a>.</p>}
+          {resumeMessage && <p className="resume-note">Resume/CV available on request. <a href="mailto:gajanrajah@protonmail.com?subject=Resume%2FCV%20request">Email Gajan</a>.</p>}
         </div>
 
         <HeroSystem />
