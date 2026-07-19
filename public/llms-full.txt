@@ -1425,7 +1425,7 @@ But still you have another method left. You can use this [online tool](https://o
 For more information about obfuscation checkout the [Portswigger lab](https://portswigger.net/web-security/essential-skills/obfuscating-attacks-using-encodings).
 
 ---
-+
+
 
 ### AWS Networking Fundamentals
 
