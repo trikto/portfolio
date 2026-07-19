@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { BackToTop } from "./components/back-to-top";
-import { SocialLinks } from "./components/social-links";
+import { SiteHeader } from "./components/site-header";
+import { ServicesPreview } from "./components/services-preview";
 import {
   siAnsible,
   siArgo,
@@ -316,11 +317,7 @@ export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
   return (
     <main id="site-top" className="site concept-cloud">
       <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK <span> · </span> AVAILABLE FOR FREELANCE PROJECTS</div>
-      <header id="site-nav" className="nav">
-        <nav aria-label="Primary navigation"><a href="#top">Home</a><a href="#about">Experience</a><a href="#work">Projects</a><Link href="/blog">Articles</Link><a href="/tools">Tools</a><a href="mailto:gajanrajah@protonmail.com">Contact</a></nav>
-        <div className="nav-actions"><a className="contact-link" href="http://www.linkedin.com/in/gajanrajah" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a><a className="contact-link" href="https://github.com/trikto" target="_blank" rel="noreferrer">GitHub <span>↗</span></a><a className="contact-link" href="mailto:gajanrajah@protonmail.com">Contact <span>↗</span></a></div>
-        <SocialLinks className="nav-actions" />
-      </header>
+      <SiteHeader />
 
       <section id="top" className="hero">
         <div className="hero-copy">
@@ -339,6 +336,7 @@ export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
       </section>
 
       <ObservabilityDashboard />
+      <ServicesPreview />
       <section id="work" className="section projects"><div className="section-heading"><p className="eyebrow">SELECTED DEPLOYMENTS</p><h2>Work that holds up<br />when it matters.</h2></div><div className="project-grid">{projects.map((project, index) => <article className="project-card" key={project.name}><div className="card-top"><span>{String(index + 1).padStart(2,"0")}</span><span className="status"><i /> {project.environment}</span></div><h3>{project.name}</h3><p>{project.detail}</p><footer><span>{project.signal}</span><code>{project.stack}</code></footer></article>)}</div></section>
 
       {latestArticles}

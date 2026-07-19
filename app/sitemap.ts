@@ -9,5 +9,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly",
     priority: 0.7,
   }));
-  return [{ url: absoluteUrl("/"), changeFrequency: "monthly", priority: 1 }, { url: absoluteUrl("/blog"), changeFrequency: "weekly", priority: 0.8 }, ...posts, { url: absoluteUrl("/tools"), changeFrequency: "monthly", priority: 0.8 }, { url: absoluteUrl("/cron"), changeFrequency: "monthly", priority: 0.7 }, { url: absoluteUrl("/yaml"), changeFrequency: "monthly", priority: 0.7 }, { url: absoluteUrl("/workouts"), changeFrequency: "weekly", priority: 0.3 }];
+  return [{ url: absoluteUrl("/"), changeFrequency: "monthly", priority: 1 }, { url: absoluteUrl("/services"), changeFrequency: "monthly", priority: 0.9 }, { url: absoluteUrl("/blog"), changeFrequency: "weekly", priority: 0.8 }, ...posts, { url: absoluteUrl("/tools"), changeFrequency: "monthly", priority: 0.8 }, { url: absoluteUrl("/cron"), changeFrequency: "monthly", priority: 0.7 }, { url: absoluteUrl("/yaml"), changeFrequency: "monthly", priority: 0.7 }, { url: absoluteUrl("/workouts"), changeFrequency: "weekly", priority: 0.3 }];
 }
