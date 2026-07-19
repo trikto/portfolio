@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
+import { BackToTop } from "../components/back-to-top";
 import { services } from "@/data/services";
 import { pageMetadata } from "@/lib/site";
 
@@ -20,5 +21,5 @@ export default function ServicesPage() {
     <section className="services-content"><p className="eyebrow">EXPECTATIONS</p><h2>Service boundaries</h2><div className="boundaries"><p>Clear boundaries protect the delivery, access, and operational safety of both sides.</p><ul>{boundaries.map((item) => <li key={item}>{item}</li>)}</ul></div></section>
     <section className="services-content"><p className="eyebrow">PROOF</p><h2>Relevant work</h2><div className="relevant-work">{work.map(([title, stack, description]) => <Link href="/#work" className="relevant-work-card" key={title}><span>{stack}</span><h3>{title}</h3><p>{description}</p><b>View selected work →</b></Link>)}</div></section>
     <section className="services-final"><p className="eyebrow">START HERE</p><h2>Discuss your infrastructure or deployment requirements</h2><p>Share the current environment, the problem you are trying to solve, and the outcome you need. I will assess whether the work fits my experience and availability.</p><div className="hero-actions"><a className="button primary" href="mailto:gajanrajah@protonmail.com?subject=DevOps%20project%20discussion">Start a conversation <span aria-hidden="true">↗</span></a><Link className="button ghost" href="/#work">View selected projects <span aria-hidden="true">↓</span></Link></div></section><SiteFooter />
-  </main>;
+  <BackToTop /></main>;
 }

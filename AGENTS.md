@@ -18,6 +18,10 @@
 - Type check: `npm run typecheck`
 - Blog tests: `npm run test:blog`
 
+## SEO maintenance
+
+- Whenever a website change affects SEO, update the relevant SEO files as part of the same change.
+
 ## Migration record
 
 - Replaced vinext scripts with native `next dev`, `next build`, and `next start`.
@@ -38,7 +42,8 @@
 
 - Added an in-card `/cron` Syntax Reference day-matching explanation and example on 2026-07-19; preserve the five-field Linux cron OR rule when both day fields are restricted, the compact two-column layout, and safe mobile wrapping.
 
-- Added a native `/services` route and homepage Services preview on 2026-07-19. Reuse `data/services.ts`, `SiteHeader`, existing card styles, and the contact email; keep the selected freelance/contract positioning restrained and preserve the shared responsive navigation.
+- Added a native `/services` route and homepage Services preview on 2026-07-19. Reuse `data/services.ts`, `SiteHeader`, existing card styles, and the contact email; keep the selected freelance/contract positioning restrained and preserve the shared responsive navigation; retain its canonical metadata, sitemap entry, and `public/llms.txt` listing.
+- The `/services` page uses the shared navigation-observed `BackToTop` control and its existing `#site-top` target; do not create a route-specific variant.
 
 - Updated the homepage’s current hSenid CV content, production-troubleshooting cards, and visible Resume/CV request wording on 2026-07-18; preserve the supplied responsibility details and three-card troubleshooting summary.
 - Added `AVAILABLE FOR FREELANCE PROJECTS` beside the existing homepage availability and location strip on 2026-07-18; retain the original availability wording and contact flow.

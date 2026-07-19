@@ -11,6 +11,7 @@ Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrast
 - [Home](https://gajan.dev/): DevOps portfolio, technical experience, selected projects, skills, and certifications.
 - [Projects](https://gajan.dev/#work): OpenShift, cloud delivery, observability, and software projects.
 - [Experience](https://gajan.dev/#about): Professional DevOps and systems engineering background.
+- [DevOps Services](https://gajan.dev/services): Selected freelance and contract support for cloud infrastructure, CI/CD automation, Kubernetes, OpenShift, monitoring, and production troubleshooting.
 
 ## Developer tools
 
