@@ -829,8 +829,10 @@ Common private ranges include:
 An internet server cannot return traffic directly to `10.20.10.25`.
 
 The NAT gateway replaces that source address with an internet-routable public address.
+
 ## 11.3 NAT gateway traffic path
 
+```text
 Private EC2 instance
     ↓
 Private subnet route table
@@ -842,9 +844,11 @@ Public subnet route table
 Internet gateway
     ↓
 Internet
+```
 
 Return path:
 
+```text
 Internet
     ↓
 Internet gateway
@@ -852,16 +856,21 @@ Internet gateway
 NAT gateway
     ↓
 Private EC2 instance
+```
 
 ## 11.4 NAT is outbound-initiated connectivity
 
 A private workload can initiate:
 
+```text
 Private instance → Internet
+```
 
 The internet cannot initiate an unsolicited connection through the NAT gateway:
 
+```text
 Internet → NAT gateway → Private instance
+```
 
 The second path is not permitted because no matching NAT connection state exists.
 
@@ -869,15 +878,11 @@ The second path is not permitted because no matching NAT connection state exists
 
 A traditional public zonal NAT gateway requires:
 
-Placement in a public subnet
-
-An Elastic IP address
-
-An internet gateway attached to the VPC
-
-A public-subnet route to the internet gateway
-
-A private-subnet route to the NAT gateway
+* Placement in a public subnet
+* An Elastic IP address
+* An internet gateway attached to the VPC
+* A public-subnet route to the internet gateway
+* A private-subnet route to the NAT gateway
 
 The NAT gateway itself does not use a security group.
 
@@ -891,24 +896,18 @@ It does not provide full security-policy enforcement.
 
 It does not replace:
 
-Security groups
-
-Network ACLs
-
-AWS Network Firewall
-
-Secure web gateways
-
-TLS
-
-Authentication
-
-Egress filtering
-
-DNS filtering
+* Security groups
+* Network ACLs
+* AWS Network Firewall
+* Secure web gateways
+* TLS
+* Authentication
+* Egress filtering
+* DNS filtering
 
 A compromised instance can initiate malicious outbound traffic through NAT unless other controls prevent it.
 
+---
 
 # 12. NAT Gateway High Availability
 
@@ -920,51 +919,52 @@ AWS recommends deploying a NAT gateway in each Availability Zone when private wo
 
 Correct design:
 
+```text
 Private Subnet A → NAT Gateway A
 Private Subnet B → NAT Gateway B
+```
 
 ## 12.2 Why one shared NAT gateway is a problem
 
 Assume:
 
+```text
 NAT Gateway A is in Availability Zone A.
 Private Subnet B is in Availability Zone B.
 Private Subnet B routes through NAT Gateway A.
+```
 
 Problems:
 
-Availability Zone A becomes an egress dependency for workloads in Zone B.
-
-If Zone A fails, Zone B loses internet egress.
-
-Traffic crosses Availability Zone boundaries.
-
-Cross-zone data-processing charges may apply.
-
-The architecture contradicts zonal fault isolation.
+1. Availability Zone A becomes an egress dependency for workloads in Zone B.
+2. If Zone A fails, Zone B loses internet egress.
+3. Traffic crosses Availability Zone boundaries.
+4. Cross-zone data-processing charges may apply.
+5. The architecture contradicts zonal fault isolation.
 
 ## 12.3 Laboratory design versus production design
 
 ### Cost-controlled laboratory
 
+```text
 Private Subnet A ─┐
                   ├→ NAT Gateway A
 Private Subnet B ─┘
+```
 
 Allowed only when documented as:
 
-Non-production
-
-Not zone-independent
-
-Cost-optimized for temporary learning
-
-A deliberate single point of failure
+* Non-production
+* Not zone-independent
+* Cost-optimized for temporary learning
+* A deliberate single point of failure
 
 ### Production design
 
+```text
 Private Subnet A → NAT Gateway A
 Private Subnet B → NAT Gateway B
+```
 
 ## 12.4 NAT gateway scaling considerations
 
@@ -972,16 +972,13 @@ Standard NAT gateways automatically scale bandwidth and packet-processing capaci
 
 Potential symptoms of NAT resource exhaustion include:
 
-Intermittent outbound connection failures
+* Intermittent outbound connection failures
+* Connections failing only to a popular destination
+* Increased error rates under load
+* Port-allocation errors
+* Packet drops
 
-Connections failing only to a popular destination
-
-Increased error rates under load
-
-Port-allocation errors
-
-Packet drops
-
+---
 
 # 13. Regional NAT Gateways
 
@@ -989,19 +986,13 @@ AWS also provides Regional NAT Gateways.
 
 A Regional NAT Gateway:
 
-Uses one NAT gateway identifier across Availability Zones
-
-Automatically expands according to workload placement
-
-Maintains zonal affinity
-
-Does not require placement in a public subnet
-
-Has its own route table
-
-Provides high availability by default
-
-Supports higher address limits than zonal NAT gateways
+* Uses one NAT gateway identifier across Availability Zones
+* Automatically expands according to workload placement
+* Maintains zonal affinity
+* Does not require placement in a public subnet
+* Has its own route table
+* Provides high availability by default
+* Supports higher address limits than zonal NAT gateways
 
 Regional NAT Gateways are intended to simplify multi-AZ internet egress. They do not support private NAT use cases.
 
@@ -1009,90 +1000,69 @@ Regional NAT Gateways are intended to simplify multi-AZ internet egress. They do
 
 First master the standard zonal model because:
 
-It remains widely deployed.
-
-It teaches route-table relationships clearly.
-
-It exposes Availability Zone dependencies.
-
-It appears frequently in existing production architectures.
-
-It remains necessary for some private NAT use cases.
+* It remains widely deployed.
+* It teaches route-table relationships clearly.
+* It exposes Availability Zone dependencies.
+* It appears frequently in existing production architectures.
+* It remains necessary for some private NAT use cases.
 
 Then compare it with Regional NAT Gateway architecture.
 
 ## 13.2 Zonal versus Regional NAT Gateway
 
-|Characteristic|Zonal NAT Gateway|Regional NAT Gateway|
-|---|---|---|
-|Availability scope|One AZ|Expands across AZs|
-|Public subnet required|Yes for public zonal NAT|No|
-|Separate NAT per AZ|Recommended|Not required|
-|Single NAT identifier across AZs|No|Yes|
-|Private NAT support|Yes, using the applicable zonal mode|No|
-|Zonal routing management|Customer-managed|More automated|
+| Characteristic                   | Zonal NAT Gateway                    | Regional NAT Gateway |
+| -------------------------------- | ------------------------------------ | -------------------- |
+| Availability scope               | One AZ                               | Expands across AZs   |
+| Public subnet required           | Yes for public zonal NAT             | No                   |
+| Separate NAT per AZ              | Recommended                          | Not required         |
+| Single NAT identifier across AZs | No                                   | Yes                  |
+| Private NAT support              | Yes, using the applicable zonal mode | No                   |
+| Zonal routing management         | Customer-managed                     | More automated       |
 
+---
 
 # 14. NAT Cost Controls
 
 NAT gateways can generate costs through:
 
-Hourly gateway charges
-
-Data-processing charges
-
-Cross-AZ traffic
-
-Internet data transfer
-
-Unnecessary traffic to public AWS endpoints
+* Hourly gateway charges
+* Data-processing charges
+* Cross-AZ traffic
+* Internet data transfer
+* Unnecessary traffic to public AWS endpoints
 
 ## 14.1 Reduce NAT traffic with VPC endpoints
 
 Private workloads often access services such as:
 
-Amazon S3
-
-DynamoDB
-
-Systems Manager
-
-Elastic Container Registry
-
-CloudWatch
-
-Secrets Manager
+* Amazon S3
+* DynamoDB
+* Systems Manager
+* Elastic Container Registry
+* CloudWatch
+* Secrets Manager
 
 Instead of routing every request through NAT, use appropriate VPC endpoints.
 
 Benefits:
 
-Reduced NAT processing charges
-
-Private network paths
-
-Reduced internet dependency
-
-Tighter endpoint policies
-
-Better security boundaries
+* Reduced NAT processing charges
+* Private network paths
+* Reduced internet dependency
+* Tighter endpoint policies
+* Better security boundaries
 
 ## 14.2 Production cost-review questions
 
-Does every private subnet actually require internet access?
+* Does every private subnet actually require internet access?
+* Can S3 and DynamoDB use gateway endpoints?
+* Can AWS APIs use interface endpoints?
+* Is cross-AZ NAT traffic occurring?
+* Is one NAT gateway being retained in an unused environment?
+* Are development NAT gateways running continuously?
+* Can development environments be destroyed outside working hours?
 
-Can S3 and DynamoDB use gateway endpoints?
-
-Can AWS APIs use interface endpoints?
-
-Is cross-AZ NAT traffic occurring?
-
-Is one NAT gateway being retained in an unused environment?
-
-Are development NAT gateways running continuously?
-
-Can development environments be destroyed outside working hours?
-
+---
 
 # 15. IPv6 Egress
 
@@ -1102,16 +1072,19 @@ For outbound-only IPv6 internet access, AWS provides an egress-only internet gat
 
 The traffic model is:
 
+```text
 Private IPv6 workload
     ↓
 Egress-only internet gateway
     ↓
 Internet
+```
 
 It permits the workload to initiate outbound IPv6 connections while preventing unsolicited inbound connections.
 
 Do not assume an IPv4 NAT gateway is automatically the correct IPv6 design.
 
+---
 
 # 16. Security Groups
 
@@ -1121,41 +1094,27 @@ A security group is a stateful virtual firewall attached to supported resources 
 
 Security groups control:
 
-Inbound traffic
-
-Outbound traffic
-
-Protocols
-
-Ports
-
-Source CIDRs
-
-Destination CIDRs
-
-Source security groups
-
-Destination security groups
-
-Managed prefix lists
+* Inbound traffic
+* Outbound traffic
+* Protocols
+* Ports
+* Source CIDRs
+* Destination CIDRs
+* Source security groups
+* Destination security groups
+* Managed prefix lists
 
 ## 16.2 Security-group characteristics
 
 Security groups:
 
-Are stateful
-
-Support allow rules
-
-Do not support explicit deny rules
-
-Operate at resource or network-interface level
-
-Aggregate when multiple security groups are attached
-
-Automatically apply rule changes
-
-Track established connections
+* Are stateful
+* Support allow rules
+* Do not support explicit deny rules
+* Operate at resource or network-interface level
+* Aggregate when multiple security groups are attached
+* Automatically apply rule changes
+* Track established connections
 
 New security groups start with no inbound rules and normally include an outbound allow-all rule.
 
@@ -1163,7 +1122,9 @@ New security groups start with no inbound rules and normally include an outbound
 
 Assume an instance is allowed to initiate an HTTPS connection:
 
+```text
 Instance → External API TCP 443
+```
 
 The outbound request is allowed by the outbound rule.
 
@@ -1175,11 +1136,15 @@ Stateful does not mean unrestricted. It means return traffic associated with an 
 
 A security group rule can say:
 
+```text
 ALLOW TCP 443 from 203.0.113.0/24
+```
 
 It cannot say:
 
+```text
 DENY TCP 443 from 198.51.100.0/24
+```
 
 To apply an explicit subnet-level deny, use a NACL or another suitable security-control layer.
 
@@ -1187,16 +1152,20 @@ To apply an explicit subnet-level deny, use a NACL or another suitable security-
 
 If an EC2 instance has two security groups:
 
+```text
 Security Group A:
 ALLOW TCP 22 from 10.0.0.0/8
 
 Security Group B:
 ALLOW TCP 443 from 0.0.0.0/0
+```
 
 The effective rules allow both:
 
+```text
 TCP 22 from 10.0.0.0/8
 TCP 443 from 0.0.0.0/0
+```
 
 Security groups are additive.
 
@@ -1208,10 +1177,12 @@ Instead of allowing an entire CIDR block, a rule may reference another security 
 
 Example:
 
+```text
 app-sg inbound:
 TCP 8080 from alb-sg
+```
 
-This means resources associated with alb-sg may send traffic to resources associated with app-sg on TCP port 8080, subject to routing and other controls.
+This means resources associated with `alb-sg` may send traffic to resources associated with `app-sg` on TCP port 8080, subject to routing and other controls.
 
 The reference does not create a network route. Routing must already exist.
 
@@ -1219,11 +1190,15 @@ The reference does not create a network route. Routing must already exist.
 
 Compare:
 
+```text
 ALLOW TCP 8080 from 10.20.0.0/16
+```
 
 with:
 
+```text
 ALLOW TCP 8080 from alb-sg
+```
 
 The CIDR rule allows every resource in the entire VPC range.
 
@@ -1231,9 +1206,12 @@ The SG-reference rule permits only resources that are members of the intended se
 
 This creates a logical service relationship:
 
+```text
 Load balancer tier → Application tier
 Application tier   → Database tier
+```
 
+---
 
 # 17. Recommended Security-Group Design
 
@@ -1241,74 +1219,86 @@ Application tier   → Database tier
 
 Name:
 
+```text
 prod-alb-sg
+```
 
 Inbound:
 
-|Protocol|Port|Source|Purpose|
-|---|---|---|---|
-|TCP|443|0.0.0.0/0|Public HTTPS|
-|TCP|443|::/0|Public IPv6 HTTPS, when enabled|
+| Protocol | Port | Source      | Purpose                         |
+| -------- | ---- | ----------- | ------------------------------- |
+| TCP      | 443  | `0.0.0.0/0` | Public HTTPS                    |
+| TCP      | 443  | `::/0`      | Public IPv6 HTTPS, when enabled |
 
 Optional HTTP redirect:
 
-|Protocol|Port|Source|
-|---|---|---|
-|TCP|80|0.0.0.0/0|
+| Protocol | Port | Source      |
+| -------- | ---- | ----------- |
+| TCP      | 80   | `0.0.0.0/0` |
 
 Port 80 should redirect to HTTPS rather than serving sensitive application traffic directly.
 
 Outbound:
 
-|Protocol|Port|Destination|
-|---|---|---|
-|TCP|8080|prod-app-sg|
+| Protocol | Port | Destination   |
+| -------- | ---- | ------------- |
+| TCP      | 8080 | `prod-app-sg` |
 
 ## 17.2 Application security group
 
 Name:
 
+```text
 prod-app-sg
+```
 
 Inbound:
 
-|Protocol|Port|Source|
-|---|---|---|
-|TCP|8080|prod-alb-sg|
+| Protocol | Port | Source        |
+| -------- | ---- | ------------- |
+| TCP      | 8080 | `prod-alb-sg` |
 
 This prevents direct application access from arbitrary internet or VPC sources.
 
 Outbound:
 
-|Protocol|Port|Destination|
-|---|---|---|
-|TCP|5432|prod-db-sg|
-|TCP|443|Required destinations or controlled egress path|
-|UDP/TCP|53|Approved DNS path where applicable|
+| Protocol | Port | Destination                                     |
+| -------- | ---- | ----------------------------------------------- |
+| TCP      | 5432 | `prod-db-sg`                                    |
+| TCP      | 443  | Required destinations or controlled egress path |
+| UDP/TCP  | 53   | Approved DNS path where applicable              |
 
 ## 17.3 Database security group
 
 Name:
 
+```text
 prod-db-sg
+```
 
 Inbound:
 
-|Protocol|Port|Source|
-|---|---|---|
-|TCP|5432|prod-app-sg|
+| Protocol | Port | Source        |
+| -------- | ---- | ------------- |
+| TCP      | 5432 | `prod-app-sg` |
 
 For MySQL:
 
+```text
 TCP 3306 from prod-app-sg
+```
 
 For Microsoft SQL Server:
 
+```text
 TCP 1433 from prod-app-sg
+```
 
 Database access from the internet is forbidden:
 
+```text
 TCP 5432 from 0.0.0.0/0
+```
 
 ## 17.4 Administrative access
 
@@ -1316,24 +1306,26 @@ Avoid exposing SSH to the internet.
 
 Preferred methods include:
 
-AWS Systems Manager Session Manager
-
-Controlled VPN access
-
-Zero-trust access platform
-
-Temporary, audited bastion access
+* AWS Systems Manager Session Manager
+* Controlled VPN access
+* Zero-trust access platform
+* Temporary, audited bastion access
 
 Forbidden default:
 
+```text
 TCP 22 from 0.0.0.0/0
+```
 
 If temporary SSH is unavoidable:
 
+```text
 TCP 22 from administrator-public-ip/32
+```
 
 Remove the rule immediately after use.
 
+---
 
 # 18. Security-Group Egress
 
@@ -1341,9 +1333,11 @@ Remove the rule immediately after use.
 
 A newly created security group normally permits all outbound traffic:
 
+```text
 All protocols
 All ports
 Destination: 0.0.0.0/0
+```
 
 This is convenient but may be broader than production requirements.
 
@@ -1351,31 +1345,21 @@ This is convenient but may be broader than production requirements.
 
 A hardened application security group may permit only:
 
-Database connections
-
-HTTPS to approved services
-
-DNS
-
-Monitoring endpoints
-
-Internal service ports
+* Database connections
+* HTTPS to approved services
+* DNS
+* Monitoring endpoints
+* Internal service ports
 
 However, restrictive egress must be implemented carefully because applications frequently depend on:
 
-DNS resolution
-
-Certificate validation
-
-Operating-system repositories
-
-Time synchronization
-
-Container registries
-
-Cloud APIs
-
-Monitoring and logging endpoints
+* DNS resolution
+* Certificate validation
+* Operating-system repositories
+* Time synchronization
+* Container registries
+* Cloud APIs
+* Monitoring and logging endpoints
 
 Implement egress restriction with an explicit dependency inventory.
 
@@ -1383,6 +1367,7 @@ Implement egress restriction with an explicit dependency inventory.
 
 Security groups cannot filter certain traffic to the Amazon-provided Route 53 Resolver. DNS control for that resolver requires Route 53 Resolver DNS Firewall or another appropriate DNS-control mechanism.
 
+---
 
 # 19. Network ACLs
 
@@ -1398,37 +1383,34 @@ Each subnet must be associated with one NACL. If no custom NACL is assigned, the
 
 Network ACLs:
 
-Operate at subnet level
-
-Are stateless
-
-Have separate inbound and outbound rule sets
-
-Support allow and deny rules
-
-Process rules in numerical order
-
-Stop at the first matching rule
-
-Apply to all relevant resources in associated subnets
-
-Require explicit return-path rules
+* Operate at subnet level
+* Are stateless
+* Have separate inbound and outbound rule sets
+* Support allow and deny rules
+* Process rules in numerical order
+* Stop at the first matching rule
+* Apply to all relevant resources in associated subnets
+* Require explicit return-path rules
 
 ## 19.3 Default network ACL
 
 The default VPC NACL initially permits all inbound and outbound traffic.
 
-It also contains an unchangeable final * deny rule.
+It also contains an unchangeable final `*` deny rule.
 
 Simplified inbound:
 
+```text
 100 ALLOW ALL from 0.0.0.0/0
 *   DENY  ALL
+```
 
 Simplified outbound:
 
+```text
 100 ALLOW ALL to 0.0.0.0/0
 *   DENY  ALL
+```
 
 ## 19.4 Custom network ACL
 
@@ -1436,7 +1418,9 @@ A newly created custom NACL normally denies traffic until allow rules are added.
 
 Every NACL has a final unmatched-traffic deny rule:
 
+```text
 * DENY ALL
+```
 
 ## 19.5 Rule evaluation
 
@@ -1444,13 +1428,17 @@ Rules are evaluated from the lowest number upward.
 
 Example:
 
+```text
 100 DENY  TCP 22 from 203.0.113.0/24
 200 ALLOW TCP 22 from 0.0.0.0/0
 *   DENY  ALL
+```
 
 Traffic from:
 
+```text
 203.0.113.25
+```
 
 matches rule 100 and is denied.
 
@@ -1458,7 +1446,9 @@ AWS does not continue to rule 200.
 
 Traffic from:
 
+```text
 198.51.100.25
+```
 
 does not match rule 100. It matches rule 200 and is allowed.
 
@@ -1470,22 +1460,27 @@ Use intervals to leave room for future rules.
 
 Example:
 
+```text
 100 Allow primary traffic
 110 Allow secondary traffic
 120 Allow health checks
 200 Deny known malicious range
 300 Allow remaining approved traffic
 *   Deny everything else
+```
 
 Do not number every rule consecutively:
 
+```text
 1
 2
 3
 4
+```
 
 This makes later insertion difficult.
 
+---
 
 # 20. Stateless Behaviour and Ephemeral Ports
 
@@ -1495,15 +1490,19 @@ A NACL does not remember previous packets.
 
 Suppose a client initiates:
 
+```text
 Client:50000 → Server:443
+```
 
 The request arrives at destination port 443.
 
 The response is:
 
+```text
 Server:443 → Client:50000
+```
 
-The response targets the client’s ephemeral port, 50000.
+The response targets the client’s ephemeral port, `50000`.
 
 A stateless NACL must allow both directions independently.
 
@@ -1511,33 +1510,41 @@ A stateless NACL must allow both directions independently.
 
 Inbound rule:
 
+```text
 ALLOW TCP 443 from 0.0.0.0/0
+```
 
 Outbound return rule:
 
+```text
 ALLOW TCP 1024-65535 to 0.0.0.0/0
+```
 
 Without the outbound ephemeral-port rule:
 
-The client request may reach the server.
-
-The server response may be denied.
-
-The connection appears to time out.
+* The client request may reach the server.
+* The server response may be denied.
+* The connection appears to time out.
 
 ## 20.3 Example: Private client accessing HTTPS
 
 A private instance initiates:
 
+```text
 Private instance:50000 → External server:443
+```
 
 Private-subnet outbound NACL:
 
+```text
 ALLOW TCP 443 to 0.0.0.0/0
+```
 
 Private-subnet inbound return rule:
 
+```text
 ALLOW TCP 1024-65535 from 0.0.0.0/0
+```
 
 Custom NACLs require corresponding return-traffic rules.
 
@@ -1545,36 +1552,35 @@ Custom NACLs require corresponding return-traffic rules.
 
 The exact ephemeral-port range depends on:
 
-Client operating system
-
-Kernel configuration
-
-Load balancer behaviour
-
-NAT behaviour
-
-AWS service
+* Client operating system
+* Kernel configuration
+* Load balancer behaviour
+* NAT behaviour
+* AWS service
 
 A broad training rule often uses:
 
+```text
 1024-65535
+```
 
 In production, determine the actual required range before narrowing it.
 
+---
 
 # 21. Security Groups versus Network ACLs
 
-|Characteristic|Security group|Network ACL|
-|---|---|---|
-|Attachment level|Resource or ENI|Subnet|
-|State handling|Stateful|Stateless|
-|Rule actions|Allow only|Allow and deny|
-|Evaluation|Combined set of rules|Lowest-numbered first match|
-|Return traffic|Automatically tracked|Explicit rules required|
-|SG references|Supported|Not supported|
-|Main purpose|Workload access control|Coarse subnet guardrail|
-|Multiple controls|Rules aggregate|One NACL per subnet|
-|Typical failure|Missing port or wrong source|Missing return or ephemeral-port rule|
+| Characteristic    | Security group               | Network ACL                           |
+| ----------------- | ---------------------------- | ------------------------------------- |
+| Attachment level  | Resource or ENI              | Subnet                                |
+| State handling    | Stateful                     | Stateless                             |
+| Rule actions      | Allow only                   | Allow and deny                        |
+| Evaluation        | Combined set of rules        | Lowest-numbered first match           |
+| Return traffic    | Automatically tracked        | Explicit rules required               |
+| SG references     | Supported                    | Not supported                         |
+| Main purpose      | Workload access control      | Coarse subnet guardrail               |
+| Multiple controls | Rules aggregate              | One NACL per subnet                   |
+| Typical failure   | Missing port or wrong source | Missing return or ephemeral-port rule |
 
 ## 21.1 Primary-control rule
 
@@ -1582,15 +1588,11 @@ Use security groups as the primary workload access-control system.
 
 Use NACLs for requirements such as:
 
-Blocking a known malicious CIDR across an entire subnet
-
-Enforcing broad subnet boundaries
-
-Adding defence in depth
-
-Meeting a specific compliance control
-
-Applying stateless network restrictions
+* Blocking a known malicious CIDR across an entire subnet
+* Enforcing broad subnet boundaries
+* Adding defence in depth
+* Meeting a specific compliance control
+* Applying stateless network restrictions
 
 AWS supports operating with security groups as the primary resource-level control and NACLs as an additional subnet-level layer.
 
@@ -1598,18 +1600,15 @@ AWS supports operating with security groups as the primary resource-level contro
 
 Creating identical complex rules in both security groups and NACLs increases:
 
-Operational complexity
-
-Troubleshooting difficulty
-
-Risk of asymmetric return-path failures
-
-Configuration drift
-
-Change-management overhead
+* Operational complexity
+* Troubleshooting difficulty
+* Risk of asymmetric return-path failures
+* Configuration drift
+* Change-management overhead
 
 Use each mechanism for its appropriate responsibility.
 
+---
 
 # 22. Complete Packet-Flow Analysis
 
@@ -1617,13 +1616,16 @@ Use each mechanism for its appropriate responsibility.
 
 Assumptions:
 
+```text
 User public IP:       198.51.100.10
 ALB public endpoint:  Publicly resolvable
 Application IP:       10.20.10.25
 Application port:     8080
+```
 
 Path:
 
+```text
 1. User resolves application DNS name.
 2. DNS returns the public ALB addresses.
 3. User sends TCP 443 traffic to the ALB.
@@ -1639,6 +1641,7 @@ Path:
 13. Application-subnet NACL permits traffic.
 14. Application processes the request.
 15. Return traffic follows stateful SG tracking and permitted NACL rules.
+```
 
 Important:
 
@@ -1648,32 +1651,36 @@ The application does not see the original internet connection as a direct packet
 
 Attempt:
 
+```text
 Internet → 10.20.10.25
+```
 
 Result:
 
+```text
 Not routable
+```
 
 Reasons:
 
-10.20.10.25 is a private IPv4 address.
-
-The private subnet has no direct internet-gateway route.
-
-The instance has no publicly routable IPv4 destination.
-
-The application security group allows traffic only from the ALB security group.
+* `10.20.10.25` is a private IPv4 address.
+* The private subnet has no direct internet-gateway route.
+* The instance has no publicly routable IPv4 destination.
+* The application security group allows traffic only from the ALB security group.
 
 ## 22.3 Application to database
 
 Assumptions:
 
+```text
 Application: 10.20.10.25
 Database:    10.20.20.30
 Port:        5432
+```
 
 Path:
 
+```text
 1. Application resolves the database DNS name.
 2. DNS returns a private database address.
 3. Application sends TCP 5432 traffic.
@@ -1684,6 +1691,7 @@ Path:
 8. Database receives the connection.
 9. Stateful security groups automatically recognize return traffic.
 10. NACL return rules must still permit the response.
+```
 
 No internet gateway or NAT gateway is involved.
 
