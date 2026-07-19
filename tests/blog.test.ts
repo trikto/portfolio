@@ -87,12 +87,12 @@ test("calculates reading time locally at 200 words per minute", () => {
   assert.equal(calculateReadingMinutes(Array.from({ length: 201 }, () => "word").join(" ")), 2);
 });
 
-test("covers exactly the 13 manifest slugs, sorted newest-first", () => {
+test("covers the 13 manifest slugs and sorts all articles newest-first", () => {
   const slugs = getAllPostSlugs();
   const posts = getAllPosts();
-  assert.equal(slugs.length, 13);
-  assert.equal(new Set(slugs).size, 13);
-  assert.deepEqual(new Set(slugs), new Set(catalog.map(({ slug }) => slug)));
+  assert.ok(slugs.length >= 13);
+  assert.equal(new Set(slugs).size, slugs.length);
+  for (const { slug } of catalog) assert.ok(slugs.includes(slug));
   assert.deepEqual(posts.map(({ publishedAt }) => publishedAt), [...posts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).map(({ publishedAt }) => publishedAt));
 });
 

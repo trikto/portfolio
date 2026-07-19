@@ -24,6 +24,10 @@ Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrast
 - [RSS feed](https://gajan.dev/feed.xml): Published article updates.
 - [Full site and article content](https://gajan.dev/llms-full.txt): Complete published portfolio and article content for language-model use.
 
+## Articles
+
+- [AWS Networking Fundamentals](https://gajan.dev/blog/aws-networking-fundamentals): A practical guide to AWS VPC design, routing, NAT gateways, security controls, packet flow, troubleshooting, and multi-AZ networking.
+
 ## Contact
 
 - [LinkedIn](https://www.linkedin.com/in/gajanrajah)

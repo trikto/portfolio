@@ -1425,3 +1425,1692 @@ But still you have another method left. You can use this [online tool](https://o
 For more information about obfuscation checkout the [Portswigger lab](https://portswigger.net/web-security/essential-skills/obfuscating-attacks-using-encodings).
 
 ---
++
+
+### AWS Networking Fundamentals
+
+- URL: https://gajan.dev/blog/aws-networking-fundamentals
+- Published: 2026-07-19
+- Author: Gajan Rajah
+- Tags: aws, vpc, networking, devops, cloud, security
+- Description: A practical, production-focused guide to AWS VPC design, routing, NAT gateways, security controls, packet flow, troubleshooting, and multi-AZ networking.
+
+## Scope
+
+This study module covers:
+
+1. Amazon VPC fundamentals
+2. IPv4 CIDR planning
+3. Public, private and isolated subnets
+4. Route tables and route selection
+5. Internet gateways
+6. NAT gateways
+7. Security groups
+8. Network ACLs
+9. End-to-end packet flow
+10. Network troubleshooting
+11. Production design principles
+
+---
+
+# 1. Learning Outcomes
+
+After completing this module, you must be able to:
+
+* Explain what an Amazon VPC is.
+* Design a multi-Availability Zone VPC.
+* Divide a VPC CIDR block into appropriate subnets.
+* Distinguish public, private and isolated subnets based on routing.
+* Explain how an internet gateway provides internet connectivity.
+* Explain how private workloads access the internet through NAT.
+* Design highly available NAT gateway routing.
+* Configure security groups using least privilege.
+* Explain the difference between security groups and network ACLs.
+* Trace traffic through every network component.
+* Diagnose routing, security-group and NACL failures.
+* Defend every networking decision in a production architecture.
+
+---
+
+# 2. Reference Architecture
+
+Use the following architecture throughout this module.
+
+```text
+AWS Region
+└── VPC: 10.20.0.0/16
+    │
+    ├── Availability Zone A
+    │   ├── Public Subnet A: 10.20.0.0/24
+    │   │   ├── Application Load Balancer node
+    │   │   └── NAT Gateway A
+    │   │
+    │   ├── Private App Subnet A: 10.20.10.0/24
+    │   │   └── Application workloads
+    │   │
+    │   └── Isolated DB Subnet A: 10.20.20.0/24
+    │       └── Database
+    │
+    └── Availability Zone B
+        ├── Public Subnet B: 10.20.1.0/24
+        │   ├── Application Load Balancer node
+        │   └── NAT Gateway B
+        │
+        ├── Private App Subnet B: 10.20.11.0/24
+        │   └── Application workloads
+        │
+        └── Isolated DB Subnet B: 10.20.21.0/24
+            └── Database
+```
+
+External connectivity:
+
+```text
+Internet
+   │
+Internet Gateway
+   │
+Public subnets
+   │
+Application Load Balancer
+   │
+Private application subnets
+   │
+Isolated database subnets
+```
+
+This architecture creates three distinct network tiers:
+
+| Tier                | Exposure                         | Main purpose                             |
+| ------------------- | -------------------------------- | ---------------------------------------- |
+| Public              | Direct route to internet gateway | Internet-facing entry and managed egress |
+| Private application | Outbound internet through NAT    | Application workloads                    |
+| Isolated database   | No default internet route        | Databases and internal data services     |
+
+---
+
+# 3. Amazon VPC Fundamentals
+
+## 3.1 What is a VPC?
+
+A Virtual Private Cloud is a logically isolated network inside an AWS Region.
+
+A VPC allows you to define:
+
+* Private IP address ranges
+* Subnets
+* Route tables
+* Internet access
+* Private connectivity
+* Network access controls
+* DNS behaviour
+* Connections to other networks
+
+A VPC spans all Availability Zones within one AWS Region. Subnets, however, belong to individual Availability Zones.
+
+For example:
+
+```text
+Region: ap-south-1
+VPC:    10.20.0.0/16
+
+Availability Zones:
+- ap-south-1a
+- ap-south-1b
+- ap-south-1c
+```
+
+The VPC can contain subnets in any of these Availability Zones.
+
+## 3.2 Regional versus zonal resources
+
+Understanding the scope of each resource is essential.
+
+| Resource                  | Scope                                          |
+| ------------------------- | ---------------------------------------------- |
+| VPC                       | Regional                                       |
+| Route table               | Regional VPC resource                          |
+| Internet gateway          | Attached to one VPC                            |
+| Security group            | Regional VPC resource                          |
+| Network ACL               | Regional VPC resource associated with subnets  |
+| Subnet                    | One Availability Zone                          |
+| Standard NAT gateway      | One Availability Zone                          |
+| EC2 network interface     | One Availability Zone                          |
+| Application Load Balancer | Multi-AZ when configured with multiple subnets |
+
+A subnet can never span multiple Availability Zones.
+
+## 3.3 Resources created automatically
+
+When you create a VPC, AWS automatically creates:
+
+* A main route table
+* A default security group
+* A default network ACL
+* A default DHCP option set
+
+AWS does not automatically create an internet gateway, NAT gateway or custom route table for a manually created nondefault VPC.
+
+---
+
+# 4. IPv4 CIDR Planning
+
+## 4.1 What is CIDR?
+
+CIDR stands for Classless Inter-Domain Routing.
+
+CIDR notation combines:
+
+```text
+Network address / Prefix length
+```
+
+Example:
+
+```text
+10.20.0.0/16
+```
+
+The `/16` means the first 16 bits identify the network. The remaining 16 bits are available for addresses inside that network.
+
+## 4.2 Common CIDR sizes
+
+| CIDR  | Total IPv4 addresses |
+| ----- | -------------------- |
+| `/16` | 65,536               |
+| `/20` | 4,096                |
+| `/22` | 1,024                |
+| `/24` | 256                  |
+| `/25` | 128                  |
+| `/26` | 64                   |
+| `/27` | 32                   |
+| `/28` | 16                   |
+
+AWS IPv4 subnets can generally range from `/16` to `/28`.
+
+## 4.3 AWS-reserved addresses
+
+AWS reserves five IPv4 addresses in every subnet.
+
+For:
+
+```text
+10.20.10.0/24
+```
+
+AWS reserves:
+
+| Address        | Purpose                                                        |
+| -------------- | -------------------------------------------------------------- |
+| `10.20.10.0`   | Network address                                                |
+| `10.20.10.1`   | VPC router                                                     |
+| `10.20.10.2`   | DNS-related use                                                |
+| `10.20.10.3`   | Reserved for future use                                        |
+| `10.20.10.255` | Network broadcast address, although broadcast is not supported |
+
+Therefore:
+
+```text
+Total addresses:     256
+Reserved by AWS:       5
+Normally usable:     251
+```
+
+## 4.4 Production CIDR-planning rules
+
+### Required
+
+* Allocate enough space for future growth.
+* Keep public, application and database ranges distinguishable.
+* Reserve unused CIDR ranges for future services.
+* Avoid overlap with on-premises networks.
+* Avoid overlap with other VPCs that may later be connected.
+* Document every allocated range.
+
+### Example allocation
+
+```text
+VPC: 10.20.0.0/16
+
+10.20.0.0/20   Reserved for public subnets
+10.20.16.0/20  Reserved for application subnets
+10.20.32.0/20  Reserved for database subnets
+10.20.48.0/20  Reserved for platform services
+10.20.64.0/18  Reserved for future growth
+```
+
+The actual subnets can be smaller subdivisions within those ranges.
+
+## 4.5 Why overlapping CIDRs are dangerous
+
+Assume:
+
+```text
+VPC A: 10.20.0.0/16
+VPC B: 10.20.0.0/16
+```
+
+If these VPCs later need VPC peering or Transit Gateway connectivity, routing becomes ambiguous because both networks use the same destination range.
+
+Overlapping CIDRs commonly prevent or complicate:
+
+* VPC peering
+* Transit Gateway routing
+* Site-to-Site VPN connectivity
+* Direct Connect connectivity
+* Kubernetes pod-network integration
+* Mergers between separate AWS environments
+
+CIDR planning is therefore an architectural decision, not a temporary setup task.
+
+---
+
+# 5. Subnets
+
+## 5.1 What is a subnet?
+
+A subnet is a portion of a VPC’s IP address range assigned to one Availability Zone.
+
+Example:
+
+```text
+VPC:                 10.20.0.0/16
+Public Subnet A:     10.20.0.0/24
+Public Subnet B:     10.20.1.0/24
+Private App A:       10.20.10.0/24
+Private App B:       10.20.11.0/24
+Private Database A:  10.20.20.0/24
+Private Database B:  10.20.21.0/24
+```
+
+A subnet is not inherently public or private when it is created.
+
+Its effective classification is determined primarily by its route table.
+
+---
+
+# 6. Public Subnets
+
+## 6.1 Definition
+
+A subnet is public when its associated route table contains a route to an internet gateway.
+
+Typical IPv4 route:
+
+```text
+Destination: 0.0.0.0/0
+Target:      igw-123456789
+```
+
+`0.0.0.0/0` means every IPv4 destination not matched by a more specific route.
+
+AWS classifies a subnet as public when it has a route to an internet gateway.
+
+## 6.2 A public subnet does not automatically make an instance public
+
+For an EC2 instance to communicate directly with the IPv4 internet, all of the following must be true:
+
+1. The subnet route table has a route to an internet gateway.
+2. The internet gateway is attached to the VPC.
+3. The instance has a public IPv4 address or Elastic IP address.
+4. The security group permits the traffic.
+5. The network ACL permits the traffic.
+6. The instance operating-system firewall permits the traffic.
+7. The application is listening on the required interface and port.
+
+A missing condition will prevent connectivity.
+
+## 6.3 Appropriate resources for public subnets
+
+Public subnets should contain resources that genuinely require direct internet routing.
+
+Typical examples:
+
+* Internet-facing Application Load Balancers
+* Public NAT gateways
+* Internet-facing Network Load Balancers
+* Controlled bastion hosts
+* Public network appliances
+
+## 6.4 Resources that should not normally be public
+
+The following should normally remain in private or isolated subnets:
+
+* Application servers
+* Kubernetes worker nodes
+* EKS nodes
+* Databases
+* Redis clusters
+* Elasticsearch or OpenSearch data nodes
+* Message brokers
+* Internal administrative applications
+* Monitoring systems
+* Internal APIs
+
+A server does not need a public IP merely because users access its application. Users can access it through a public load balancer.
+
+---
+
+# 7. Private Application Subnets
+
+## 7.1 Definition
+
+A private subnet does not have a direct route to an internet gateway.
+
+A private application subnet may instead use a NAT gateway for outbound internet access.
+
+Example:
+
+```text
+Destination: 10.20.0.0/16
+Target:      local
+
+Destination: 0.0.0.0/0
+Target:      nat-123456789
+```
+
+## 7.2 Why application workloads require outbound access
+
+Private application workloads may need to:
+
+* Download software updates
+* Pull container images
+* Access third-party APIs
+* Contact package repositories
+* Retrieve external certificates
+* Send logs to external systems
+* Access public AWS service endpoints
+
+A NAT gateway allows these workloads to initiate outbound connections without assigning public IPv4 addresses to them. External systems cannot initiate unsolicited connections through the NAT gateway.
+
+## 7.3 Private does not mean disconnected
+
+A private subnet can still communicate with:
+
+* Other subnets in the same VPC
+* Peered VPCs
+* Transit Gateway attachments
+* On-premises networks
+* AWS services through VPC endpoints
+* The internet through NAT
+* Internal load balancers
+
+“Private” means there is no direct internet-gateway route for the subnet.
+
+---
+
+# 8. Isolated Subnets
+
+## 8.1 Definition
+
+An isolated subnet has no default route to:
+
+* An internet gateway
+* A NAT gateway
+* Another internet-egress system
+
+Example route table:
+
+```text
+Destination: 10.20.0.0/16
+Target:      local
+```
+
+An isolated subnet can still communicate with other permitted resources inside the VPC through the local route.
+
+## 8.2 Appropriate isolated-subnet resources
+
+* Relational databases
+* Internal caches
+* Internal message brokers
+* Data-processing systems
+* Sensitive administrative services
+* Internal certificate authorities
+
+## 8.3 Why databases usually do not need internet access
+
+A production database should normally receive application connections and communicate with tightly defined internal services.
+
+It usually does not need unrestricted access to:
+
+```text
+0.0.0.0/0
+```
+
+Removing the default internet route reduces:
+
+* Exfiltration paths
+* Malware command-and-control access
+* Accidental external connections
+* Exposure caused by future configuration errors
+
+Updates, backups and monitoring should preferably use managed AWS mechanisms, internal endpoints or explicitly controlled paths.
+
+---
+
+# 9. Route Tables
+
+## 9.1 Purpose
+
+A route table determines where traffic is sent based on its destination IP address.
+
+Each route contains:
+
+```text
+Destination → Target
+```
+
+Examples:
+
+```text
+10.20.0.0/16 → local
+0.0.0.0/0    → Internet Gateway
+0.0.0.0/0    → NAT Gateway
+10.50.0.0/16 → VPC Peering Connection
+10.60.0.0/16 → Transit Gateway
+```
+
+Every subnet must use one subnet route table. A subnet may be explicitly associated with a custom route table; otherwise, it uses the VPC’s main route table. A route table may be associated with multiple subnets, but a subnet can use only one subnet route table at a time.
+
+## 9.2 Local route
+
+Every route table contains a local route for its VPC CIDR.
+
+Example:
+
+```text
+Destination: 10.20.0.0/16
+Target:      local
+```
+
+This allows communication between resources inside the VPC.
+
+For example:
+
+```text
+Application: 10.20.10.25
+Database:    10.20.20.30
+```
+
+The route to `10.20.20.30` matches:
+
+```text
+10.20.0.0/16 → local
+```
+
+The traffic therefore remains within the VPC.
+
+Security groups and network ACLs still apply. A route existing does not guarantee the traffic is permitted.
+
+## 9.3 Main route table
+
+Every VPC has one main route table.
+
+Any subnet without an explicit custom-route-table association uses the main route table.
+
+### Recommended production pattern
+
+Keep the main route table restrictive:
+
+```text
+10.20.0.0/16 → local
+```
+
+Explicitly associate every subnet with a purpose-specific custom route table.
+
+This prevents a newly created subnet from accidentally inheriting internet access.
+
+AWS recommends explicit route-table control as a way to reduce unintended routing.
+
+## 9.4 Custom route tables
+
+Create separate route tables where routing behaviour differs.
+
+Recommended design:
+
+```text
+rt-public
+rt-private-app-a
+rt-private-app-b
+rt-isolated-db
+```
+
+This makes routing intent explicit.
+
+## 9.5 Public route table
+
+Associated with public subnets:
+
+| Destination    | Target           | Purpose               |
+| -------------- | ---------------- | --------------------- |
+| `10.20.0.0/16` | `local`          | Internal VPC traffic  |
+| `0.0.0.0/0`    | Internet gateway | IPv4 internet traffic |
+
+For IPv6:
+
+| Destination | Target           |
+| ----------- | ---------------- |
+| `::/0`      | Internet gateway |
+
+IPv4 and IPv6 require separate routes. An IPv4 default route does not cover IPv6 traffic.
+
+## 9.6 Private application route table
+
+For Availability Zone A:
+
+| Destination    | Target        |
+| -------------- | ------------- |
+| `10.20.0.0/16` | `local`       |
+| `0.0.0.0/0`    | NAT Gateway A |
+
+For Availability Zone B:
+
+| Destination    | Target        |
+| -------------- | ------------- |
+| `10.20.0.0/16` | `local`       |
+| `0.0.0.0/0`    | NAT Gateway B |
+
+## 9.7 Isolated database route table
+
+| Destination    | Target  |
+| -------------- | ------- |
+| `10.20.0.0/16` | `local` |
+
+There is no default route to the internet.
+
+## 9.8 Longest-prefix matching
+
+When several routes match a destination, AWS selects the most specific route.
+
+Example:
+
+```text
+10.20.0.0/16  → local
+10.20.10.0/24 → firewall
+0.0.0.0/0     → NAT gateway
+```
+
+Destination:
+
+```text
+10.20.10.25
+```
+
+Matching routes:
+
+```text
+10.20.0.0/16
+10.20.10.0/24
+0.0.0.0/0
+```
+
+The `/24` route wins because it is the most specific.
+
+Priority:
+
+```text
+/32 > /24 > /16 > /8 > /0
+```
+
+AWS uses longest-prefix matching before applying additional route-priority rules.
+
+## 9.9 Default routes
+
+IPv4:
+
+```text
+0.0.0.0/0
+```
+
+IPv6:
+
+```text
+::/0
+```
+
+A default route matches any destination that does not have a more specific route.
+
+It is commonly used for:
+
+* Internet gateway
+* NAT gateway
+* Transit Gateway
+* Firewall appliance
+
+## 9.10 Blackhole routes
+
+A route may display a `blackhole` state when its target is unavailable or deleted.
+
+Examples:
+
+* Deleted NAT gateway
+* Deleted VPC peering connection
+* Deleted network interface
+* Detached gateway
+
+Traffic matching a blackhole route is discarded.
+
+## 9.11 Route tables do not act as firewalls
+
+Route tables answer:
+
+> Where should this packet be sent?
+
+They do not answer:
+
+> Is this packet authorized?
+
+Authorization is handled by components such as:
+
+* Security groups
+* Network ACLs
+* AWS Network Firewall
+* Operating-system firewalls
+* Application authentication
+
+---
+
+# 10. Internet Gateways
+
+## 10.1 Purpose
+
+An internet gateway allows communication between a VPC and the internet.
+
+It is:
+
+* Horizontally scaled
+* Redundant
+* Highly available
+* Managed by AWS
+* Attached to a VPC
+* A target in route tables
+
+An internet gateway supports both IPv4 and IPv6 traffic.
+
+## 10.2 Configuration sequence
+
+To enable direct IPv4 internet access:
+
+1. Create an internet gateway.
+2. Attach it to the VPC.
+3. Add a route to it from the public route table.
+4. Associate the route table with the public subnet.
+5. Assign the resource a public IPv4 address or Elastic IP.
+6. Permit traffic through security groups.
+7. Permit traffic through network ACLs.
+
+Example route:
+
+```text
+0.0.0.0/0 → igw-123456789
+```
+
+## 10.3 IPv4 address translation
+
+An EC2 instance is aware of its private IPv4 address.
+
+For direct public IPv4 access, the internet gateway performs one-to-one address translation between:
+
+```text
+Instance private IPv4 address
+        ↕
+Instance public IPv4 address or Elastic IP
+```
+
+AWS documents this translation as part of internet-gateway IPv4 connectivity.
+
+## 10.4 What an internet gateway does not do
+
+An internet gateway does not:
+
+* Automatically make all subnets public
+* Assign public IP addresses
+* Replace a NAT gateway
+* Act as a security group
+* Inspect application-layer traffic
+* Authenticate users
+* Protect a poorly configured public server
+
+## 10.5 Common internet-gateway failure modes
+
+### Failure: gateway not attached
+
+The route may exist in configuration, but the VPC cannot use an unattached internet gateway.
+
+### Failure: no default route
+
+The gateway exists, but the subnet route table has no route to it.
+
+### Failure: no public IPv4 address
+
+The instance has only a private IPv4 address and cannot directly communicate over the IPv4 internet gateway.
+
+### Failure: security group blocks traffic
+
+Routing is correct, but the resource firewall denies the required port.
+
+### Failure: restrictive NACL
+
+The inbound request or outbound return traffic is denied.
+
+---
+
+# 11. NAT Fundamentals
+
+## 11.1 What is NAT?
+
+NAT means Network Address Translation.
+
+For typical private-subnet internet access, the NAT gateway translates:
+
+```text
+Private source address
+        ↓
+NAT gateway public address
+```
+
+Example:
+
+```text
+Private instance: 10.20.10.25
+NAT Elastic IP:   203.0.113.10
+External server:  198.51.100.20
+```
+
+Original outbound packet:
+
+```text
+Source:      10.20.10.25
+Destination: 198.51.100.20
+```
+
+Translated packet:
+
+```text
+Source:      203.0.113.10
+Destination: 198.51.100.20
+```
+
+The NAT gateway maintains translation state so the response can be returned to the original private workload.
+
+## 11.2 Why NAT is necessary for private IPv4 addresses
+
+Private IPv4 ranges are not routable over the public internet.
+
+Common private ranges include:
+
+```text
+10.0.0.0/8
+172.16.0.0/12
+192.168.0.0/16
+```
+
+An internet server cannot return traffic directly to `10.20.10.25`.
+
+The NAT gateway replaces that source address with an internet-routable public address.
+
+## 11.3 NAT gateway traffic path
+
+```text
+Private EC2 instance
+    ↓
+Private subnet route table
+    ↓
+NAT gateway
+    ↓
+Public subnet route table
+    ↓
+Internet gateway
+    ↓
+Internet
+```
+
+Return path:
+
+```text
+Internet
+    ↓
+Internet gateway
+    ↓
+NAT gateway
+    ↓
+Private EC2 instance
+```
+
+## 11.4 NAT is o…4958 tokens truncated…
+
+## 22.4 Private application to internet
+
+Assumptions:
+
+```text
+Application:   10.20.10.25
+External API:  198.51.100.20:443
+NAT Elastic IP: 203.0.113.10
+```
+
+Path:
+
+```text
+1. Application initiates TCP 443.
+2. app-sg outbound rules are evaluated.
+3. Private-subnet outbound NACL rules are evaluated.
+4. Private route table matches 0.0.0.0/0 → NAT Gateway A.
+5. NAT translates the source address.
+6. NAT public-subnet route uses 0.0.0.0/0 → internet gateway.
+7. Traffic reaches the external API.
+8. External API responds to the NAT public address.
+9. NAT restores the private destination address.
+10. Private-subnet inbound NACL permits the ephemeral destination port.
+11. Stateful app-sg permits the connection response.
+12. Application receives the response.
+```
+
+## 22.5 Internet trying to initiate through NAT
+
+Attempt:
+
+```text
+Internet client
+→ NAT Elastic IP
+→ Private application
+```
+
+Result:
+
+```text
+Blocked
+```
+
+Reason:
+
+The NAT gateway has no existing translation state created by an outbound connection from the private workload.
+
+## 22.6 Application in one AZ using NAT in another AZ
+
+Path:
+
+```text
+Private App Subnet B
+→ Cross-AZ path
+→ NAT Gateway A
+→ Internet gateway
+→ Internet
+```
+
+Risks:
+
+* Cross-AZ dependency
+* Cross-AZ data processing
+* Loss of egress if AZ A fails
+* Reduced fault isolation
+
+Corrected path:
+
+```text
+Private App Subnet B
+→ NAT Gateway B
+→ Internet gateway
+→ Internet
+```
+
+---
+
+# 23. Network-Troubleshooting Method
+
+Use this order. Do not randomly change security rules.
+
+## Step 1: Define the exact flow
+
+Record:
+
+```text
+Source resource:
+Source address:
+Destination resource:
+Destination address:
+Protocol:
+Destination port:
+Initiator:
+Expected path:
+Observed error:
+```
+
+Example:
+
+```text
+Source:      EC2 app server
+Source IP:   10.20.10.25
+Destination: RDS PostgreSQL
+Destination IP: 10.20.20.30
+Protocol:    TCP
+Port:        5432
+Initiator:   Application server
+Symptom:     Connection timeout
+```
+
+## Step 2: Validate name resolution
+
+Commands:
+
+```bash
+dig database.example.internal
+nslookup database.example.internal
+getent hosts database.example.internal
+```
+
+Questions:
+
+* Does the name resolve?
+* Does it resolve to the expected private address?
+* Is the application using the correct endpoint?
+* Is there a stale DNS record?
+
+## Step 3: Validate the application listener
+
+On the destination:
+
+```bash
+sudo ss -lntp
+sudo netstat -lntp
+```
+
+Check whether the application listens on:
+
+```text
+0.0.0.0:PORT
+```
+
+or the correct private interface.
+
+A service listening only on:
+
+```text
+127.0.0.1:PORT
+```
+
+cannot accept remote connections.
+
+## Step 4: Validate route tables
+
+Check the source subnet route table first.
+
+Questions:
+
+* Which route matches the destination?
+* Is there a more specific conflicting route?
+* Is the target available?
+* Is the route in `blackhole` state?
+* Is the subnet associated with the intended route table?
+
+## Step 5: Validate security groups
+
+Check:
+
+* Destination inbound rules
+* Source outbound rules
+* Correct protocol
+* Correct port
+* Correct CIDR or SG reference
+* Whether another attached security group adds unexpected access
+* Whether the expected source SG is actually attached
+
+## Step 6: Validate NACLs
+
+Check both:
+
+* Source subnet NACL
+* Destination subnet NACL
+
+Validate:
+
+* Forward-direction rule
+* Return-direction rule
+* Ephemeral ports
+* Rule ordering
+* Explicit deny rules
+* Correct subnet association
+
+## Step 7: Validate the operating-system firewall
+
+Examples:
+
+```bash
+sudo nft list ruleset
+sudo iptables -L -n -v
+sudo firewall-cmd --list-all
+sudo ufw status verbose
+```
+
+## Step 8: Test progressively
+
+Examples:
+
+```bash
+curl -v https://example.com
+curl -v http://10.20.10.25:8080
+nc -vz 10.20.20.30 5432
+openssl s_client -connect example.com:443
+```
+
+A TCP timeout generally suggests dropped or unroutable traffic.
+
+A connection-refused response usually means the host was reached, but no application accepted the connection on that port.
+
+## Step 9: Use Reachability Analyzer
+
+Reachability Analyzer performs static configuration analysis between supported source and destination resources.
+
+It can identify blocking components such as:
+
+* Route tables
+* Security groups
+* Network ACLs
+* Gateways
+* Load balancers
+* Network interfaces
+
+It does not send live packets. It analyzes the configured network path.
+
+## Step 10: Use VPC Flow Logs
+
+VPC Flow Logs capture metadata about IP traffic associated with VPC network interfaces.
+
+They can help identify:
+
+* Accepted traffic
+* Rejected traffic
+* Source and destination addresses
+* Source and destination ports
+* Protocols
+* Unexpected traffic
+* Overly restrictive controls
+
+Flow logs are collected outside the packet-forwarding path and do not reduce network throughput.
+
+Typical actions:
+
+```text
+ACCEPT
+REJECT
+```
+
+A `REJECT` result can indicate a security-group or NACL decision, but further investigation is still required to identify the exact rule.
+
+---
+
+# 24. Common Failure Scenarios
+
+## Scenario 1: Public instance cannot access the internet
+
+Possible causes:
+
+* No public IPv4 address
+* Missing internet-gateway route
+* Internet gateway not attached
+* Outbound SG restriction
+* NACL restriction
+* Host firewall
+* DNS failure
+
+## Scenario 2: Private instance cannot download packages
+
+Possible causes:
+
+* No NAT gateway
+* Default route points to the wrong NAT gateway
+* NAT gateway failed or was deleted
+* NAT gateway is in a subnet without an IGW route
+* NACL return ports blocked
+* DNS resolution failure
+* Egress security-group restriction
+
+## Scenario 3: ALB reports unhealthy targets
+
+Possible causes:
+
+* `app-sg` does not permit the ALB SG
+* Incorrect application port
+* Incorrect health-check path
+* Application bound only to localhost
+* Application not running
+* NACL blocks health checks
+* Target registered in the wrong port
+* Target belongs to an unavailable subnet or AZ
+
+## Scenario 4: Application cannot reach database
+
+Possible causes:
+
+* Wrong database endpoint
+* Database SG does not allow `app-sg`
+* Wrong database port
+* Database not listening
+* NACL blocks traffic or return traffic
+* Application credentials invalid
+* Database is unavailable
+* DNS resolves to an unexpected address
+
+## Scenario 5: Security-group change did not block traffic immediately
+
+Security groups use connection tracking. Existing tracked connections may behave differently from newly established connections.
+
+Test using a new connection rather than assuming an existing persistent session proves the new rule is ineffective.
+
+## Scenario 6: NACL appears correct but connection times out
+
+Common reason:
+
+The forward port is allowed, but the return ephemeral-port range is blocked.
+
+## Scenario 7: New subnet unexpectedly has internet access
+
+Cause:
+
+The subnet was not explicitly associated with a custom route table and inherited the main route table, which contains an internet-gateway route.
+
+Prevention:
+
+Keep the main route table restrictive and explicitly associate every subnet.
+
+## Scenario 8: Workloads in AZ B lose internet during AZ A failure
+
+Cause:
+
+Both AZs use a zonal NAT gateway located in AZ A.
+
+Prevention:
+
+Deploy one zonal NAT gateway per Availability Zone or evaluate a Regional NAT Gateway.
+
+---
+
+# 25. AWS CLI Inspection Commands
+
+## VPCs
+
+```bash
+aws ec2 describe-vpcs
+```
+
+Filter by VPC:
+
+```bash
+aws ec2 describe-vpcs \
+  --vpc-ids vpc-xxxxxxxx
+```
+
+## Subnets
+
+```bash
+aws ec2 describe-subnets \
+  --filters "Name=vpc-id,Values=vpc-xxxxxxxx"
+```
+
+## Route tables
+
+```bash
+aws ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=vpc-xxxxxxxx"
+```
+
+## Internet gateways
+
+```bash
+aws ec2 describe-internet-gateways \
+  --filters "Name=attachment.vpc-id,Values=vpc-xxxxxxxx"
+```
+
+## NAT gateways
+
+```bash
+aws ec2 describe-nat-gateways \
+  --filter "Name=vpc-id,Values=vpc-xxxxxxxx"
+```
+
+## Security groups
+
+```bash
+aws ec2 describe-security-groups \
+  --filters "Name=vpc-id,Values=vpc-xxxxxxxx"
+```
+
+Detailed security-group rules:
+
+```bash
+aws ec2 describe-security-group-rules \
+  --filters "Name=group-id,Values=sg-xxxxxxxx"
+```
+
+## Network ACLs
+
+```bash
+aws ec2 describe-network-acls \
+  --filters "Name=vpc-id,Values=vpc-xxxxxxxx"
+```
+
+## Network interfaces
+
+```bash
+aws ec2 describe-network-interfaces \
+  --filters "Name=vpc-id,Values=vpc-xxxxxxxx"
+```
+
+---
+
+# 26. Practical Laboratory
+
+## 26.1 Objective
+
+Build and validate a two-AZ, three-tier AWS network.
+
+## 26.2 Required resources
+
+Create:
+
+* One VPC
+* Six subnets
+* One internet gateway
+* One public route table
+* Two private application route tables
+* One isolated database route table
+* Two zonal NAT gateways for the full production model
+* Three security groups
+* At least one custom network ACL for testing
+* VPC Flow Logs
+* Reachability Analyzer paths
+
+## 26.3 Network plan
+
+```text
+VPC: 10.20.0.0/16
+
+Public A:      10.20.0.0/24
+Public B:      10.20.1.0/24
+Private App A: 10.20.10.0/24
+Private App B: 10.20.11.0/24
+Database A:    10.20.20.0/24
+Database B:    10.20.21.0/24
+```
+
+## 26.4 Build sequence
+
+1. Create the VPC.
+2. Enable DNS support and DNS hostnames where required.
+3. Create two subnets per tier across two AZs.
+4. Create and attach an internet gateway.
+5. Create the public route table.
+6. Add `0.0.0.0/0 → IGW`.
+7. Associate both public subnets.
+8. Allocate Elastic IP addresses.
+9. Create one NAT gateway in each public subnet.
+10. Create one private application route table per AZ.
+11. Route each private app subnet through its same-AZ NAT gateway.
+12. Create an isolated database route table.
+13. Associate both database subnets.
+14. Create ALB, app and database security groups.
+15. Launch temporary test resources.
+16. Enable VPC Flow Logs.
+17. Create Reachability Analyzer paths.
+18. Execute expected-success and expected-failure tests.
+19. Record results.
+20. Delete chargeable resources after testing.
+
+## 26.5 Required route tables
+
+### `rt-public`
+
+```text
+10.20.0.0/16 → local
+0.0.0.0/0    → Internet Gateway
+```
+
+Associations:
+
+```text
+Public Subnet A
+Public Subnet B
+```
+
+### `rt-private-app-a`
+
+```text
+10.20.0.0/16 → local
+0.0.0.0/0    → NAT Gateway A
+```
+
+Association:
+
+```text
+Private App Subnet A
+```
+
+### `rt-private-app-b`
+
+```text
+10.20.0.0/16 → local
+0.0.0.0/0    → NAT Gateway B
+```
+
+Association:
+
+```text
+Private App Subnet B
+```
+
+### `rt-isolated-db`
+
+```text
+10.20.0.0/16 → local
+```
+
+Associations:
+
+```text
+Database Subnet A
+Database Subnet B
+```
+
+## 26.6 Required tests
+
+| Test                               | Expected result     |
+| ---------------------------------- | ------------------- |
+| Internet → ALB TCP 443             | Allowed             |
+| Internet → app TCP 8080            | Blocked             |
+| Internet → database TCP 5432       | Blocked             |
+| ALB → app TCP 8080                 | Allowed             |
+| App → database TCP 5432            | Allowed             |
+| App → internet TCP 443             | Allowed through NAT |
+| Internet → app through NAT         | Blocked             |
+| Database → internet                | Blocked             |
+| Unapproved VPC resource → database | Blocked             |
+| AZ A private app → NAT A           | Allowed             |
+| AZ B private app → NAT B           | Allowed             |
+
+## 26.7 Failure-injection exercises
+
+Deliberately introduce and diagnose:
+
+1. Remove the app subnet default route.
+2. Point private subnet B to NAT gateway A.
+3. Remove the ALB-to-app security-group rule.
+4. Change the database SG source to the wrong SG.
+5. Block ephemeral return ports in a custom NACL.
+6. Remove the public-subnet route to the IGW.
+7. Remove the test instance’s public IPv4 address.
+8. Stop the application listener.
+9. Associate a subnet with the wrong route table.
+10. Delete a NAT gateway and inspect the route state.
+
+For every failure, record:
+
+```text
+Symptom
+Expected path
+Investigation
+Root cause
+Correction
+Prevention
+Monitoring recommendation
+```
+
+---
+
+# 27. Architecture Decision Notes
+
+## Why use two Availability Zones?
+
+Mitigates:
+
+* Single-AZ infrastructure failure
+* Localized power or networking failure
+* Planned maintenance impact
+* Loss of one application subnet
+* Loss of one zonal NAT gateway
+
+## Why use public load balancers?
+
+Provides:
+
+* Controlled public entry point
+* TLS termination
+* Health checks
+* Backend distribution
+* Separation between public users and private workloads
+
+## Why keep application workloads private?
+
+Reduces:
+
+* Direct attack surface
+* Public-IP management
+* Accidental exposure
+* Need for host-level internet access
+* Dependence on individual server firewall correctness
+
+## Why isolate databases?
+
+Reduces:
+
+* Internet-exposure risk
+* Exfiltration paths
+* Unnecessary outbound connectivity
+* Effects of future public-routing mistakes
+
+## Why use security-group references?
+
+Provides:
+
+* Logical service identity
+* Automatic accommodation of changing private IPs
+* Narrower access than VPC-wide CIDRs
+* Clear tier-to-tier relationships
+
+## Why use one zonal NAT gateway per AZ?
+
+Mitigates:
+
+* Cross-AZ dependency
+* Loss of egress during another AZ’s failure
+* Unnecessary inter-AZ traffic
+* Poor fault isolation
+
+## Why keep the main route table restrictive?
+
+Mitigates:
+
+* Accidental public routing for newly created subnets
+* Implicit route-table inheritance
+* Unreviewed internet exposure
+
+---
+
+# 28. Allowed and Forbidden Designs
+
+## Allowed
+
+* Public ALB in public subnets
+* Public NAT gateway in each active AZ
+* Private application servers without public IPs
+* Isolated database subnets
+* SG-to-SG references
+* Same-AZ zonal NAT routing
+* Explicit custom route-table associations
+* VPC endpoints for AWS service access
+* VPC Flow Logs for network evidence
+* Reachability Analyzer for configuration analysis
+
+## Forbidden without written justification
+
+* Public databases
+* Public application servers behind a load balancer
+* `0.0.0.0/0` access to SSH
+* `0.0.0.0/0` access to database ports
+* Shared cross-AZ zonal NAT presented as highly available
+* Database subnets routed directly to the internet gateway
+* Treating NAT as a firewall
+* Treating subnet names as proof of privacy
+* Permitting the entire VPC CIDR when SG references are sufficient
+* Making random SG and NACL changes during troubleshooting
+* Restrictive NACLs without documented return-port requirements
+* Using the default security group for production workloads
+* Leaving unused NAT gateways and Elastic IPs running
+
+---
+
+# 29. Interview-Level Questions
+
+## Question 1
+
+### What makes an AWS subnet public?
+
+A subnet is public when its associated route table contains a route to an internet gateway. Resources still require appropriate public addressing and security rules for direct IPv4 internet communication.
+
+## Question 2
+
+### Can an EC2 instance in a public subnet access the internet without a public IPv4 address?
+
+Not directly over IPv4 through the internet gateway. The instance requires a public IPv4 address or Elastic IP for direct IPv4 internet communication. Alternatively, it can use another egress mechanism such as NAT.
+
+## Question 3
+
+### Why is a public NAT gateway placed in a public subnet?
+
+The NAT gateway must send translated internet-bound traffic to an internet gateway. Its subnet therefore requires a route to the internet gateway.
+
+## Question 4
+
+### Can an internet client connect to a private instance through a NAT gateway?
+
+No. A NAT gateway permits response traffic for connections initiated by private resources. It does not provide unsolicited inbound forwarding.
+
+## Question 5
+
+### Why use one zonal NAT gateway per Availability Zone?
+
+To preserve zonal fault isolation, avoid cross-AZ dependencies and prevent workloads in healthy zones from losing egress when the NAT gateway’s zone fails.
+
+## Question 6
+
+### What is the difference between a security group and a NACL?
+
+A security group is a stateful resource-level allow-list. A NACL is a stateless subnet-level filter that supports allow and deny rules and processes them in numerical order.
+
+## Question 7
+
+### Why do NACLs require ephemeral-port rules?
+
+Because they are stateless. Return traffic is evaluated separately and normally targets the initiating client’s ephemeral port.
+
+## Question 8
+
+### Does referencing a security group create network connectivity?
+
+No. It authorizes traffic matching the rule, but route-table connectivity and other network controls must still exist.
+
+## Question 9
+
+### Does attaching a restrictive SG override a permissive SG?
+
+No. Rules from multiple attached security groups are aggregated. A permissive rule in any attached group can permit the traffic.
+
+## Question 10
+
+### How would you troubleshoot an application timeout to a database?
+
+1. Confirm endpoint and DNS.
+2. Confirm the database is available and listening.
+3. Check the source subnet route.
+4. Check application SG outbound rules.
+5. Check database SG inbound rules.
+6. Validate source SG references.
+7. Check both subnet NACLs and return ports.
+8. Check host and database-level firewalls.
+9. Use Reachability Analyzer.
+10. Review VPC Flow Logs.
+
+---
+
+# 30. Knowledge Check
+
+Answer without notes.
+
+1. What is the scope of a VPC?
+2. What is the scope of a subnet?
+3. Can a subnet span two Availability Zones?
+4. How many addresses does AWS reserve in an IPv4 subnet?
+5. What determines whether a subnet is public?
+6. Why does a public-subnet EC2 instance still need a public IP?
+7. What does the VPC local route do?
+8. What happens when a subnet has no explicit route-table association?
+9. What is longest-prefix matching?
+10. What does `0.0.0.0/0` mean?
+11. Why does a database subnet normally lack a default internet route?
+12. Why does a NAT gateway require an internet path?
+13. Can NAT receive unsolicited internet connections?
+14. Why should private subnet A use NAT gateway A?
+15. What happens if NAT gateway A’s AZ fails?
+16. Are security groups stateful?
+17. Can security groups contain deny rules?
+18. What happens when multiple SGs are attached?
+19. Are NACLs stateful?
+20. How are NACL rules ordered?
+21. Why must a NACL permit return traffic?
+22. When is an SG reference better than a CIDR?
+23. Why is `0.0.0.0/0` on SSH dangerous?
+24. What can Reachability Analyzer identify?
+25. What information do VPC Flow Logs provide?
+26. What is the difference between a timeout and connection refusal?
+27. Why should the main route table remain restrictive?
+28. How can VPC endpoints reduce NAT costs?
+29. What network component provides outbound-only IPv6 internet access?
+30. What failure does a multi-AZ network actually mitigate?
+
+---
+
+# 31. Completion Standard
+
+This section is complete only when you can perform all of the following without referring to notes:
+
+* Draw the two-AZ, three-tier VPC architecture.
+* Calculate basic subnet ranges.
+* State the five AWS-reserved subnet addresses.
+* Classify a subnet by inspecting its route table.
+* Write all four required route tables.
+* Explain longest-prefix matching.
+* Trace internet-to-ALB traffic.
+* Trace ALB-to-application traffic.
+* Trace application-to-database traffic.
+* Trace private-application internet egress.
+* Explain why NAT does not permit unsolicited inbound traffic.
+* Explain zonal versus Regional NAT Gateways.
+* Design least-privilege SG rules.
+* Explain SG connection tracking.
+* Write a valid stateful-security-group explanation.
+* Write a valid stateless-NACL explanation.
+* Identify required ephemeral-port rules.
+* Diagnose at least five deliberately broken network paths.
+* Explain the security boundary of each subnet tier.
+* State what failure every component mitigates.
+
+## Required final output
+
+Produce a one-page architecture record containing:
+
+```text
+1. VPC CIDR
+2. Subnet CIDRs
+3. Availability Zone placement
+4. Route-table definitions
+5. Internet gateway purpose
+6. NAT design
+7. Security-group relationships
+8. NACL strategy
+9. Allowed traffic flows
+10. Forbidden traffic flows
+11. High-availability decisions
+12. Cost considerations
+13. Known limitations
+14. Failure scenarios
+15. Troubleshooting evidence
+```
