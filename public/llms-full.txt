@@ -1,0 +1,1427 @@
+# Gajan.dev
+
+> Full published content for Gajan Rajah's DevOps and cloud engineering portfolio.
+
+Canonical site: https://gajan.dev/
+Contact: gajanrajah@protonmail.com
+
+## Site
+
+Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrastructure automation, observability, CI/CD, cloud engineering, and reliable delivery.
+
+Key pages:
+- https://gajan.dev/
+- https://gajan.dev/services
+- https://gajan.dev/tools
+- https://gajan.dev/blog
+- https://gajan.dev/cron
+- https://gajan.dev/yaml
+
+## Published articles
+
+### CI/CD Pipelines Explained in Simple Terms
+
+- URL: https://gajan.dev/blog/ci-cd-pipelines-explained-in-simple-terms-dbe44f01c4c7
+- Published: 2026-07-15
+- Author: Gajan Rajah
+- Tags: ci-cd-pipeline, github-actions, devops, gitlab
+- Description: Most people working in tech have heard of CI/CD pipelines, but beginners often see them as some kind of DevOps magic.
+
+Most people working in tech have heard of **CI/CD pipelines**, but beginners often see them as some kind of DevOps magic.
+
+A developer pushes code, tests run automatically, the application is built, and sometimes it is deployed without anyone manually executing each step.
+
+The idea is simpler than it sounds.
+
+A CI/CD pipeline is an automated process that checks, builds, and delivers software.
+
+### Think of It Like a Factory Assembly Line
+
+The easiest way to understand a pipeline is to compare it to an assembly line in a factory.
+
+A product moves through several stations, and each station performs a specific task.
+
+A software pipeline works the same way.
+
+The code moves through stages such as:
+
+1.  Installing dependencies
+2.  Checking code quality
+3.  Running automated tests
+4.  Building the application
+5.  Creating a deployment package
+6.  Deploying the application
+7.  Verifying that it works
+
+If one stage fails, the pipeline usually stops.
+
+This prevents broken code from reaching users.
+
+### What Does CI/CD Mean?
+
+CI/CD usually refers to:
+
+-   Continuous Integration
+-   Continuous Delivery
+-   Continuous Deployment
+
+Although they are related, they are not identical.
+
+### Continuous Integration
+
+**Continuous Integration**, or CI, means developers frequently merge their changes into a shared repository.
+
+Whenever code is pushed, an automated pipeline may:
+
+-   Install dependencies
+-   Check formatting
+-   Run tests
+-   Build the application
+-   Scan for security problems
+
+If something fails, the developer receives feedback immediately.
+
+The main purpose of CI is to detect problems early.
+
+A simple CI workflow looks like this:
+
+**Developer pushes code → pipeline starts → tests run → build runs → results are reported**
+
+### Continuous Delivery
+
+**Continuous Delivery** extends CI.
+
+After the code passes testing and builds successfully, it is prepared for deployment.
+
+The application remains ready to release, but deploying it to production usually requires manual approval.
+
+The process looks like this:
+
+**Code pushed → tests pass → application builds → release is prepared → human approves deployment**
+
+Continuous Delivery is useful when a company requires approvals, release windows, or compliance checks.
+
+### Continuous Deployment
+
+**Continuous Deployment** goes one step further.
+
+When all tests and checks pass, the application is deployed to production automatically.
+
+The workflow becomes:
+
+**Code pushed → tests pass → build succeeds → application is deployed automatically**
+
+Continuous Deployment can make releases faster, but it requires reliable testing, monitoring, and rollback mechanisms.
+
+### Continuous Delivery vs Continuous Deployment
+
+The difference is the final production step.
+
+**Continuous Delivery:** deployment is ready, but a person approves it.
+
+**Continuous Deployment:** deployment happens automatically.
+
+### What Triggers a Pipeline?
+
+A pipeline starts when a specific event occurs.
+
+Common triggers include:
+
+-   Pushing code
+-   Opening a pull request
+-   Merging a pull request
+-   Creating a release tag
+-   Running the pipeline manually
+-   Running it on a schedule
+
+For example, a team may run tests for every pull request but deploy only when code is merged into the main branch.
+
+### Common Pipeline Stages
+
+### 1\. Source
+
+The pipeline downloads the latest code from GitHub, GitLab, Bitbucket, or another repository.
+
+### 2\. Install Dependencies
+
+The pipeline installs the libraries needed by the application.
+
+For example:
+
+```
+npm ci
+```
+
+or:
+
+```
+pip install -r requirements.txt
+```
+
+### 3\. Code Quality Checks
+
+The pipeline may run linting, formatting, type checking, or static code analysis.
+
+### 4\. Automated Testing
+
+The pipeline may run:
+
+-   Unit tests
+-   Integration tests
+-   End-to-end tests
+-   Security scans
+
+If an important test fails, the pipeline stops.
+
+### 5\. Build
+
+The pipeline converts the source code into something deployable.
+
+This could be:
+
+-   A compiled application
+-   A JAR file
+-   A static website
+-   A Docker image
+-   A deployment archive
+
+### 6\. Deployment
+
+The application is deployed to a development, staging, or production environment.
+
+### 7\. Verification
+
+The pipeline checks whether the deployed application is healthy.
+
+For example:
+
+```
+curl --fail https://example.com/health
+```
+
+A successful deployment command does not always mean the application is working, so this step is important.
+
+### A Complete Example
+
+Imagine a developer adding a new login feature.
+
+The process may look like this:
+
+1.  The developer writes the code.
+2.  The developer pushes it to GitHub.
+3.  The pipeline starts.
+4.  Dependencies are installed.
+5.  Code quality checks run.
+6.  Automated tests run.
+7.  The application is built.
+8.  A Docker image is created.
+9.  The image is deployed to a test environment.
+10.  Health checks verify the deployment.
+11.  The application is approved and deployed to production.
+
+Without a pipeline, someone would need to run many of these steps manually.
+
+With CI/CD, the process becomes repeatable and consistent.
+
+### A Simple GitHub Actions Example
+
+```
+name: CI Pipeline
+```
+
+```
+on:
+  push:
+    branches:
+      - main
+```
+
+```
+  pull_request:
+    branches:
+      - main
+```
+
+```
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+```
+
+```
+    steps:
+      - name: Download source code
+        uses: actions/checkout@v4
+```
+
+```
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+```
+
+```
+      - name: Install dependencies
+        run: npm ci
+```
+
+```
+      - name: Run tests
+        run: npm test
+```
+
+```
+      - name: Build application
+        run: npm run build
+```
+
+This pipeline runs whenever code is pushed to the main branch or when a pull request targets it.
+
+It downloads the code, installs dependencies, runs tests, and builds the application.
+
+If any command fails, the pipeline fails.
+
+### What Happens When a Pipeline Fails?
+
+Pipeline failures are normal.
+
+A failure usually means an automated check found a problem.
+
+Common reasons include:
+
+-   A test failed
+-   The application did not build
+-   A dependency could not be downloaded
+-   A configuration file was invalid
+-   A secret was missing
+-   The deployment failed
+-   The health check failed
+
+The developer reviews the logs, fixes the issue, and pushes another change.
+
+The pipeline then runs again.
+
+### Why Use CI/CD?
+
+CI/CD pipelines provide several benefits.
+
+### Faster Feedback
+
+Developers discover problems soon after pushing code.
+
+### Fewer Manual Errors
+
+Automation reduces forgotten commands and inconsistent deployments.
+
+### Better Code Quality
+
+Tests and quality checks run regularly.
+
+### Faster Releases
+
+Teams can release smaller changes more frequently.
+
+### Consistent Deployments
+
+The same process runs every time.
+
+### Better Traceability
+
+Teams can identify which commit was built, tested, and deployed.
+
+### Common CI/CD Tools
+
+Popular CI/CD tools include:
+
+-   GitHub Actions
+-   GitLab CI/CD
+-   Jenkins
+-   Azure Pipelines
+-   Bitbucket Pipelines
+-   Argo CD
+-   Tekton
+
+These are tools used to implement CI/CD.
+
+CI/CD itself is the process.
+
+### CI/CD Is Not Magic
+
+A CI/CD pipeline is simply a structured sequence of automated steps.
+
+It usually follows this flow:
+
+**Code pushed → tests run → application builds → artifact is created → application is deployed → deployment is verified**
+
+Continuous Integration checks code changes early.
+
+Continuous Delivery keeps the application ready for release.
+
+Continuous Deployment releases successful changes automatically.
+
+Once you understand the workflow, CI/CD stops looking like a mysterious DevOps concept.
+
+It becomes what it really is:
+
+**An automated assembly line for delivering software safely and consistently.**
+
+---
+
+### How to setup a HA K3s cluster in a homelab?
+
+- URL: https://gajan.dev/blog/how-to-setup-a-ha-k3s-cluster-in-a-homelab-03d9761cc9e2
+- Published: 2025-10-27
+- Author: Gajan Rajah
+- Tags: kubernetes, docker, containers, k3d, homelab
+- Description: The plan is to set up a High Available (HA) cluster with 3 master nodes and 5 worker nodes, using containers in a VM in your local machine. Here I am using a RHEL 8 VM. I am assuming that…
+
+The plan is to set up a High Available (HA) cluster with 3 master nodes and 5 worker nodes, using containers in a VM in your local machine. Here I am using a RHEL 8 VM. I am assuming that the reader of this article will have the knowledge of a beginner or an intermediate practitioner.
+
+First of all, you need to have docker set up.
+
+![How to setup a HA K3s cluster in a homelab? image 1](/blog/how-to-setup-a-ha-k3s-cluster-in-a-homelab-03d9761cc9e2/cover.png)
+
+Now we will use a lightweight command-line tool called **k3d**. It builds a *cluster* of K3s nodes (which are just Docker containers) with a single command. It automatically creates a Docker network, links all the containers, handles token sharing, and sets up the HA **etcd** database. This saves you from dozens of complex manual ***docker run*** commands.
+
+```
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+```
+
+The command line client ***kubectl*** should be installed, so that we can interact with the K3s cluster.
+
+```
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+rm kubectl
+```
+
+Now begins the interesting part of creating the cluster.
+
+```
+k3d cluster create homelab-cluster --servers 3 --agents 5
+```
+
+That’s it. Seriously. **k3d** will pull the K3s image, create a dedicated Docker network, launch all 8 containers, configure them, and set up the HA control plane.
+
+![How to setup a HA K3s cluster in a homelab? image 2](/blog/how-to-setup-a-ha-k3s-cluster-in-a-homelab-03d9761cc9e2/image-02.png)
+
+Verify using
+
+```
+kubectl get nodes -o wide
+```
+
+Stay tuned for the next post where I will do some more configurations to the cluster.
+
+---
+
+### How to move/migrate Steam games from one PC to another
+
+- URL: https://gajan.dev/blog/how-to-move-migrate-steam-games-from-one-pc-to-another-39d09dd1dfa9
+- Published: 2025-04-15
+- Author: Gajan Rajah
+- Tags: mortal-kombat-11, steam, games
+- Description: If you are moving or upgrading to a new PC, you might also want to move the existing games without the hassle of downloading all the games again in the new PC. Or you might want to copy the…
+
+If you are moving or upgrading to a new PC, you might also want to move the existing games without the hassle of downloading all the games again in the new PC. Or you might want to copy the games in Steam from your friend’s computer to yours to avoid the trouble of downloading them.
+
+For the sake of simplicity, the source PC from where the games will be copied, will be called as PC A. The destination PC to where the games will be pasted to, will be called as PC B.
+
+#### In PC A, locate the steam installation folder.
+
+1.  Open Steam
+2.  Go to the Library tab
+3.  Locate the game that you want to copy.
+4.  Now, right click it and click properties.
+5.  Click the “Installed Files” tab in the left side pane.
+6.  Click “Browse”
+
+This will open the location of the game files in your file explorer.
+
+Usually this location is
+
+> `C:\Program Files (x86)\Steam\steamapps\common\<game_name>`
+
+This is the folder that you need to copy.
+
+Copy this folder to an external storage location like an external disk.
+
+#### Now install Steam in PC B.
+
+Search the game in the store and buy it if it is a paid game.
+
+After purchasing, the download will be initiated.
+
+Stop/pause the download after choosing to inspect the download progress.
+
+![How to move/migrate Steam games from one PC to another image 2](/blog/how-to-move-migrate-steam-games-from-one-pc-to-another-39d09dd1dfa9/image-02.png)
+
+Now go to the installation location in PC B.
+
+> C:\\Program Files (x86)\\Steam\\steamapps\\downloading
+
+If there’s only one folder named with a number, you can safely delete it.
+
+**Optional:** If not, go to the Steam store and search for your game. Now, right click and click “Copy Page URL”. Paste it in a text editor like Notepad. The link should be something like this
+
+> [https://store.steampowered.com/app/976310/Mortal\_Kombat\_11/](https://store.steampowered.com/app/976310/Mortal_Kombat_11/)
+
+Delete the folder with the name which is as same as the one in the link.
+
+#### Remember the copied game files to an external disk from PC A?
+
+Copy them to this location:
+
+> `C:\Program Files (x86)\Steam\steamapps\common\<game_name>`
+
+Next locate the *executable application file* of the game to start running the game, because launching from Steam will most probably start to initiate the game file download again.
+
+Most probably it will be present under the *Binaries* folder.
+
+In my case it was:
+
+> C:\\Program Files (x86)\\Steam\\steamapps\\common\\Mortal Kombat 11\\Binaries\\Retail\\MK11.exe
+
+Create a shortcut for this executable file, and move this shortcut to your desktop.
+
+Now you can open and run the game using this shortcut and it syncs with Steam.
+
+Enjoy your game!
+
+References (“also have a look at”):
+
+<a href="https://medium.com/media/becdb8fc2cbbb3aaeef728bff754ca02/href">https://medium.com/media/becdb8fc2cbbb3aaeef728bff754ca02/href</a>
+
+---
+
+### W1seGuy Room in TryHackMe
+
+- URL: https://gajan.dev/blog/w1seguy-room-in-tryhackme-031880e5a138
+- Published: 2025-11-19
+- Updated: 2026-01-04
+- Author: Gajan Rajah
+- Tags: tryhackme-writeup, reverse-engineering, tryhackme, encryption
+- Description: I am keeping this simple, first of all you get access to the source code.
+
+I am keeping this simple, first of all you get access to the source code.
+
+Download it and examine to get an understanding of what’s going on.
+
+The key points to note here are:
+
+1.  **Bitwise XOR encryption** is used and then the bytes are hex encoded.
+2.  The first flag is encrypted this way, and output to you when you connect to port *1337* of the machine.
+3.  A key value is randomly generated, which the server expects you to input. If input correctly, you get the second flag.
+
+```
+nc <machine_ip_address> 1337
+```
+
+The flaw with bitwise XOR encryption is that
+
+> Flag XOR Key = Xored\_value
+
+> Xored\_value XOR Flag= Key
+
+So the key is not really protected.
+
+We know that the key is of length 5 upon inspecting the source code. The bitwise XOR operation goes on for each character of the flag but you may remember that the key is of length 5. Now the flag length and the key length do not match. To overcome this issue, the key is repeatedly used for the XOR operation every time it’s characters run out during the operation.
+
+The first 4 characters of the flag are *THM&#123;* and the last character is *&#125;*.
+
+So if we perform the XOR operation on *THM&#123;* with the encrypted value, we get the first 4 characters of the key. I am taking a guess that the last character of the flag was used to encrypt *&#125;*.
+
+But first we need to decode the bytes from hex, and then perform the above operation to get the key. Input it to the server. And there you go with the second flag!
+
+Once you get the key, use the same XOR operation against the entire encrypted output (hex decode it) from the server. Now you get the decrypted value which is the first flag!
+
+Below is a script that I prepared to automate the entire process:
+
+```
+hex_string = input("Enter hex string: ")   # Take hex input from user
+
+hex_encoded = hex_string
+
+xored_original = bytes.fromhex(hex_encoded).decode('utf-8')
+
+def xor_encrypt(text):
+    if len(text) < 5:
+        raise ValueError("Input string must be at least 5 characters long.")
+
+    keys = ['T', 'H', 'M', '{','}']  # 4 keys for first 4 characters
+
+    output = []
+
+    # XOR first 4 characters
+    for i in range(4):
+        output.append(chr(ord(text[i]) ^ ord(keys[i])))
+
+    # XOR last character with }
+    last_char = text[-1]
+    output.append(chr(ord(last_char) ^ ord(keys[4])))
+
+    return "".join(output)
+
+# Key
+print(xor_encrypt(xored_original))
+
+key=xor_encrypt(xored_original)
+
+flag=xored_original
+xored=""
+for i in range(0,len(flag)):
+    xored += chr(ord(flag[i]) ^ ord(key[i%len(key)]))
+
+print(xored)
+```
+
+No, you can’t use the same key as below 😂 because it’s auto-generated to an arbitrary value every time.
+
+![W1seGuy Room in TryHackMe image 2](/blog/w1seguy-room-in-tryhackme-031880e5a138/image-02.png)
+
+* * *
+
+[W1seGuy Room in TryHackMe](https://infosecwriteups.com/w1seguy-room-in-tryhackme-031880e5a138) was originally published in [InfoSec Write-ups](https://infosecwriteups.com/) on Medium, where people are continuing the conversation by highlighting and responding to this story.
+
+---
+
+
+### How to setup Nginx to host your website?
+
+- URL: https://gajan.dev/blog/how-to-setup-nginx-to-host-your-website-38ea7db1b58d
+- Published: 2026-01-03
+- Author: Gajan Rajah
+- Tags: nginx, linux
+- Description: If you want to host your website with a lightweight web server, then Nginx is your solution.
+
+If you want to host your website with a lightweight web server, then Nginx is your solution.
+
+First install Nginx using the package manager.
+
+Update the package manager repository metadata:
+
+```
+sudo apt update
+```
+
+Install Nginx and start the service:
+
+```
+sudo apt install nginx -y
+
+sudo systemctl status nginx
+```
+
+Your website will reside in:
+
+> `/var/www/<domain_name>/html`
+
+Replace **`<domain_name>`** with your actual domain name.
+
+So we will create a folder there:
+
+```
+sudo mkdir -p /var/www/gajan.dev/html
+```
+
+Assign the necessary permissions to that folder:
+
+```
+sudo chown -R $USER:$USER /var/www/gajan.dev/html
+```
+
+Place all your website files in this location:
+
+> `/var/www/<domain_name>/html/`
+
+Now we will edit the configuration file:
+
+```
+sudo vim /etc/nginx/sites-available/<domain_name>
+```
+
+Paste the following content inside the configuration file:
+
+```
+server {
+    listen 80;
+    server_name <domain_name> www.<domain_name>;
+    root /var/www/<domain_name>/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+This instructs the server to:
+
+-   Listen on port 80
+-   The domain names served here are `<domain_name>` and `www.<domain_name>`.
+-   The website files are placed in the location which follow root
+-   index.html is the index of your website
+-   The location block instructs the server on how different paths should be handled:
+
+> Look for the exact file ($uri).
+
+> If not found, look for a directory ($uri/).
+
+> If still not found, fall back to index.html
+
+We will enable the above site by creating a symbolic link:
+
+```
+sudo ln -s /etc/nginx/sites-available/<domain_name> /etc/nginx/sites-enabled/
+```
+
+Check Nginx if there are any errors in the configurations done above:
+
+```
+sudo nginx -t 
+```
+
+Now restart Nginx
+
+```
+sudo systemctl restart nginx
+```
+
+Now you should be able to reach your website when you access your domain name through your web browser.
+
+> Note that DNS mapping should be done to the public IP address of your server, so that your server is reached when someone clicks your domain name.
+
+---
+
+### How to setup SSH?
+
+- URL: https://gajan.dev/blog/how-to-setup-ssh-b4281bf7704b
+- Published: 2026-01-03
+- Author: Gajan Rajah
+- Tags: linux, ssh
+- Description: If you want to setup SSH to remotely connect to machines then this guide is for you:
+
+If you want to setup SSH to remotely connect to machines then this guide is for you:
+
+Execute the below command to generate the SSH key pair:
+
+```
+ssh-keygen -t rsa -f <path_to_your_key>/<name_of_your_SSH_key> -C <your_username>
+```
+
+You can add a passphrase for an added layer of security but this is optional.
+
+You need two keys to establish the SSH connection:
+
+> Private Key: Used by the user to securely authenticate to the remote server
+
+> Public Key: Placed in the remote server
+
+Copy the contents of the public key (*public key is the key file with the .pub extension*).
+
+Execute the below commands in order to create the necessary directories and assign the permissions.
+
+```
+mkdir -p ~/.ssh
+echo "PASTE_YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+```
+
+Now you can SSH to the remote server and verify using the below command:
+
+```
+ssh username@remote_host_ip
+```
+
+For added security you can
+
+> Disable password based login
+
+> Disable root login
+
+If you wanna go ahead, then edit the sshd\_config file:
+
+```
+sudo vim /etc/ssh/sshd_config
+```
+
+Make sure that these three lines are present
+
+> PasswordAuthentication no
+
+> PubkeyAuthentication yes
+
+> PermitRootLogin no
+
+Restart the service
+
+```
+sudo systemctl restart ssh
+```
+
+Now you can securely connect to your system!
+
+---
+
+### Cloning docker images between repositories without downloading them
+
+- URL: https://gajan.dev/blog/cloning-docker-images-between-repositories-without-downloading-them-413a636536ce
+- Published: 2025-12-28
+- Author: Gajan Rajah
+- Tags: skopeo, gitlab, docker, containers, ci-cd-pipeline
+- Description: If you have a slow internet connection or are limited on bandwidth quota and want to clone docker images between repositories without downloading them to your local machine, then this guide…
+
+If you have a slow internet connection or are limited on bandwidth quota and want to clone docker images between repositories without downloading them to your local machine, then this guide is for you.
+
+As an intermediary platform we will use **GitLab** here.
+
+First of all create a private project using you GitLab account. Then under the left sidebar, go to *Settings* and click *CI/CD*.
+
+Then add two protected variables there. This will be your username and password for your docker repo login.
+
+> DOCKER\_HUB\_USERNAME
+
+> DOCKER\_HUB\_PASSWORD
+
+Now under the left sidebar, click Build and click Pipeline Editor, and paste the below code. (Replace the values denoted between &lt;&gt;)
+
+```
+stages:
+  - deploy
+
+clone_image:
+  stage: deploy
+  image:
+    name: quay.io/skopeo/stable:latest
+    entrypoint: [""]
+  variables:
+    SOURCE_IMAGE: "docker://docker.io/<SOURCE_REPO>/<IMAGE_NAME>:<TAG>"
+    DEST_IMAGE: "docker://docker.io/<DEST_REPO>/<IMAGE_NAME>:<TAG>"
+  script:
+    - |
+      skopeo copy \
+        --dest-creds "${DOCKER_HUB_USERNAME}:${DOCKER_HUB_PASSWORD}" \
+        "$SOURCE_IMAGE" \
+        "$DEST_IMAGE"
+```
+
+Click *Commit*, now your pipeline will start to run.
+
+After the successful execution, you will have the image cloned to your repo.
+
+![Cloning docker images between repositories without downloading them image 2](/blog/cloning-docker-images-between-repositories-without-downloading-them-413a636536ce/image-02.png)
+
+If you are cloning from a private repo, update the relevant skopeo commands.
+
+---
+
+### What is GitOps and why do you need it?
+
+- URL: https://gajan.dev/blog/what-is-gitops-and-why-do-you-need-it-a9a42f187497
+- Published: 2025-12-26
+- Author: Gajan Rajah
+- Tags: kubernetes, devops, gitops, cloud-computing, git
+- Description: If you are learning or working in the cloud, chances are that you might have heard about GitOps. So what is GitOps?
+
+If you are learning or working in the cloud, chances are that you might have heard about GitOps. So what is **GitOps**?
+
+Before let’s get into a short introduction about *IaC (Infrastructure as Code)*
+
+Entire infrastructures like AWS environments are managed through code. The infrastructure is defined using code. What needs to be built and how it needs to be built in the infrastructure is defined here. Tools like Terraform and Ansible help us.
+
+> It’s the blueprint.
+
+We can version control them in Git and track changes and have a centralized location where everyone has access to it.
+
+But here come the problems:
+
+1.  No pull requests
+2.  Directly merging to main without reviews
+3.  No code reviews/collaboration
+4.  No automated tests (invalid YAML files could be present)
+5.  Everyone has access to the infrastructure and they can apply the changes from their local machine.
+6.  Nobody knows who executed what on the remote servers.
+7.  Mistakes in the files will be only found out once they are applied.
+
+**GitOps** comes to solve these problems. It treats the IaC the same way Application as Code is treated.
+
+1.  IaC is stored on a Git repository.
+2.  Branch out to a new branch and work on the changes.
+3.  The changes are validated by a CI pipeline which validates the configuration files and runs automated tests.
+4.  Other team members can approve the final changes.
+5.  Then a CD pipeline deploys it to the infrastructure.
+
+GitOps has two ways of deployment to the infrastructure.
+
+1.  Push Deployment
+2.  Pull Deployment
+
+Push deployment is the usual concept where the changes are pushed to the intended environment from the repository.
+
+Pull deployment is where an agent is installed in the environment which pulls the changes from the Git repository.
+
+> The agent monitors and compares the desired state from the Git repository with the actual state in the environment where it’s running. If it notices any changes, it will pull the changes and make the actual state transition to the desired state.
+
+Examples of pull based GitOps tools are *FluxCD* and *ArgoCD*.
+
+**Rollbacks**: If you changes break the running environment, you can simply revert to the last working state by using git revert and rolling back.
+
+Increases **security** because many team members don’t need direct access to environments to make changes, because it’s only the CD pipeline that’s going to make the changes. Anybody can propose changes by pull requests in the Git repository.
+
+> GitOps workflows are definitely recommended to optimize your workflow, so you should be trying them out.
+
+---
+
+### TakeOver Room in TryHackMe
+
+- URL: https://gajan.dev/blog/takeover-room-in-tryhackme-23c045bb3644
+- Published: 2025-11-21
+- Author: Gajan Rajah
+- Tags: tryhackme-writeup, enumeration, tryhackme, subdomain, ctf-writeup
+- Description: Use ffuf with a comprehensive wordlist to enumerate the subdomains
+
+Use ffuf with a comprehensive wordlist to enumerate the subdomains
+
+```
+curl -O -L <https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/dns-Jhaddix.txt>
+```
+
+```
+curl -O -L <https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-20000.txt>
+```
+
+The first is a very large wordlist but here we will use the second wordlist.
+
+```
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-20000.txt -u <https://10.65.182.21> -H "Host: FUZZ.futurevera.thm" -fs 0,4605
+```
+
+\-fs denotes that we are eliminating responses with 0 bytes and 4605 bytes. 4605 bytes is the response we get from the endpoint when we use any random string for the subdomain, meaning it’s not a valid subdomain.
+
+We get *blog* and *support*. We will add these subdomains to the /etc/hosts file
+
+Now we will do a directory scan with ffuf
+
+```
+fuf -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -u <https://support.futurevera.thm/FUZZ>
+```
+
+We get some outputs from the above scan, but they do not contain any useful info.
+
+So if we go to the subdomain *support.futurevera.thm* and inspect the certificate we can find an alt DNS name. When we visit this subdomain, we get an error mentioning that we cannot reach the specified redirected endpoint, but the redirected endpoint has the flag within it.
+
+* * *
+
+[TakeOver Room in TryHackMe](https://infosecwriteups.com/takeover-room-in-tryhackme-23c045bb3644) was originally published in [InfoSec Write-ups](https://infosecwriteups.com/) on Medium, where people are continuing the c…2269 tokens truncated…shortcut and it syncs with Steam.
+
+Enjoy your game!
+
+References (“also have a look at”):
+
+<a href="https://medium.com/media/becdb8fc2cbbb3aaeef728bff754ca02/href">https://medium.com/media/becdb8fc2cbbb3aaeef728bff754ca02/href</a>
+
+---
+
+### Getting started with Ansible Automation
+
+- URL: https://gajan.dev/blog/getting-started-with-ansible-automation-cb3043db7320
+- Published: 2025-03-19
+- Author: Gajan Rajah
+- Tags: automation, ansible, ansible-tutorial, ansible-playbook
+- Description: This guide will explore the initial steps to get started with Ansible automation in your projects. The main focus of Ansible is to automate redundant tasks that need to be performed over and…
+
+This guide will explore the initial steps to get started with Ansible automation in your projects. The main focus of Ansible is to automate redundant tasks that need to be performed over and over again in multiple environments. Ansible executes tasks over SSH.
+
+After installing Ansible edit your */etc/ansible/hosts* file to update the set of servers or nodes that Ansible is going to access.
+
+> \[servers\]  
+> 172.16.20.9 ansible\_user=user
+
+**ansible\_user** is used to set the name of the SSH user.
+
+#### Testing the connectivity
+
+Once you have configured the node address, test the connectivity and make sure that the endpoint is reachable.
+
+> ansible all -m ping — ask-pass
+
+Use **— ask-pass** if you are using a password-based login and enter the password in the interactive shell.
+
+Use **— private-key=/path/to/your/private\_key** if you are using a key-based login.
+
+You should get a response similar to the below image:
+
+![Getting started with Ansible Automation image 2](/blog/getting-started-with-ansible-automation-cb3043db7320/image-02.png)
+
+#### Playbook initialization
+
+```
+- name: Name of the playbook
+  hosts: all
+  vars:
+    copy_operations:
+      - src: source_file_1_location
+        dest: destination_file_1_location
+        remote_src: yes
+      - src: source_file_2_location
+        dest: destination_file_2_location
+        remote_src: no
+```
+
+**name**: Name of the playbook
+
+**hosts**: The set of hosts where the tasks are going to be executed.
+
+**vars**: The set of variables. **copy\_operations** is the name of a variable.
+
+Variables can have contents like sub-variables.
+
+Since we are going to initiate a copy task, the variables are named in that context. Variable names can be of any choice of the user.
+
+**src**: Defines the location of the source file.
+
+**dest**: Defines the location of the destination file.
+
+**remote\_src**: States whether the source file resides in the managed node. If yes, the file will be copied from the managed node, or else from the control node.
+
+#### Copying files
+
+```
+- name: Copy directories recursively using shell
+  ansible.builtin.shell: "cp -a {{ item.src }}/. {{ item.dest }}"
+  loop: "{{ copy_operations }}"
+  loop_control:
+    label: "Copying {{ item.src }} to {{ item.dest }}"
+```
+
+The following task will copy the files using the **ansible.builtin.shell** module.
+
+**loop**: The variable set for which the looping will occur.
+
+**loop\_control**: Defining what should be done with each item in the loop.
+
+**label**: Logging information about the ongoing task.
+
+#### Checking if the destination directories exist
+
+What if the destination directories do not exist in the first place when initiating the copy operations? Therefore, we should make sure that they exist.
+
+```
+# Check if destination directories exist
+    - name: Check destination directories
+      ansible.builtin.stat:
+        path: "{{ item.dest }}"
+      loop: "{{ copy_operations }}"
+      register: dest_dir_check
+      loop_control:
+        label: "Checking {{ item.dest }}"
+
+    - name: Display destination directory check results
+      ansible.builtin.debug:
+        msg: "Dest: {{ item.item.dest }} | Exists: {{ item.stat.exists }}"
+      loop: "{{ dest_dir_check.results }}"
+      loop_control:
+        label: "Checking result for {{ item.item.dest }}"
+```
+
+Using the **ansible.builtin.stat** module, we are checking the presence of the directories.
+
+**path**: The location where the files are going to be checked.
+
+**register**: The variable where the result of this task is going to be stored.
+
+**loop\_control**:Defining a task that gets executed with each iteration of the loop.
+
+**label**: Logging information about the ongoing task.
+
+The **ansible.builtin.debug** module is used to display the output of the previous operation.
+
+#### Creating the missing directories
+
+```
+# Create missing directories
+    - name: Create missing destination directories
+      ansible.builtin.file:
+        path: "{{ item.dest }}"
+        state: directory
+        owner: user
+        group: user
+        mode: '0755'
+      loop: "{{ copy_operations }}"
+      when: >-
+        not (dest_dir_check.results 
+        | selectattr('item.dest', '==', item.dest) 
+        | map(attribute='stat.exists') 
+        | first)
+      loop_control:
+        label: "Creating {{ item.dest }}"
+```
+
+Here the **ansible.builtin.file** module is used to create the missing directories.
+
+**path**: The directory to be created
+
+**state**: The type of file
+
+**owner**: Owner of the file
+
+**group**: Group of the file
+
+**mode**: Access permissions for the file
+
+**when**: Handles the logic of creating the directories only if they are missing. The previously configured **dest\_dir\_check** variable is used here.
+
+Finally the directories get created.
+
+#### Final playbook
+
+```
+---
+- name: Backup mchoice-smsc directories with preservation
+  hosts: all
+  become: yes
+  become_user: user
+  vars:
+    copy_operations:
+      - src: source_file_1_location
+        dest: destination_file_1_location
+        remote_src: yes
+      - src: source_file_2_location
+        dest: destination_file_2_location
+        remote_src: no
+
+  tasks:
+    # Check if destination directories exist
+    - name: Check destination directories
+      ansible.builtin.stat:
+        path: "{{ item.dest }}"
+      loop: "{{ copy_operations }}"
+      register: dest_dir_check
+      loop_control:
+        label: "Checking {{ item.dest }}"
+
+    - name: Display destination directory check results
+      ansible.builtin.debug:
+        msg: "Dest: {{ item.item.dest }} | Exists: {{ item.stat.exists }}"
+      loop: "{{ dest_dir_check.results }}"
+      loop_control:
+        label: "Checking result for {{ item.item.dest }}"
+
+    # Create missing directories
+    - name: Create missing destination directories
+      ansible.builtin.file:
+        path: "{{ item.dest }}"
+        state: directory
+        owner: user
+        group: user
+        mode: '0755'
+      loop: "{{ copy_operations }}"
+      when: >-
+        not (dest_dir_check.results 
+        | selectattr('item.dest', '==', item.dest) 
+        | map(attribute='stat.exists') 
+        | first)
+      loop_control:
+        label: "Creating {{ item.dest }}"
+
+    # Copy directories
+    - name: Copy directories recursively using shell
+      ansible.builtin.shell: "cp -a {{ item.src }}/. {{ item.dest }}"
+      loop: "{{ copy_operations }}"
+      loop_control:
+        label: "Copying {{ item.src }} to {{ item.dest }}"
+```
+
+#### Final thoughts
+
+This is just a small demonstration of what Ansible is capable of. Further automation can be done according to the user’s requirements. Feel free to explore more topics about automation with Ansible, and stay tuned for more updates about automation.
+
+---
+
+### Linux not suspending issue fixed
+
+- URL: https://gajan.dev/blog/linux-not-suspending-issue-fixed-ca2b943c59df
+- Published: 2024-07-13
+- Author: Gajan Rajah
+- Tags: Linux, Ubuntu, Suspend, Fix, Ubuntu 22 04
+- Description: Click here to view the original post.
+
+[Click here to view the original post.](https://forums.linuxmint.com/viewtopic.php?t=337938)
+
+First of all to gain a thorough understanding about the issue, let’s cover all ACPI sleep states (S0 to S5):
+
+1.  **S0 State (Working state)**
+
+-   This is the normal operating state of the computer.
+-   The CPU is fully powered and executing instructions.
+-   All peripherals and components are operational.
+-   Power consumption is at its highest in this state as the system is actively running.
+
+2\. **S1 State (Standby)**:
+
+-   Also known as the “Standby state” or “Suspend to RAM.”
+-   In S1, the CPU stops executing instructions to save power.
+-   The CPU maintains its state (registers and cache) so it can quickly resume processing.
+-   Power is still supplied to RAM and some other components.
+-   This state allows for a quick wake-up time (usually a few seconds).
+-   Power consumption is reduced compared to S0, but not as low as deeper sleep states.
+
+3\. **S2 State (Sleep)**:
+
+-   Also known as the “Sleep state” or “Suspend to RAM.”
+-   S2 builds upon S1 by further reducing power consumption.
+-   In S2, more components are powered down compared to S1.
+-   The CPU is powered down, and its state (registers and cache) is saved to RAM.
+-   This state consumes less power than S1.
+-   It takes longer to wake up from S2 compared to S1 (typically several seconds to resume).
+
+4\. **S3 State (Standby)**:
+
+-   Also known as the “Standby state” or “Suspend to RAM.”
+-   S3 is a deeper sleep state where most components are powered down.
+-   The CPU is powered off, and its state (registers and cache) is saved to RAM.
+-   RAM remains powered to retain data, but other components such as the CPU and peripherals are in a low-power state or completely powered off.
+-   This state consumes significantly less power than S2.
+-   It takes longer to wake up from S3 compared to S1 and S2 (typically several seconds to resume).
+
+5\. **S4 State (Hibernate)**:
+
+-   Also known as the “Hibernate state” or “Suspend to Disk.”
+-   In S4, the system saves the current state (including the contents of RAM) to the hard disk or another non-volatile storage device.
+-   The system then completely powers off, consuming no power except for a small amount needed to monitor the power button or other wake-up triggers.
+-   This state is useful for longer periods of inactivity as it allows the system to save its state indefinitely without requiring continuous power.
+-   Resume from S4 (hibernate) state is slower than from S1 to S3 because it involves reading the saved state from disk back into RAM.
+
+6\. **S5 State (Soft Off)**:
+
+-   Also known as the “Soft Off state” or “Mechanical Off.”
+-   S5 is the state where the system is completely powered off.
+-   No power is supplied to the system except for minimal circuitry to detect and respond to the power button press or other wake-up events.
+-   The state of the system and any running applications or data is not preserved; it requires a full boot process to resume operation.
+-   This state consumes the least amount of power since the system is essentially turned off.
+
+These ACPI sleep states (S0 to S5) allow a computer system to manage power consumption based on its activity level, balancing the need for immediate responsiveness with power savings during periods of inactivity.
+
+## Fix explained
+
+Below mentioned steps are for Ubuntu 22.04. If you are using a different distro, please update your commands accordingly.
+
+
+![Linux not suspending issue fixed image 1](/blog/linux-not-suspending-issue-fixed-ca2b943c59df/cover.png)
+
+By default when you click on suspend, the system goes to the [S0 standby state](https://discussion.fedoraproject.org/t/please-improve-the-s0ix-experience-under-linux/79113?replies_to_post_number=8).
+
+To manually override this, execute the following steps:
+
+> sudo vim /etc/default/grub
+
+Press i to go to insert mode and add the following line:
+
+> GRUB\_CMDLINE\_LINUX\_DEFAULT=“mem\_sleep\_default=deep”
+
+If some values already exist for the above variable, include the configuration as a space separated value along with the other configurations.
+
+> sudo update-grub
+> 
+> sudo reboot now
+
+This will fix your issue. But if your issue still persists, check your BIOS settings with regard to power states.
+
+---
+
+### MD5 explained / How MD5 works?
+
+- URL: https://gajan.dev/blog/md5-explained-how-md5-works-3e66a4015e2d
+- Published: 2024-01-24
+- Author: Gajan Rajah
+- Tags: MD5, Cryptography, Hashing
+- Description: An easy to understand simple explanation on how MD5 works.
+
+An easy to understand simple explanation on how MD5 works.
+
+## Padding
+
+The data in bit format should be 64 bits short of a 512 bit multiple.
+
+
+![MD5 explained / How MD5 works? image 1](/blog/md5-explained-how-md5-works-3e66a4015e2d/image-01.png)
+
+E.g. — Assume that your data consists of 1000 bits.
+
+The nearest multiple of 512 is 1024.
+
+Now let’s check if 1024 satisfies the above mentioned condition.
+
+1024–64 = 960 which is less than 1000 bits but we need at least 1000 bits to store our data.
+
+Moving on to the next multiple which is 1536.
+
+1536–64 = 1472
+
+Adding padding bits to 1000 to make it 1472.
+
+1472 + 64 = 1536 (which is a multiple of 512)
+
+Now the condition has been satisfied.
+
+## Appending
+
+Now express the length of the initial input string in terms of 64 bits.
+
+
+![MD5 explained / How MD5 works? image 2](/blog/md5-explained-how-md5-works-3e66a4015e2d/image-02.png)
+
+This string is going to be hashed.
+
+## Initializing
+
+Divide the above string into 512 bit blocks.
+
+Initialize four different buffers named A, B, C and D.
+
+Each buffer is 32 bits and initialized as follows:
+
+> A = 01 23 45 67
+> 
+> B = 89 ab cd ef
+> 
+> C = fe dc ba 98
+> 
+> D = 76 54 32 10
+
+## Processing
+
+Take each 512 bit block and further divide into 16-bit blocks (each 16-bit block will contain 32 bits such that 16 x 32 = 512).
+
+Each 16-bit block is assigned its own number ranging from M0 to M15.
+
+An example is given below:
+
+> M0–01010100 01101000 01100101 01111001  
+> M1–00100000 01100001 01110010 01100101  
+> M2–00100000 01100100 01100101 01110100  
+> M3–01100101 01110010 01101101 01101001  
+> M4–01101110 01101001 01110011 01110100  
+> M5–01101001 01100011 10000000 00000000  
+> M6–00000000 00000000 00000000 00000000  
+> M7–00000000 00000000 00000000 00000000  
+> M8–00000000 00000000 00000000 00000000  
+> M9–00000000 00000000 00000000 00000000  
+> M10–00000000 00000000 00000000 00000000  
+> M11–00000000 00000000 00000000 00000000  
+> M12–00000000 00000000 00000000 00000000  
+> M13–00000000 00000000 00000000 00000000  
+> M14–00000000 00000000 00000000 00000000  
+> M15–00000000 00000000 00000000 10110000
+
+These numbers are also used in hexadecimal format.
+
+Four rounds of operations are carried out on the 512-bit block.
+
+Each round consists of 16 operations.
+
+4 x 16 = 64 operations per 512-bit block.
+
+An array K on constant values is created after deriving the values from a formula.
+
+### Each operation round utilizes all the sub-blocks, buffers and the constant array values.
+
+
+![An abstract representation of the processing](/blog/md5-explained-how-md5-works-3e66a4015e2d/cover.png)
+
+*An abstract representation of the processing*
+
+Subsequent adding operations of output to buffer input form new buffer values.
+
+This eventually results in the final buffer value which is the hash.
+
+For more info and to get an in-depth understanding:
+
+[
+
+## The MD5 algorithm (with examples) | Comparitech
+
+### In this article, we discuss the underlying processes of the MD5 algorithm and how the math behind the MD5 hash function…
+
+www.comparitech.com
+
+](https://www.comparitech.com/blog/information-security/md5-algorithm-with-examples/)
+
+[
+
+## MD5 Hash Algorithm in Cryptography: Here's Everything You Should Know
+
+### MD5 Algorithm is a hashing algorithm that prevents producing repeated as signs. Learn how the algorithm works to…
+
+www.simplilearn.com
+
+](https://www.simplilearn.com/tutorials/cyber-security-tutorial/md5-algorithm)
+
+---
+
+### How to obfuscate URL/form data parameters to bypass WAF for SQL injections?
+
+- URL: https://gajan.dev/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b
+- Published: 2023-11-27
+- Updated: 2024-01-17
+- Author: Gajan Rajah
+- Tags: Infosec, Sql Injection, Obfuscation
+- Description: Disclaimer: This information is meant for learning purposes only. We strongly discourage any illegal activities, including unauthorized hacking. We do not endorse or take responsibility for…
+
+***Disclaimer: This information is meant for learning purposes only. We strongly discourage any illegal activities, including unauthorized hacking. We do not endorse or take responsibility for unethical practices. Users should act responsibly and within the law. The content providers are not liable for any consequences resulting from unethical or illegal actions based on this information. Please adhere to ethical standards and legal regulations.***
+
+
+
+*Credits: Thanks to kharaone and anshifmonz\_ for pointing this out to me.*
+
+## Context
+
+So I was working on the [Glacier CTF 2023](https://play.glacierctf.com/) [“Peak” web challenge](https://peak.web.glacierctf.com/) and tried to attempt SQL injections on the register and login page.
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 1](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/cover.png)
+
+But from the challenge description I assumed that they are implying the presence of a WAF here.
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 2](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-02.png)
+
+> Beware the silent guards that stand sentinel along the treacherous path, obstructing your ascent.
+
+
+![login](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-03.png)
+
+*login*
+
+
+![register](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-04.png)
+
+*register*
+
+Since there’s a WAF here, I tried to obfuscate the form data parameters sent through the request body.
+
+## Obfuscating the parameters
+
+Send your request to Burp Repeater
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 5](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-05.png)
+
+Highlight the code you wish to encode and right click it
+
+> Convert selection -> URL -> URL-encode all characters
+
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 6](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-06.png)
+
+Now your message is obfuscated!
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 7](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-07.png)
+
+But still you have another method left. You can use this [online tool](https://onlinetexttools.com/url-encode-text) too (make sure to check the “Escape All Text Characters” checkbox)
+
+
+![How to obfuscate URL/form data parameters to bypass WAF for SQL injections? image 8](/blog/how-to-obfuscate-url-form-data-parameters-to-bypass-waf-for-sql-injections-57c9c5f8169b/image-08.png)
+
+For more information about obfuscation checkout the [Portswigger lab](https://portswigger.net/web-security/essential-skills/obfuscating-attacks-using-encodings).
+
+---

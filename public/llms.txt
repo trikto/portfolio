@@ -19,6 +19,11 @@ Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrast
 - [Cron Expression Validator](https://gajan.dev/cron): Browser-based cron expression validation and schedule preview.
 - [YAML Validator and Formatter](https://gajan.dev/yaml): Browser-based YAML validation, formatting, and troubleshooting.
 
+## Machine-readable resources
+
+- [RSS feed](https://gajan.dev/feed.xml): Published article updates.
+- [Full site and article content](https://gajan.dev/llms-full.txt): Complete published portfolio and article content for language-model use.
+
 ## Contact
 
 - [LinkedIn](https://www.linkedin.com/in/gajanrajah)
