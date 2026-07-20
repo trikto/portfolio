@@ -41,7 +41,15 @@
 
 ## Recent changes
 
+- Updated the `/cron` editor to use one continuous crontab.guru-style field surface while preserving free-form five-field editing, validation, presets, and run previews on 2026-07-20.
+
+- Clarified on 2026-07-19 that the public visibility of `trikto/portfolio` does not grant push access to everyone; pushing requires collaborator or organization write permission.
+
+- Verified GitHub contributor attribution on 2026-07-19: the live REST contributors endpoint reports only `trikto` with 63 commits, and the fetched `main` history uses `Gajan <work@gajan.dev>` throughout. GitHub's repository-summary widget still shows the historical six-user list `cobiwave`, `trikto`, `jacobo-martinez`, `SNasser97`, `wschwab`, and `krit-s`; treat that as stale Insights/cache or pre-replacement history, not current collaborators.
+
 - Replaced the main portfolio blue-black styling with a neutral near-black system on 2026-07-19; preserve the graphite surfaces, neutral accents, semantic status colors, and blog-specific theme boundary.
+
+- Extended the neutral near-black system to the blog index and article pages on 2026-07-19; preserve article content, local imagery, and semantic article/status colors.
 
 - Added the published AWS Networking Fundamentals article at `/blog/aws-networking-fundamentals` on 2026-07-19; preserve its full study-module structure, local cover image, AWS/VPC/networking tags, and generated sitemap/feed inclusion.
 - Restored the missing AWS article content from sections 11.3 through 22.3 using `AWS Networking Fundamentals - Week 01.docx` on 2026-07-19; preserve the NAT, security-group, NACL, and packet-flow subsections when editing the article.
