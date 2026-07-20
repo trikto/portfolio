@@ -1,34 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { cronFields, cronRanges, parseCronExpression, type CronExpression, upcomingRuns } from "@/lib/cron";
+import { useEffect, useMemo, useState } from "react";
+import { cronExpression, explainCron, type CronFields, upcomingRuns, validateCron } from "@/lib/cron";
 
-const initial: CronExpression = "0 9 * * 1-5";
-const randomExpressions = ["30 2 * * *", "0 18 * * 1-5", "15 6 1 * *"];
-const syntaxRows = [["*", "any value"], [",", "value list separator"], ["-", "range of values"], ["/", "step values"]];
-const aliasRows = [["@yearly", "non-standard"], ["@annually", "non-standard"], ["@monthly", "non-standard"], ["@weekly", "non-standard"], ["@daily", "non-standard"], ["@hourly", "non-standard"], ["@reboot", "non-standard"]];
-
-function formatNextRun(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(date);
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  return `${values.year}-${values.month}-${values.day} ${values.hour}:${values.minute}:${values.second}`;
-}
+const initial: CronFields = ["0", "9", "*", "*", "1-5"];
+const labels = ["Minute", "Hour", "Day of month", "Month", "Day of week"];
+const presets: { label: string; value: CronFields }[] = [
+  { label: "Every minute", value: ["*", "*", "*", "*", "*"] }, { label: "Every hour", value: ["0", "*", "*", "*", "*"] }, { label: "Daily · 00:00", value: ["0", "0", "*", "*", "*"] }, { label: "Daily · 09:00", value: ["0", "9", "*", "*", "*"] }, { label: "Monday · 09:00", value: ["0", "9", "*", "*", "1"] }, { label: "Weekdays · 09:00", value: initial }, { label: "Monthly", value: ["0", "0", "1", "*", "*"] },
+];
+const examples = [...presets, { label: "Every 15 minutes", value: ["*/15", "*", "*", "*", "*"] as CronFields }];
+const random = [["30", "2", "*", "*", "*"], ["0", "18", "*", "*", "1-5"], ["15", "6", "1", "*", "*"]] as CronFields[];
+function format(date: Date, timeZone: string) { return new Intl.DateTimeFormat("en-GB", { timeZone, day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(date).replace(",", " -"); }
 
 export function CronEditor() {
-  const [expression, setExpression] = useState<CronExpression>(initial);
-  const [activeField, setActiveField] = useState<number | null>(null);
-  const [timeZone] = useState(() => typeof Intl === "undefined" ? "UTC" : Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
-  const [copyState, setCopyState] = useState("");
-  const parsed = useMemo(() => parseCronExpression(expression), [expression]);
-  const runs = useMemo(() => parsed.valid && parsed.previewable ? upcomingRuns(expression, timeZone) : [], [expression, parsed, timeZone]);
-  const selectedField = activeField === null ? null : cronFields[activeField];
-  const referenceRows = activeField === null ? [...syntaxRows, ...aliasRows] : [...syntaxRows, [cronRanges[activeField], "allowed values"]];
-  const copy = async () => { try { await navigator.clipboard.writeText(expression); setCopyState("Copied"); } catch { setCopyState("Copy unavailable"); } window.setTimeout(() => setCopyState(""), 1800); };
-  const explanation = parsed.valid ? `“${parsed.explanation}.”` : "“Invalid expression.”";
-  return <div className="cron-guru-editor">
-    <section className="cron-guru-result" aria-live="polite"><p>{explanation}</p><small>{parsed.valid && parsed.alias === "@reboot" ? "system startup trigger" : parsed.valid && runs[0] ? `next at ${formatNextRun(runs[0], timeZone)}` : parsed.valid ? "no upcoming runs found" : parsed.errors[0]?.message}</small></section>
-    <section className={`cron-guru-box${parsed.valid ? "" : " invalid"}`} aria-label="Cron expression editor"><button className="cron-guru-random" type="button" onClick={() => setExpression(randomExpressions[Math.floor(Math.random() * randomExpressions.length)])}>random</button><div className="cron-guru-input-row"><input aria-label="Cron expression" aria-invalid={!parsed.valid} value={expression} onChange={(event) => setExpression(event.target.value)} /><button type="button" onClick={copy}>Copy</button></div><div className="cron-guru-fields">{cronFields.map((field, index) => <button className={activeField === index ? "active" : ""} type="button" key={field} onClick={() => setActiveField(index)}>{field}</button>)}</div></section>
-    <section className="cron-guru-reference" aria-label="Cron reference"><table><tbody><tr><th colSpan={2}>{selectedField ? `${selectedField} · ${cronRanges[activeField!]}` : "syntax"}</th></tr>{referenceRows.map(([term, description]) => <tr key={`${term}-${description}`}><th>{term}</th><td>{description}</td></tr>)}</tbody></table></section>
-    <p className="cron-copy-status" aria-live="polite">{copyState}</p>
+  const [fields, setFields] = useState<CronFields>(initial), [timeZone, setTimeZone] = useState("UTC"), [copyState, setCopyState] = useState("");
+  const [preview, setPreview] = useState({ fields: initial, timeZone: "UTC" });
+  useEffect(() => { const id = window.setTimeout(() => setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC")); return () => window.clearTimeout(id); }, []);
+  const errors = useMemo(() => validateCron(fields), [fields]);
+  useEffect(() => { const id = window.setTimeout(() => setPreview({ fields, timeZone }), 250); return () => window.clearTimeout(id); }, [fields, timeZone]);
+  const previewPending = preview.fields !== fields || preview.timeZone !== timeZone;
+  const runs = useMemo(() => errors.length || previewPending ? [] : upcomingRuns(preview.fields, preview.timeZone), [errors.length, preview, previewPending]);
+  const expression = cronExpression(fields), activePreset = presets.find((preset) => cronExpression(preset.value) === expression)?.label;
+  const setValue = (value: CronFields) => setFields(value);
+  const copy = async () => { try { await navigator.clipboard.writeText(expression); setCopyState("Copied"); } catch { setCopyState("Copy unavailable, select the expression instead."); } window.setTimeout(() => setCopyState(""), 1800); };
+  return <div className="cron-editor">
+    <section className="cron-result" aria-live="polite"><p>{errors.length ? "Invalid schedule" : explainCron(fields)}</p><small>{errors.length ? "Fix the highlighted fields to preview runs." : previewPending ? "Updating preview..." : runs[0] ? `Next run: ${format(runs[0], timeZone)}` : "No upcoming runs found."}</small></section>
+    <section className="cron-panel cron-editor-box" aria-labelledby="editor-title"><div className="cron-panel-head"><div><p className="eyebrow">FIVE-FIELD LINUX CRON</p><h2 id="editor-title">{expression || "-"}</h2></div><div className="cron-actions"><button onClick={copy}>Copy</button><button onClick={() => setValue(random[Math.floor(Math.random() * random.length)])}>Random example</button><button onClick={() => setValue(["", "", "", "", ""])}>Clear</button><button onClick={() => setValue(initial)}>Reset</button></div></div><div className="cron-fields cron-fields-connected" aria-label="Cron expression fields">{fields.map((field, index) => { const error = errors.find((item) => item.field === index); return <label className={error ? "invalid" : ""} key={labels[index]}><input aria-invalid={!!error} aria-describedby={error ? `cron-error-${index}` : undefined} value={field} onChange={(event) => setFields(fields.map((item, position) => position === index ? event.target.value : item) as CronFields)} /><span>{labels[index]}</span>{error && <em id={`cron-error-${index}`}>{error.message}</em>}</label>; })}</div><p className="cron-copy-status" aria-live="polite">{copyState}</p></section>
+    <section className="cron-section cron-runs"><div><p className="eyebrow">EXECUTION PREVIEW</p><h2>Upcoming runs</h2></div><label className="timezone">Timezone<select value={timeZone} onChange={(event) => setTimeZone(event.target.value)}><option value={timeZone}>{timeZone}</option>{timeZone !== "UTC" && <option value="UTC">UTC</option>}</select></label><ol>{errors.length ? <li>Runs appear after all fields are valid.</li> : previewPending ? <li>Updating preview...</li> : runs.length ? runs.map((run) => <li key={run.toISOString()}>{format(run, timeZone)}</li>) : <li>No upcoming runs found.</li>}</ol><p className="cron-note">Your server must use this same timezone for matching execution times.</p></section>
+    <section className="cron-section"><p className="eyebrow">QUICK START</p><h2>Common presets</h2><div className="cron-chips">{presets.map((preset) => <button className={activePreset === preset.label ? "active" : ""} onClick={() => setValue(preset.value)} key={preset.label}>{preset.label}</button>)}<button className={!activePreset ? "active" : ""} onClick={() => setValue(["", "", "", "", ""])}>Custom</button></div></section>
+    <section className="cron-grid"><div className="cron-section"><p className="eyebrow">SYNTAX REFERENCE</p><h2>Read the expression</h2><dl><dt>*</dt><dd>Any valid value</dd><dt>,</dt><dd>List separator</dd><dt>-</dt><dd>Range of values</dd><dt>/</dt><dd>Step values</dd></dl><div className="field-ranges">Minute 0–59 · Hour 0–23 · Day 1–31 · Month 1–12 · Weekday 0–7 (0 and 7 are Sunday)</div><section className="day-matching" aria-labelledby="day-matching-title"><h3 id="day-matching-title">Day matching</h3><p>Cron normally requires all fields to match. Day of month and day of week are the exception: when both are restricted, the job runs when either field matches.</p><code>minute AND hour AND month AND (day of month OR day of week)</code><p><code>0 9 15 * 1</code> Runs at 09:00 on every Monday and on the 15th day of every month.</p><small>When either day field is *, the other field controls the day normally.</small></section></div><div className="cron-section"><p className="eyebrow">COMMON EXAMPLES</p><h2>Load an example</h2><div className="cron-examples">{examples.map((example) => <button onClick={() => setValue(example.value)} key={example.label}><code>{cronExpression(example.value)}</code><span>{example.label}</span></button>)}</div></div></section>
+    <section className="cron-section cron-learn"><p className="eyebrow">CRON GUIDE</p><h2>Schedules without guesswork</h2><div><article><h3>What is a cron expression?</h3><p>A five-field schedule used by Linux cron. Fields are minute, hour, day of month, month, and day of week.</p></article><article><h3>Steps and day matching</h3><p><code>*/15</code> means every fifteen units. When both day-of-month and day-of-week are restricted, Linux cron runs when either matches.</p></article><article><h3>Timezone and timers</h3><p>Cron uses the server timezone unless configured otherwise. For services needing retries, logging, and dependencies, consider systemd timers.</p></article><article><h3>FAQ: common mistakes</h3><p>Check server timezone, use absolute command paths, and remember that this editor supports five-field Linux cron only, not aliases such as <code>@daily</code> or <code>@reboot</code>.</p></article></div></section>
   </div>;
 }

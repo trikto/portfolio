@@ -41,7 +41,7 @@
 
 ## Recent changes
 
-- Matched `/cron` to crontab.guru’s single-expression editor model on 2026-07-20: live parsing, clickable field reference, supported aliases, browser-local previews, and the connected dark/yellow editor surface.
+- Updated the `/cron` editor to use one continuous crontab.guru-style field surface while preserving free-form five-field editing, validation, presets, and run previews on 2026-07-20.
 
 - Clarified on 2026-07-19 that the public visibility of `trikto/portfolio` does not grant push access to everyone; pushing requires collaborator or organization write permission.
 
