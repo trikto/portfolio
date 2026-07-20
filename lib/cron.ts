@@ -11,7 +11,9 @@ function values(token: string, min: number, max: number, sunday = false): number
   for (const part of token.split(",")) {
     const match = part.match(/^(\*|\d+(?:-\d+)?)(?:\/(\d+))?$/);
     if (!match) return null;
+    if (match[2] && match[1] !== "*" && !match[1].includes("-")) return null;
     const step = match[2] ? Number(match[2]) : 1;
+    if (step > max - min + 1 - Number(sunday)) return null;
     const [start, rawEnd] = match[1] === "*" ? [min, max] : match[1].split("-").map(Number);
     const end = rawEnd ?? start;
     if (!Number.isInteger(step) || step < 1 || !Number.isInteger(start) || !Number.isInteger(end) || start < min || end > max || start > end) return null;
@@ -35,5 +37,5 @@ export function explainCron(fields: CronFields): string {
 }
 export function upcomingRuns(fields: CronFields, timeZone: string, from = new Date()): Date[] {
   if (validateCron(fields).length) return [];
-  return new Cron(cronExpression(fields), { timezone: timeZone, mode: "5-part", paused: true }).nextRuns(5, from);
+  try { return new Cron(cronExpression(fields), { timezone: timeZone, mode: "5-part", paused: true }).nextRuns(5, from); } catch { return []; }
 }
