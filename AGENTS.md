@@ -41,7 +41,7 @@
 
 ## Recent changes
 
-- Updated the `/cron` editor to use one continuous crontab.guru-style field surface while preserving free-form five-field editing, validation, presets, and run previews on 2026-07-20.
+- Updated the `/cron` editor to use one editable continuous five-token expression surface with labels, validation, presets, and run previews on 2026-07-20.
 
 - Clarified on 2026-07-19 that the public visibility of `trikto/portfolio` does not grant push access to everyone; pushing requires collaborator or organization write permission.
 
