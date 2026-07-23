@@ -26,6 +26,7 @@ Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrast
 
 ## Articles
 
+- [IAM Roles and Least Privilege](https://gajan.dev/blog/iam-roles-and-least-privilege): A practical guide to AWS IAM roles, trust and permissions policies, temporary credentials, least-privilege design, cross-account access, PassRole, and AccessDenied troubleshooting.
 - [AWS Networking Fundamentals](https://gajan.dev/blog/aws-networking-fundamentals): A practical guide to AWS VPC design, routing, NAT gateways, security controls, packet flow, troubleshooting, and multi-AZ networking.
 
 ## Contact

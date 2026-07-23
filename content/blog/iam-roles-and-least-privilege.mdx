@@ -1,0 +1,2269 @@
+---
+title: "IAM Roles and Least Privilege"
+description: "A practical guide to AWS IAM roles, trust and permissions policies, temporary credentials, least-privilege design, cross-account access, PassRole, and AccessDenied troubleshooting."
+publishedAt: "2026-07-23"
+updatedAt: "2026-07-23"
+author: "Gajan Rajah"
+tags:
+  - "aws"
+  - "iam"
+  - "security"
+  - "least-privilege"
+  - "devops"
+coverImage: ""
+mediumUrl: ""
+draft: false
+---
+
+## Scope
+
+This guide covers:
+
+1. IAM identities and principals
+2. IAM roles
+3. Trust policies
+4. Permissions policies
+5. AWS STS and temporary credentials
+6. Role assumption
+7. IAM policy structure
+8. Least-privilege design
+9. Policy evaluation
+10. Permissions boundaries, SCPs, RCPs, and session policies
+11. `iam:PassRole`
+12. Cross-account access
+13. Workload roles
+14. IAM troubleshooting
+15. Practical exercises
+
+## Learning Outcomes
+
+After completing this guide, you should be able to:
+
+- Explain the difference between an IAM user and an IAM role.
+- Explain who can assume a role.
+- Distinguish a role's trust policy from its permissions policies.
+- Trace the complete `AssumeRole` process.
+- Write resource-scoped IAM policies.
+- Apply least privilege across actions, resources, and conditions.
+- Explain implicit deny and explicit deny.
+- Calculate effective permissions when several policy types apply.
+- Explain permissions boundaries and AWS Organizations guardrails.
+- Secure `iam:PassRole`.
+- Design IAM roles for EC2, Lambda, CI/CD, and cross-account administration.
+- Diagnose an `AccessDenied` error methodically.
+
+## IAM Mental Model
+
+IAM answers two separate questions:
+
+```text
+1. Authentication: Who are you?
+2. Authorization: What are you permitted to do?
+```
+
+An AWS request can be represented as:
+
+```text
+Principal
+    performs
+Action
+    against
+Resource
+    under
+Conditions
+```
+
+Example:
+
+```text
+Principal: arn:aws:sts::111122223333:assumed-role/AppRole/i-012345
+Action:    s3:GetObject
+Resource:  arn:aws:s3:::production-data/reports/july.csv
+Condition: Request came through an approved VPC endpoint
+```
+
+AWS builds a request context and evaluates all applicable policies before allowing or denying the action.
+
+The request context may include:
+
+- Principal
+- Requested action
+- Resource
+- Resource tags
+- Principal tags
+- Network source
+- AWS Region
+- AWS account
+- Organization
+- AWS service
+- Role session attributes
+- Authentication details
+
+A useful model is:
+
+```text
+P = Principal
+A = Action
+R = Resource
+C = Condition
+```
+
+For every IAM decision, determine all four.
+
+## IAM Identities and Principals
+
+### AWS Account Root User
+
+The root user represents the AWS account itself.
+
+It has complete account-level access and should not be used for routine work.
+
+Root credentials must be protected with strong authentication and reserved for tasks that specifically require root access.
+
+Required controls:
+
+- Enable MFA.
+- Do not create root access keys.
+- Do not use the root account for daily administration.
+- Store recovery information securely.
+- Monitor root-account activity.
+- Use root only for tasks that explicitly require it.
+
+### IAM User
+
+An IAM user is a long-lived identity created inside an AWS account.
+
+It may have:
+
+- Console password
+- Access key ID
+- Secret access key
+- Attached permissions policies
+- Group membership
+- MFA configuration
+
+IAM users are not the preferred design for ordinary workforce access.
+
+Preferred alternatives:
+
+- AWS IAM Identity Center
+- SAML federation
+- OIDC federation
+- Corporate identity providers
+- Temporary IAM role sessions
+
+Applications should use IAM roles instead of permanent IAM-user access keys.
+
+### IAM Group
+
+An IAM group is a collection of IAM users used for permissions management.
+
+Example:
+
+```text
+Group: DatabaseOperators
+
+Members:
+- Alice
+- Bob
+- Carol
+```
+
+Attach a policy to the group, and users in the group receive those permissions.
+
+An IAM group is not an authenticated principal.
+
+An IAM group:
+
+- Cannot sign in.
+- Cannot have credentials.
+- Cannot assume a role.
+- Cannot appear as a `Principal` in a resource policy.
+
+Groups organize IAM users. They do not represent active sessions.
+
+### IAM Role
+
+An IAM role is an AWS identity with permissions but without permanent passwords or access keys.
+
+A trusted principal assumes the role and receives temporary security credentials.
+
+Roles are intended for:
+
+- AWS services
+- Applications
+- Federated users
+- Cross-account access
+- CI/CD systems
+- Emergency administration
+- Temporary elevated access
+
+Unlike an IAM user, a role is not permanently associated with one person.
+
+### Principal
+
+A principal is an authenticated entity making an AWS request.
+
+Examples:
+
+```text
+IAM user
+IAM role session
+AWS service
+AWS account
+Federated identity
+AWS STS federated session
+OIDC identity
+SAML identity
+```
+
+An IAM group is not a principal.
+
+## What Is an IAM Role?
+
+An IAM role contains two fundamentally different permission relationships:
+
+```text
+Role
+├── Trust policy
+│   └── Who may assume this role?
+│
+└── Permissions policies
+    └── What may the role do after assumption?
+```
+
+Both sides must be correct.
+
+### Trust Policy
+
+The trust policy controls who or what can assume the role.
+
+Example for EC2:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
+Meaning:
+
+```text
+The EC2 service is trusted to assume this role.
+```
+
+The trust policy does not grant access to S3, EC2, databases, or other AWS services.
+
+It only defines the role-assumption relationship.
+
+A role trust policy is a resource-based policy attached to the role.
+
+### Permissions Policy
+
+The permissions policy determines what the assumed role can do.
+
+Example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadApplicationConfiguration",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::production-config/app/*"
+      ]
+    }
+  ]
+}
+```
+
+Meaning:
+
+```text
+A session using this role may read objects under:
+s3://production-config/app/
+```
+
+It does not allow:
+
+- Deleting objects
+- Uploading objects
+- Reading other buckets
+- Listing all AWS buckets
+- Managing IAM
+
+### Both Policies Are Required
+
+Consider an EC2 role:
+
+```text
+Trust policy:
+EC2 may assume the role.
+
+Permissions policy:
+The role may read one S3 prefix.
+```
+
+If the trust policy is wrong:
+
+```text
+EC2 cannot obtain the role.
+```
+
+If the permissions policy is wrong:
+
+```text
+EC2 obtains the role but cannot perform the required S3 operation.
+```
+
+## Role Assumption and AWS STS
+
+### AWS Security Token Service
+
+AWS Security Token Service issues temporary credentials for role sessions.
+
+A temporary credential set includes:
+
+```text
+Access key ID
+Secret access key
+Session token
+Expiration time
+```
+
+A role does not have a permanently assigned access key.
+
+Credentials are created when the role is assumed.
+
+### AssumeRole Flow
+
+Assume a deployment identity needs to assume:
+
+```text
+arn:aws:iam::222233334444:role/ProductionDeployRole
+```
+
+The flow is:
+
+```text
+1. The caller authenticates using its current identity.
+2. The caller requests sts:AssumeRole.
+3. AWS evaluates whether the caller may request that role.
+4. AWS evaluates the target role trust policy.
+5. AWS STS creates a temporary role session.
+6. STS returns temporary credentials.
+7. The caller uses those credentials for subsequent AWS requests.
+8. Requests are evaluated as the assumed-role session.
+```
+
+The resulting principal resembles:
+
+```text
+arn:aws:sts::222233334444:assumed-role/ProductionDeployRole/pipeline-1234
+```
+
+This is a role-session ARN, not the original IAM role ARN.
+
+### Caller Permission and Target Trust
+
+For conventional cross-account role assumption, both sides are required.
+
+Caller policy in the trusted account:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "sts:AssumeRole",
+  "Resource": "arn:aws:iam::222233334444:role/ProductionDeployRole"
+}
+```
+
+Target role trust policy in the trusting account:
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "arn:aws:iam::111122223333:role/CICDPipelineRole"
+  },
+  "Action": "sts:AssumeRole"
+}
+```
+
+Cross-account access requires authorization from both accounts.
+
+### Role Sessions
+
+Each role assumption creates a session.
+
+A session can include:
+
+- Session name
+- Session duration
+- Session tags
+- Source identity
+- Optional session policy
+- External ID for third-party access
+
+Good session names:
+
+```text
+github-run-8142
+alice@example.com
+incident-response-INC1042
+```
+
+Weak session names:
+
+```text
+test
+admin
+session1
+```
+
+Clear session names and source identity improve CloudTrail attribution.
+
+### Session Duration
+
+A normal assumable role can be configured with a maximum session duration from one to twelve hours.
+
+The default maximum is usually one hour unless changed.
+
+When one assumed role assumes another role, the resulting chained session is limited to one hour.
+
+Use shorter sessions for:
+
+- Production administration
+- Incident response
+- Privileged deployment roles
+- Security operations
+
+Use longer sessions only where operationally justified.
+
+## Common IAM Role Types
+
+### Service Role
+
+A service role allows an AWS service to perform actions on your behalf.
+
+Examples:
+
+```text
+Lambda execution role
+EC2 role
+ECS task role
+CodeBuild service role
+CloudFormation execution role
+Step Functions execution role
+```
+
+Example Lambda trust policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
+The permissions policy may then allow:
+
+- Writing CloudWatch Logs
+- Reading a specific secret
+- Reading from one DynamoDB table
+- Publishing to one SNS topic
+
+### Service-Linked Role
+
+A service-linked role is a special role linked directly to an AWS service.
+
+AWS defines how the service uses it.
+
+Names commonly resemble:
+
+```text
+AWSServiceRoleFor...
+```
+
+Do not treat a service-linked role like a normal application role.
+
+### EC2 Role and Instance Profile
+
+For EC2, the role is delivered through an instance profile.
+
+```text
+EC2 instance
+    ↓
+Instance profile
+    ↓
+IAM role
+    ↓
+Temporary credentials
+```
+
+Applications on the instance retrieve automatically rotated temporary credentials through the EC2 instance metadata service or through an AWS SDK credential provider.
+
+One IAM role can be assigned to an EC2 instance at a time.
+
+Applications on that instance share the role's permissions.
+
+Therefore, unrelated applications should not normally share one EC2 instance role.
+
+Forbidden:
+
+```text
+Hard-coded AWS access key in:
+- Application source code
+- .env file
+- AMI
+- User-data script
+- GitHub repository
+- Docker image
+```
+
+Required:
+
+```text
+Attach a workload-specific IAM role and allow the AWS SDK
+to retrieve temporary credentials automatically.
+```
+
+### ECS Task Role
+
+An ECS task role grants permissions to a specific ECS task or workload.
+
+Do not rely on the EC2 host role for container application permissions when using ECS on EC2.
+
+Separate task roles provide narrower access for each workload.
+
+### Cross-Account Role
+
+A cross-account role permits an identity from another AWS account to assume a role in the target account.
+
+Example:
+
+```text
+Security account
+    ↓ AssumeRole
+ProductionAuditRole
+    ↓
+Read security configuration in production account
+```
+
+This is preferable to creating duplicate IAM users in every account.
+
+### Federated Workforce Role
+
+A federated user authenticates through an external identity system such as:
+
+- Microsoft Entra ID
+- Okta
+- Google Workspace
+- Active Directory
+- Another SAML provider
+- OIDC provider
+- AWS IAM Identity Center
+
+After authentication, the user receives temporary AWS role credentials rather than permanent IAM-user credentials.
+
+### CI/CD Role
+
+A CI/CD role should be assumed by the pipeline identity.
+
+Examples:
+
+```text
+GitHub Actions through OIDC
+GitLab CI through OIDC
+CodeBuild service role
+Jenkins workload role
+```
+
+The role should be scoped to:
+
+- Specific repository
+- Specific branch
+- Specific environment
+- Specific AWS account
+- Specific deployment resources
+- Specific role-session conditions
+
+## IAM Policy Structure
+
+A policy is a JSON document.
+
+Basic structure:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DescriptiveStatementName",
+      "Effect": "Allow",
+      "Action": [
+        "service:Operation"
+      ],
+      "Resource": [
+        "arn:aws:service:region:account:resource"
+      ],
+      "Condition": {
+        "Operator": {
+          "ConditionKey": "ExpectedValue"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Version
+
+Use:
+
+```json
+"Version": "2012-10-17"
+```
+
+This is the policy language version, not the date the policy was created.
+
+### Statement
+
+A policy contains one or more statements.
+
+Use separate statements when:
+
+- Actions apply to different resource types.
+- Conditions differ.
+- Effects differ.
+- Resource scopes differ.
+- You need distinct audit-friendly purposes.
+
+### Sid
+
+`Sid` is an optional statement identifier.
+
+Good:
+
+```json
+"Sid": "ReadApplicationArtifacts"
+```
+
+Weak:
+
+```json
+"Sid": "Statement1"
+```
+
+### Effect
+
+Possible values:
+
+```text
+Allow
+Deny
+```
+
+### Action
+
+The `Action` identifies AWS API operations.
+
+Examples:
+
+```text
+s3:GetObject
+ec2:StartInstances
+logs:PutLogEvents
+secretsmanager:GetSecretValue
+sts:AssumeRole
+```
+
+### Resource
+
+`Resource` identifies the resource ARNs affected by the statement.
+
+Examples:
+
+```text
+arn:aws:s3:::company-artifacts
+arn:aws:s3:::company-artifacts/*
+arn:aws:ec2:ap-south-1:111122223333:instance/i-0123456789
+arn:aws:secretsmanager:ap-south-1:111122223333:secret:prod/db-*
+```
+
+Some actions do not support resource-level permissions and therefore require:
+
+```json
+"Resource": "*"
+```
+
+Do not assume that every use of `Resource: "*"` is automatically wrong.
+
+Verify whether the specific AWS action supports resource scoping.
+
+### Condition
+
+Conditions restrict when an otherwise matching statement applies.
+
+Typical restrictions include:
+
+- Source IP
+- VPC endpoint
+- Requested Region
+- Principal tag
+- Resource tag
+- Organization ID
+- Source account
+- Source ARN
+- MFA status
+- Requested resource tags
+
+Conditions refine permissions. They do not replace proper action and resource scoping.
+
+## Identity-Based and Resource-Based Policies
+
+### Identity-Based Policy
+
+An identity-based policy is attached to:
+
+- IAM user
+- IAM group
+- IAM role
+
+It states:
+
+```text
+This identity may perform these actions on these resources.
+```
+
+Example:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "s3:GetObject",
+  "Resource": "arn:aws:s3:::company-reports/*"
+}
+```
+
+### Resource-Based Policy
+
+A resource-based policy is attached to a resource.
+
+Examples:
+
+- S3 bucket policy
+- KMS key policy
+- SNS topic policy
+- SQS queue policy
+- Secrets Manager resource policy
+- IAM role trust policy
+
+It states:
+
+```text
+These principals may perform these actions against this resource.
+```
+
+Example S3 bucket policy fragment:
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "arn:aws:iam::111122223333:role/ReportReaderRole"
+  },
+  "Action": "s3:GetObject",
+  "Resource": "arn:aws:s3:::company-reports/*"
+}
+```
+
+Within one account, identity-based and resource-based permissions usually combine as a union, while an applicable explicit deny overrides an allow.
+
+Cross-account access generally requires permission from both the principal's account and the resource-owning account.
+
+## Least Privilege
+
+### Definition
+
+Least privilege means granting only the permissions required to perform an approved task, with no unnecessary permissions.
+
+It applies to:
+
+```text
+Who receives access
+Which actions are allowed
+Which resources are accessible
+Under which conditions
+For how long
+From which environment
+```
+
+### Least-Privilege Dimensions
+
+Use these six dimensions:
+
+| Dimension | Question |
+|---|---|
+| Principal | Who needs access? |
+| Action | What exact operations are required? |
+| Resource | Which exact resources are required? |
+| Condition | Under what circumstances? |
+| Duration | For how long? |
+| Environment | Development, staging, or production? |
+
+### Bad Policy
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "*",
+  "Resource": "*"
+}
+```
+
+Meaning:
+
+```text
+All AWS actions against all applicable resources.
+```
+
+This is administrative access.
+
+### Slightly Narrower but Still Weak
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "s3:*",
+  "Resource": "*"
+}
+```
+
+Meaning:
+
+```text
+All S3 actions against all S3 resources the account can address.
+```
+
+This may include:
+
+- Deleting objects
+- Deleting buckets
+- Changing bucket policies
+- Changing encryption
+- Changing lifecycle configuration
+- Replication changes
+- Object ownership changes
+
+### Properly Scoped S3 Policy
+
+Requirement:
+
+```text
+Application may:
+- List the reports/ prefix
+- Download report objects
+
+Application may not:
+- Upload
+- Delete
+- Read other prefixes
+- Access other buckets
+```
+
+Policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListReportsPrefix",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::company-data",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "reports",
+            "reports/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ReadReportObjects",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::company-data/reports/*"
+    }
+  ]
+}
+```
+
+Notice the two resource types:
+
+```text
+ListBucket → Bucket ARN
+GetObject  → Object ARN
+```
+
+A common IAM error is assigning an object action to a bucket ARN or a bucket action to an object ARN.
+
+## Resource-Level Restriction
+
+Weak:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "secretsmanager:GetSecretValue"
+  ],
+  "Resource": "*"
+}
+```
+
+This could allow reading every accessible secret.
+
+Stronger:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "secretsmanager:GetSecretValue"
+  ],
+  "Resource": [
+    "arn:aws:secretsmanager:ap-south-1:111122223333:secret:production/payments/database-*"
+  ]
+}
+```
+
+Stronger with a Region condition:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "secretsmanager:GetSecretValue",
+  "Resource": "arn:aws:secretsmanager:ap-south-1:111122223333:secret:production/payments/database-*",
+  "Condition": {
+    "StringEquals": {
+      "aws:RequestedRegion": "ap-south-1"
+    }
+  }
+}
+```
+
+## Role-Based and Attribute-Based Access
+
+### Role-Based Access Control
+
+RBAC assigns permissions according to job or workload role.
+
+Examples:
+
+```text
+DatabaseOperator
+ReadOnlyAuditor
+ProductionDeployer
+BillingViewer
+ApplicationRuntime
+```
+
+### Attribute-Based Access Control
+
+ABAC uses attributes such as tags.
+
+Example rule:
+
+```text
+Permit access when:
+Principal Project tag = Resource Project tag
+```
+
+Conceptual policy:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "ec2:StartInstances",
+    "ec2:StopInstances"
+  ],
+  "Resource": "*",
+  "Condition": {
+    "StringEquals": {
+      "aws:ResourceTag/Project": "${aws:PrincipalTag/Project}"
+    }
+  }
+}
+```
+
+ABAC can reduce the need to maintain separate policies for every project, provided that tagging is governed correctly.
+
+### Tag Security Warning
+
+ABAC fails when users can freely alter authorization tags.
+
+If access depends on:
+
+```text
+Project=Payments
+```
+
+then permission to add or modify that tag becomes security-sensitive.
+
+Control:
+
+- Who can create tags
+- Who can change authorization tags
+- Which tag keys are accepted
+- Which tag values are accepted
+- Whether tags must be supplied during resource creation
+
+## IAM Policy Evaluation
+
+### Fundamental Rules
+
+AWS authorization starts with an implicit deny.
+
+```text
+No applicable Allow → Denied
+Applicable Allow    → Potentially allowed
+Applicable Deny     → Denied
+```
+
+The decisive rule is:
+
+```text
+Explicit Deny overrides every Allow.
+```
+
+### Simplified Evaluation Model
+
+A useful simplified formula is:
+
+```text
+Effective permissions =
+    permissions granted by identity and resource policies
+    intersected with:
+        permissions boundary
+        session policy
+        SCP and RCP guardrails
+
+Then:
+    any applicable explicit Deny wins.
+```
+
+More precisely:
+
+```text
+Identity-based policy + resource-based policy:
+Usually union
+
+Identity policy + permissions boundary:
+Intersection
+
+Identity policy + SCP:
+Intersection
+
+Role policy + session policy:
+Intersection
+```
+
+### Example
+
+Role policy:
+
+```text
+Allows:
+s3:GetObject
+s3:PutObject
+```
+
+Permissions boundary:
+
+```text
+Allows:
+s3:GetObject
+```
+
+SCP:
+
+```text
+Allows:
+s3:*
+```
+
+Effective permissions:
+
+```text
+s3:GetObject
+```
+
+`PutObject` is not allowed by the permissions boundary.
+
+### Explicit Deny Example
+
+Role policy:
+
+```text
+Allow s3:GetObject
+```
+
+Bucket policy:
+
+```text
+Deny s3:GetObject when the connection is not using TLS
+```
+
+Request without TLS:
+
+```text
+Denied
+```
+
+The role's allow cannot override the bucket policy's explicit deny.
+
+## Permissions Boundaries
+
+A permissions boundary sets the maximum permissions that an IAM user or role can receive from identity-based policies.
+
+It does not grant permissions by itself.
+
+```text
+Identity policy:
+What the role has been granted
+
+Permissions boundary:
+Maximum permissions the role is permitted to receive
+```
+
+Effective permissions are the intersection of the two.
+
+### Example
+
+Developer-created role policy:
+
+```text
+Allow:
+ec2:*
+iam:*
+s3:*
+```
+
+Boundary:
+
+```text
+Allow:
+ec2:Describe*
+s3:GetObject
+s3:ListBucket
+```
+
+Effective result:
+
+```text
+ec2:Describe*
+s3:GetObject
+s3:ListBucket
+```
+
+The boundary prevents the broad identity policy from becoming fully effective.
+
+### Appropriate Use
+
+Permissions boundaries are useful when delegating role creation.
+
+Example:
+
+```text
+Platform team:
+Creates boundary named WorkloadRoleBoundary
+
+Application teams:
+May create their own application roles
+
+Requirement:
+Every created role must use WorkloadRoleBoundary
+```
+
+The application team can manage its role policies without exceeding the authorized maximum.
+
+### Incorrect Assumption
+
+```text
+Boundary allows s3:GetObject
+Therefore the role can read S3.
+```
+
+Incorrect.
+
+The identity policy must also allow `s3:GetObject`.
+
+## AWS Organizations Guardrails
+
+### Service Control Policy
+
+An SCP limits the maximum available permissions for principals in member accounts of an AWS Organization.
+
+An SCP does not grant permissions.
+
+Example:
+
+```text
+SCP denies disabling CloudTrail.
+```
+
+Even an administrator role in that member account cannot disable CloudTrail while the deny applies.
+
+### Resource Control Policy
+
+An RCP places organization-level guardrails on supported resources.
+
+Conceptually:
+
+```text
+SCP:
+Controls the maximum permissions available to principals.
+
+RCP:
+Controls the maximum permissions available against resources.
+```
+
+Identity-based or resource-based policies are still required to grant actual permissions.
+
+### Guardrail Hierarchy
+
+```text
+Organization
+└── Organizational Unit
+    └── Account
+        └── IAM role
+            └── Role session
+```
+
+A request may be affected by policies at several levels.
+
+When troubleshooting, do not stop after finding an `Allow` attached to the role.
+
+## Session Policies
+
+A session policy is supplied when creating a temporary STS session.
+
+It can restrict the resulting session further.
+
+Example:
+
+Role normally permits:
+
+```text
+Read and write to bucket A
+Read from bucket B
+```
+
+Session policy permits:
+
+```text
+Read only from bucket A
+```
+
+Effective session:
+
+```text
+Read only from bucket A
+```
+
+A session policy cannot expand beyond the role's existing permissions.
+
+Appropriate uses:
+
+- Temporary incident access
+- Restricted automation run
+- Tenant-specific session
+- Per-request scope reduction
+- Federated session restriction
+
+## `iam:PassRole`
+
+### Purpose
+
+`iam:PassRole` allows a principal to assign an IAM role to an AWS service.
+
+Examples:
+
+- Launch EC2 with an instance role
+- Create Lambda with an execution role
+- Create ECS task definition with a task role
+- Start CodeBuild with a service role
+- Create a CloudFormation stack using an execution role
+
+The service later assumes that role and uses its permissions.
+
+### Why It Is Security-Sensitive
+
+Suppose a developer cannot directly delete production data.
+
+However, the developer is allowed to pass this role:
+
+```text
+ProductionAdministratorRole
+```
+
+to Lambda.
+
+The developer could:
+
+1. Create a Lambda function.
+2. Assign `ProductionAdministratorRole`.
+3. Run code through the Lambda function.
+4. Use the role's privileges indirectly.
+
+Therefore, broad `iam:PassRole` can create a privilege-escalation path.
+
+### Forbidden
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "iam:PassRole",
+  "Resource": "*"
+}
+```
+
+This allows passing any eligible role in the account.
+
+### Correct Restriction
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PassApprovedEC2Roles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:PassRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::111122223333:role/application/ec2/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+```
+
+This restricts:
+
+```text
+Which roles may be passed
+Which service may receive them
+```
+
+### `AssumeRole` vs `PassRole`
+
+`sts:AssumeRole`:
+
+```text
+The calling principal becomes a role session.
+```
+
+`iam:PassRole`:
+
+```text
+The calling principal assigns a role to an AWS service.
+The AWS service assumes the role later.
+```
+
+They are not equivalent.
+
+## Third-Party Cross-Account Roles
+
+When granting a third-party provider access:
+
+```text
+Do not create an IAM user with permanent access keys.
+Create a cross-account IAM role.
+```
+
+Require:
+
+- Third party's AWS account ID
+- Restricted permissions policy
+- Restricted trust policy
+- Unique external ID
+- Auditable role sessions
+
+Trust policy example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TrustMonitoringVendor",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::444455556666:root"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "customer-7c83f560-b2fd"
+        }
+      }
+    }
+  ]
+}
+```
+
+The external ID helps prevent the confused deputy problem, where one customer attempts to trick a multi-tenant provider into using another customer's role.
+
+The external ID should be unique per customer.
+
+It should not be treated as a password or secret.
+
+## Confused Deputy Protection for AWS Services
+
+When an AWS service accesses a resource on your behalf, restrict the service principal using context such as:
+
+```text
+aws:SourceArn
+aws:SourceAccount
+```
+
+Example:
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": {
+    "Service": "cloudtrail.amazonaws.com"
+  },
+  "Action": "s3:PutObject",
+  "Resource": "arn:aws:s3:::central-audit-logs/AWSLogs/111122223333/*",
+  "Condition": {
+    "StringEquals": {
+      "aws:SourceAccount": "111122223333"
+    }
+  }
+}
+```
+
+Trusting only a service principal without limiting which customer-owned resource may invoke it can create a cross-service confused deputy risk.
+
+## Managed and Inline Policies
+
+### AWS Managed Policy
+
+Created and maintained by AWS.
+
+Examples:
+
+```text
+ReadOnlyAccess
+AmazonS3ReadOnlyAccess
+AdministratorAccess
+```
+
+Advantages:
+
+- Quick to adopt
+- Maintained by AWS
+- Useful during initial setup
+
+Disadvantages:
+
+- Usually broader than a specific workload needs
+- May change as AWS updates the policy
+- Designed for general reuse rather than your exact architecture
+
+A sensible process is to start with managed policies only where necessary and then replace them with customer-managed, least-privilege policies based on actual usage.
+
+### Customer-Managed Policy
+
+Created and maintained in your account.
+
+Advantages:
+
+- Reusable
+- Versioned
+- Centrally managed
+- Can be specific to your architecture
+- Easier to audit across several roles
+
+### Inline Policy
+
+Embedded directly into one user, group, or role.
+
+Advantages:
+
+- Strong one-to-one relationship
+- Deleted with the identity
+
+Disadvantages:
+
+- Harder to reuse
+- Harder to inventory consistently
+- Can fragment permissions management
+
+Recommended rule:
+
+- Use customer-managed policies for reusable permission sets.
+- Use inline policies only where a strict one-to-one policy relationship is intentional and documented.
+
+## Least-Privilege Implementation Process
+
+Do not attempt to guess a perfect production policy in one step.
+
+Use a controlled process.
+
+### Phase 1: Define the Task
+
+Write the exact workload requirement:
+
+```text
+The invoice processor must:
+- Read objects from incoming-invoices/
+- Write objects to processed-invoices/
+- Read one Secrets Manager secret
+- Publish failures to one SNS topic
+```
+
+### Phase 2: Identify API Actions
+
+Map application operations to AWS API actions:
+
+```text
+Read object       → s3:GetObject
+Write object      → s3:PutObject
+Read secret       → secretsmanager:GetSecretValue
+Publish message   → sns:Publish
+```
+
+### Phase 3: Identify Resource ARNs
+
+Identify:
+
+```text
+Incoming prefix
+Processed prefix
+Specific secret
+Specific SNS topic
+```
+
+### Phase 4: Add Conditions
+
+Examples:
+
+- Restrict Region
+- Restrict organization
+- Restrict resource tags
+- Restrict source account
+- Restrict source ARN
+- Restrict VPC endpoint
+
+### Phase 5: Test Allowed Actions
+
+Confirm every required operation succeeds.
+
+### Phase 6: Test Forbidden Actions
+
+Confirm:
+
+```text
+Delete object → denied
+Read unrelated secret → denied
+Publish to unrelated topic → denied
+Modify IAM → denied
+```
+
+### Phase 7: Observe Actual Usage
+
+Use:
+
+- AWS CloudTrail
+- IAM last-accessed information
+- IAM Access Analyzer policy generation
+- IAM Access Analyzer policy validation
+
+Generated policies must still be reviewed and tested before production deployment.
+
+### Phase 8: Remove Unused Access
+
+Review periodically:
+
+- Unused actions
+- Unused services
+- Unused roles
+- Old trust relationships
+- Unused access keys
+- Excessive session durations
+- Stale third-party roles
+
+## IAM Design Rules
+
+### Required
+
+- Human users use federation and temporary credentials.
+- Workloads use IAM roles.
+- Each workload receives a dedicated role.
+- Each role has one clear business or technical purpose.
+- Trust policies identify specific trusted principals.
+- Permissions list required API actions.
+- Resources are scoped to exact ARNs where supported.
+- Conditions are added where they materially reduce risk.
+- Production and development use separate roles.
+- Privileged sessions are short-lived.
+- `iam:PassRole` is restricted to approved roles.
+- Access is reviewed using CloudTrail and IAM Access Analyzer.
+- Explicit denies are used only as intentional guardrails.
+
+### Forbidden Without Written Justification
+
+- Permanent access keys in application code
+- `AdministratorAccess` for application workloads
+- `"Action": "*"` for routine roles
+- `"Resource": "*"` where resource-level permissions are supported
+- `"Principal": "*"` in a role trust policy
+- Shared roles across unrelated workloads
+- Development roles with production access
+- Unrestricted `iam:PassRole`
+- Third-party IAM users with permanent credentials
+- Trusting an entire external account without additional safeguards
+- Authorization tags that users can freely modify
+- Assuming an SCP, boundary, or session policy grants permissions
+- Treating a role name as proof that it is safe
+
+## Common IAM Failure Scenarios
+
+### Scenario 1: Role Cannot Be Assumed
+
+Possible causes:
+
+- Caller lacks `sts:AssumeRole`.
+- Target trust policy does not trust the caller.
+- Trust-policy condition fails.
+- External ID is missing or incorrect.
+- Permissions boundary blocks `sts:AssumeRole`.
+- SCP blocks the operation.
+- Role ARN is incorrect.
+- Session duration exceeds the role limit.
+- Role chaining requested more than one hour.
+
+### Scenario 2: Role Assumption Succeeds, but the API Call Fails
+
+Possible causes:
+
+- Role permissions policy does not allow the action.
+- Resource ARN is incorrect.
+- Required dependent action is missing.
+- Resource policy denies access.
+- Permissions boundary limits the action.
+- Session policy limits the action.
+- SCP or RCP limits the action.
+- KMS key policy does not allow decryption.
+- Condition does not match.
+- Explicit deny applies.
+
+### Scenario 3: EC2 Application Has No Credentials
+
+Possible causes:
+
+- No instance profile is attached.
+- Instance profile contains the wrong role.
+- Metadata access is blocked.
+- Application SDK is not using the standard credential chain.
+- Proxy settings interfere with metadata access.
+- Credentials were hard-coded and have expired.
+- Role was recently replaced and the application cached old credentials.
+
+### Scenario 4: Lambda Cannot Read a Secret
+
+Check:
+
+```text
+Lambda execution role
+→ secretsmanager:GetSecretValue
+→ Exact secret ARN
+→ KMS decrypt permission, when required
+→ KMS key policy
+→ VPC and DNS connectivity where applicable
+```
+
+Do not solve the issue by attaching `AdministratorAccess`.
+
+### Scenario 5: User Can Create Lambda but Cannot Select the Execution Role
+
+Likely cause:
+
+```text
+Missing iam:PassRole
+```
+
+Grant `iam:PassRole` only for the approved execution-role ARN.
+
+### Scenario 6: Policy Appears to Allow the Action but AWS Denies It
+
+Likely causes:
+
+- Explicit deny elsewhere
+- Permissions boundary
+- SCP
+- RCP
+- Session policy
+- Resource-policy condition
+- Unsupported resource ARN
+- Condition key unavailable in the request
+- Wrong principal type
+- Wrong account or Region
+
+### Scenario 7: Policy Grants More Access Than Expected
+
+Possible causes:
+
+- Another attached policy grants additional permissions.
+- Multiple permission sources are aggregated.
+- Resource policy grants access directly.
+- Wildcard action includes unexpected API operations.
+- Wildcard resource includes unrelated resources.
+- `NotAction` was used with `Allow`.
+- ABAC tags are too broadly controllable.
+
+`NotAction` combined with `Allow` can unintentionally grant much broader permissions than expected.
+
+## IAM Troubleshooting Procedure
+
+### Step 1: Identify the Actual Principal
+
+Run:
+
+```bash
+aws sts get-caller-identity
+```
+
+Example output:
+
+```json
+{
+  "UserId": "AROAXXXXXXXXX:pipeline-123",
+  "Account": "111122223333",
+  "Arn": "arn:aws:sts::111122223333:assumed-role/DeployRole/pipeline-123"
+}
+```
+
+Do not assume the active principal from the shell username, EC2 username, or local operating-system account.
+
+### Step 2: Identify the Exact Denied Action
+
+Extract from the error:
+
+```text
+Action:
+Resource:
+Principal:
+Region:
+Request conditions:
+```
+
+Example:
+
+```text
+Action:    s3:GetObject
+Resource:  arn:aws:s3:::company-data/report.csv
+Principal: assumed-role/AppRole/i-012345
+```
+
+### Step 3: Inspect the Role
+
+```bash
+aws iam get-role \
+  --role-name AppRole
+```
+
+This shows information including the trust policy and maximum session duration.
+
+### Step 4: List Managed Policies
+
+```bash
+aws iam list-attached-role-policies \
+  --role-name AppRole
+```
+
+### Step 5: List Inline Policies
+
+```bash
+aws iam list-role-policies \
+  --role-name AppRole
+```
+
+Retrieve an inline policy:
+
+```bash
+aws iam get-role-policy \
+  --role-name AppRole \
+  --policy-name ApplicationPermissions
+```
+
+### Step 6: Check the Permissions Boundary
+
+```bash
+aws iam get-role \
+  --role-name AppRole \
+  --query 'Role.PermissionsBoundary'
+```
+
+### Step 7: Check Resource Policies
+
+Depending on the resource, inspect:
+
+```text
+S3 bucket policy
+KMS key policy
+SQS queue policy
+SNS topic policy
+Secrets Manager resource policy
+Lambda resource policy
+```
+
+### Step 8: Check AWS Organizations Guardrails
+
+Investigate:
+
+```text
+SCP
+RCP
+Organizational Unit inheritance
+Account-level guardrails
+```
+
+### Step 9: Check Session Restrictions
+
+Determine whether the session was created with:
+
+- Session policy
+- Session tags
+- Source identity
+- External ID
+- Reduced duration
+
+### Step 10: Check Explicit Denies First
+
+An explicit deny ends the evaluation.
+
+Search all applicable policies for:
+
+```json
+"Effect": "Deny"
+```
+
+Then determine whether the action, resource, and conditions match the request.
+
+### Step 11: Review CloudTrail
+
+CloudTrail records the caller identity, event name, source, request parameters, and other authorization evidence for supported API activity.
+
+Review the denied event and the preceding role-assumption event.
+
+### Step 12: Use Policy Tools
+
+Use:
+
+- IAM Policy Simulator
+- IAM Access Analyzer policy validation
+- IAM Access Analyzer findings
+- Last-accessed information
+
+Policy simulation is useful, but it does not fully reproduce every service-specific runtime condition.
+
+Treat it as supporting evidence, not the sole proof of effective access.
+
+## Practical Laboratory
+
+### Objective
+
+Create a workload role that can read one S3 prefix and nothing else.
+
+### Architecture
+
+```text
+EC2 test instance
+    ↓ Instance profile
+S3ReportReaderRole
+    ↓
+s3://iam-lab-bucket/reports/*
+```
+
+### Required Role Trust Policy
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TrustEC2",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
+### Required Permissions Policy
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListReportsPrefix",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::iam-lab-bucket",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "reports",
+            "reports/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ReadReportObjects",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::iam-lab-bucket/reports/*"
+    }
+  ]
+}
+```
+
+### Required Tests
+
+| Test | Expected result |
+|---|---|
+| `sts get-caller-identity` | Shows assumed EC2 role |
+| List `reports/` | Allowed |
+| Read `reports/test.txt` | Allowed |
+| Upload to `reports/` | Denied |
+| Delete `reports/test.txt` | Denied |
+| Read `private/secret.txt` | Denied |
+| List all buckets | Denied |
+| Create IAM user | Denied |
+
+### AWS CLI Tests
+
+```bash
+aws sts get-caller-identity
+```
+
+```bash
+aws s3 ls s3://iam-lab-bucket/reports/
+```
+
+```bash
+aws s3 cp \
+  s3://iam-lab-bucket/reports/test.txt \
+  /tmp/test.txt
+```
+
+Expected denial:
+
+```bash
+aws s3 rm \
+  s3://iam-lab-bucket/reports/test.txt
+```
+
+Expected denial:
+
+```bash
+aws s3 cp \
+  s3://iam-lab-bucket/private/secret.txt \
+  /tmp/secret.txt
+```
+
+### Failure-Injection Exercises
+
+Deliberately introduce:
+
+1. Remove `s3:GetObject`.
+2. Use the bucket ARN instead of the object ARN.
+3. Change the trust principal from EC2 to Lambda.
+4. Remove the instance profile.
+5. Add a permissions boundary that excludes S3.
+6. Add an explicit deny to the bucket policy.
+7. Pass the wrong role to EC2.
+8. Restrict access to the wrong prefix.
+9. Request an excessive role-session duration.
+10. Add an unrestricted `iam:PassRole` policy and identify the escalation risk.
+
+For each exercise, record:
+
+```text
+Symptom
+Active principal
+Requested action
+Requested resource
+Applicable policies
+Root cause
+Correction
+Prevention
+```
+
+## Architecture Exercise
+
+Design roles for this application:
+
+```text
+Internet-facing application
+├── GitHub Actions deployment pipeline
+├── EC2 application servers
+├── S3 artifact bucket
+├── Secrets Manager database credential
+├── CloudWatch logs
+└── RDS database
+```
+
+### Deployment Role
+
+May:
+
+- Deploy application artifacts
+- Update approved compute resources
+- Read deployment configuration
+- Pass only the application runtime role
+
+May not:
+
+- Modify account-wide IAM
+- Access database credentials
+- Delete CloudTrail
+- Pass administrator roles
+- Modify unrelated environments
+
+### Application Runtime Role
+
+May:
+
+- Read the required application secret
+- Read approved configuration
+- Write application logs
+- Access required application data
+
+May not:
+
+- Deploy infrastructure
+- Manage IAM
+- Read unrelated secrets
+- Access development or unrelated production applications
+- Modify logging configuration
+
+### Read-Only Operations Role
+
+May:
+
+- View infrastructure
+- View logs
+- View alarms
+- View application health
+
+May not:
+
+- Restart resources
+- Change policies
+- Read secret values
+- Modify production
+
+### Emergency Role
+
+Must require:
+
+- Strong authentication
+- Short session
+- Approval process
+- Detailed CloudTrail attribution
+- Alerting on assumption
+- Defined incident purpose
+- Post-use review
+
+## Interview Questions
+
+### What is the difference between an IAM user and an IAM role?
+
+An IAM user is a long-lived identity that may have permanent credentials.
+
+An IAM role has no permanent credentials and is assumed to create temporary role sessions.
+
+### What are the two main policy components of a role?
+
+The trust policy defines who can assume the role.
+
+Permissions policies define what the assumed role may do.
+
+### Does a trust policy grant S3 access?
+
+No.
+
+It grants or restricts role assumption.
+
+S3 access must be granted through the role's permissions and, where applicable, the resource policy.
+
+### What is least privilege?
+
+Grant only the actions, resources, conditions, and duration necessary for an approved task.
+
+### What is an implicit deny?
+
+A request is denied because no applicable policy explicitly allows it.
+
+### What is an explicit deny?
+
+An applicable policy contains `"Effect": "Deny"`.
+
+It overrides applicable allows.
+
+### Does a permissions boundary grant access?
+
+No.
+
+It defines the maximum permissions identity-based policies can grant to the user or role.
+
+### Does an SCP grant permissions?
+
+No.
+
+It limits the maximum permissions available to principals in affected member accounts.
+
+### What does `iam:PassRole` do?
+
+It permits a principal to assign an approved role to an AWS service so that the service can assume it later.
+
+### Why is broad `iam:PassRole` dangerous?
+
+It can allow a user to assign a highly privileged role to a service they control and use that service to perform privileged actions indirectly.
+
+### Why use an external ID?
+
+To reduce the confused deputy risk when a multi-tenant third party assumes roles in customer accounts.
+
+### Why should applications use roles instead of access keys?
+
+Roles provide temporary, automatically rotated credentials and avoid storing permanent credentials in applications.
+
+### What happens when an identity policy allows an action but an SCP denies it?
+
+The request is denied.
+
+### What is role chaining?
+
+Role chaining occurs when one assumed-role session assumes another role.
+
+The chained session is limited to one hour.
+
+### How would you troubleshoot an IAM `AccessDenied` error?
+
+Identify:
+
+1. Active principal
+2. Requested action
+3. Requested resource
+4. Request context
+5. Identity policies
+6. Resource policies
+7. Trust policy
+8. Permissions boundary
+9. Session policy
+10. SCP and RCP guardrails
+11. Conditions
+12. Explicit denies
+
+## Knowledge Check
+
+Answer without notes:
+
+1. What is a principal?
+2. Why is an IAM group not a principal?
+3. What is an IAM role?
+4. What is a role trust policy?
+5. What is a role permissions policy?
+6. What does STS issue?
+7. What is a role-session ARN?
+8. What action is normally used to assume a role?
+9. What is the difference between `AssumeRole` and `PassRole`?
+10. Why should applications not use permanent access keys?
+11. What is implicit deny?
+12. What is explicit deny?
+13. Which takes priority: allow or explicit deny?
+14. Does a permissions boundary grant access?
+15. Does an SCP grant access?
+16. What is a session policy?
+17. Why should `Resource` be narrowed?
+18. When is `Resource: "*"` unavoidable?
+19. What is ABAC?
+20. Why must tag-modification permissions be controlled?
+21. What does an EC2 instance profile do?
+22. Can unrelated applications safely share one EC2 role?
+23. Why is unrestricted `iam:PassRole` dangerous?
+24. What does an external ID protect against?
+25. Why should role-session names be meaningful?
+26. What is the role-chaining duration limit?
+27. What is the difference between an AWS-managed and customer-managed policy?
+28. What tools can identify unused permissions?
+29. What policy types must be checked during an access denial?
+30. Why is `AdministratorAccess` inappropriate for application workloads?
+
+## Completion Standard
+
+This guide is complete only when you can:
+
+- Draw the IAM role-assumption flow.
+- Write an EC2 trust policy from memory.
+- Write a resource-scoped permissions policy.
+- Explain trust versus permission.
+- Explain temporary credentials.
+- Explain role sessions.
+- Explain implicit and explicit deny.
+- Calculate permissions with a boundary.
+- Explain SCP and RCP guardrails.
+- Secure `iam:PassRole`.
+- Explain cross-account authorization.
+- Explain the external-ID requirement.
+- Design separate deployment and runtime roles.
+- Diagnose at least five IAM failures.
+- Prove that required actions succeed.
+- Prove that forbidden actions fail.
+- Explain why each granted permission exists.

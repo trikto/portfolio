@@ -41,6 +41,8 @@
 
 ## Recent changes
 
+- Added the published IAM Roles and Least Privilege article at `/blog/iam-roles-and-least-privilege` on 2026-07-23; preserve its role-assumption, policy-evaluation, `iam:PassRole`, cross-account, workload-role, troubleshooting, and practical-lab sections when editing it.
+
 - Updated the `/cron` editor to use one editable continuous five-token expression surface with labels, right-aligned secondary actions, validation, presets, and run previews on 2026-07-20; numeric-prefix and oversized steps such as `0/15` and weekday `*/8` are rejected before Croner previews to prevent client crashes.
 
 - Clarified on 2026-07-19 that the public visibility of `trikto/portfolio` does not grant push access to everyone; pushing requires collaborator or organization write permission.
