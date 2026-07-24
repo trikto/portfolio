@@ -41,6 +41,8 @@
 
 ## Recent changes
 
+- Added an article-only fixed reading-progress bar with a compact percentage on 2026-07-24. It measures from `.article-prose` through `.article-footer`, excludes related posts and the site footer, and uses a shared dependency-free client component with reduced-motion-safe styling.
+
 - Expanded `/cron` on 2026-07-23 with the `Online Cron Editor` heading, consolidated route metadata, server-rendered Linux cron guidance and FAQ content, WebApplication and FAQPage JSON-LD, an updated `/tools` card, and one contextual article link; fixed plain-English explanations for wildcard minute steps such as `*/5` and constrained editor grid items so the Copy button and fifth field label remain visible on mobile; preserve the interactive editor above the guide and do not claim support for names, aliases, numeric-prefix steps, or non-five-field platform syntax.
 
 - Added the published IAM Roles and Least Privilege article at `/blog/iam-roles-and-least-privilege` on 2026-07-23; preserve its local cover image and role-assumption, policy-evaluation, `iam:PassRole`, cross-account, workload-role, troubleshooting, and practical-lab sections when editing it.

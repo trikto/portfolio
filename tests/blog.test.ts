@@ -25,6 +25,16 @@ test("article prose keeps Markdown list markers", async () => {
   assert.match(styles, /\.article-prose ol\s*\{\s*list-style\s*:\s*decimal/);
 });
 
+test("article pages include the shared reading progress indicator", async () => {
+  const page = await readFile(path.join(process.cwd(), "app", "blog", "[slug]", "page.tsx"), "utf8");
+  const progress = await readFile(path.join(process.cwd(), "app", "components", "article-reading-progress.tsx"), "utf8");
+  assert.match(page, /import \{ ArticleReadingProgress \} from "\.\.\/\.\.\/components\/article-reading-progress"/);
+  assert.match(page, /<ArticleReadingProgress \/>/);
+  assert.match(progress, /document\.querySelector\("\.article-prose"\)/);
+  assert.match(progress, /document\.querySelector\("\.article-footer"\)/);
+  assert.match(progress, /Math\.min\(100, Math\.max\(0,/);
+});
+
 test("article-page images retain their source proportions while card covers stay fixed", async () => {
   const styles = await readFile(path.join(process.cwd(), "app", "globals.css"), "utf8");
   assert.match(styles, /\.article-hero-image img\s*\{\s*display:block;\s*width:100%;\s*height:auto;/);
