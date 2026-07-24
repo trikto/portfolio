@@ -20,6 +20,7 @@
 
 ## Publishing
 
+- After making requested repository changes, validate them, commit only the scoped files, and push directly to `main` without waiting for a separate publishing reminder.
 - When the user asks to commit and push, commit the scoped changes and push directly to `main`; do not create a separate branch or pull request unless they explicitly ask for one.
 
 ## SEO maintenance
