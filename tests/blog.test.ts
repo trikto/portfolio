@@ -56,6 +56,8 @@ test("article pages include the shared reading progress indicator", async () => 
   assert.match(styles, /\.nav nav\s*\{[^}]*background:var\(--panel\)/);
   assert.doesNotMatch(styles, /\.site:not\(\.blog-page\) \.nav nav/);
   assert.doesNotMatch(styles, /background:radial-gradient\(800px 550px at 86% 8%,rgba\(255,255,255,\.045\),transparent 70%\),var\(--bg\)/);
+  assert.match(styles, /\.hero-system,\.pipeline\s*\{\s*box-shadow:none/);
+  assert.match(styles, /@media \(prefers-color-scheme:light\)\s*\{ \.blog-page \{ background:var\(--bg\); \} \}/);
   assert.doesNotMatch(styles, /\.site:not\(\.blog-page\)\.concept-cloud\s*\{[^}]*background:/);
 });
 

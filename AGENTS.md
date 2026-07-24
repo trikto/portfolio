@@ -46,7 +46,7 @@
 
 ## Recent changes
 
-- Made the shared navigation neutral across routes and removed the dark-mode radial background glow on 2026-07-24. Desktop navigation no longer has a route-specific background; the mobile menu uses `var(--panel)` across routes. Keep the blog-only light-mode radial glow unchanged.
+- Made the shared navigation neutral across routes and removed radial/glow effects on 2026-07-24. Desktop navigation no longer has a route-specific background; the mobile menu uses `var(--panel)` across routes. The homepage topology/pipeline surfaces have no diffuse shadow, and blog light mode uses a flat background too.
 
 - Unified every route's dark-mode base background with article pages on 2026-07-24 by removing the homepage concept-cloud gradient override; retain the blog-only light-mode theme under `prefers-color-scheme`.
 
