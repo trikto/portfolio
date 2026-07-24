@@ -18,6 +18,10 @@
 - Type check: `npm run typecheck`
 - Blog tests: `npm run test:blog`
 
+## Publishing
+
+- When the user asks to commit and push, commit the scoped changes and push directly to `main`; do not create a separate branch or pull request unless they explicitly ask for one.
+
 ## SEO maintenance
 
 - Whenever a website change affects SEO, update the relevant SEO files as part of the same change.
