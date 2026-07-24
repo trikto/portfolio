@@ -51,7 +51,11 @@ test("article pages include the shared reading progress indicator", async () => 
   assert.match(styles, /\.article-reading-progress-label\s*\{[^}]*cursor:pointer/);
   assert.match(styles, /\.article-reading-progress-label:focus-visible/);
   assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[^}]*\{[^}]*\.article-reading-progress-fill/);
-  assert.match(styles, /\.site:not\(\.blog-page\)\s*\{[^}]*background:radial-gradient\(800px 550px at 86% 8%,rgba\(255,255,255,\.045\),transparent 70%\),var\(--bg\)/);
+  assert.match(styles, /\.site:not\(\.blog-page\)\s*\{[^}]*background:var\(--bg\)/);
+  assert.match(styles, /\.site\.blog-page\s*\{[^}]*background:var\(--bg\)/);
+  assert.match(styles, /\.nav nav\s*\{[^}]*background:var\(--panel\)/);
+  assert.doesNotMatch(styles, /\.site:not\(\.blog-page\) \.nav nav/);
+  assert.doesNotMatch(styles, /background:radial-gradient\(800px 550px at 86% 8%,rgba\(255,255,255,\.045\),transparent 70%\),var\(--bg\)/);
   assert.doesNotMatch(styles, /\.site:not\(\.blog-page\)\.concept-cloud\s*\{[^}]*background:/);
 });
 

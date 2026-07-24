@@ -46,6 +46,8 @@
 
 ## Recent changes
 
+- Made the shared navigation neutral across routes and removed the dark-mode radial background glow on 2026-07-24. Desktop navigation no longer has a route-specific background; the mobile menu uses `var(--panel)` across routes. Keep the blog-only light-mode radial glow unchanged.
+
 - Unified every route's dark-mode base background with article pages on 2026-07-24 by removing the homepage concept-cloud gradient override; retain the blog-only light-mode theme under `prefers-color-scheme`.
 
 - Extended the shared reading-progress percentage, clickable DevOps/SRE quote, green pulse, and reduced-motion behavior to the homepage on 2026-07-24. Homepage progress measures the complete page scroll; article routes still measure only from `.article-prose` through `.article-footer`.
