@@ -10,7 +10,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 const tools = [
-  { title: "Cron Expression Validator", description: "Validate cron expressions, understand each field, and preview upcoming execution times.", action: "Cron Expression Validator", href: "/cron", icon: "◷" },
+  { title: "Cron Editor & Crontab Generator", description: "Build and validate cron expressions with human-readable explanations and upcoming run previews.", action: "Cron Editor & Crontab Generator", href: "/cron", icon: "◷" },
   { title: "YAML Validator and Formatter", description: "Validate, format, and troubleshoot YAML syntax directly in the browser.", action: "YAML Validator and Formatter", href: "/yaml", icon: "✓" },
 ];
 

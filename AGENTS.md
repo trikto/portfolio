@@ -41,6 +41,8 @@
 
 ## Recent changes
 
+- Expanded `/cron` on 2026-07-23 with the `Online Cron Editor` heading, consolidated route metadata, server-rendered Linux cron guidance and FAQ content, WebApplication and FAQPage JSON-LD, an updated `/tools` card, and one contextual article link; fixed plain-English explanations for wildcard minute steps such as `*/5` and constrained editor grid items so the Copy button and fifth field label remain visible on mobile; preserve the interactive editor above the guide and do not claim support for names, aliases, numeric-prefix steps, or non-five-field platform syntax.
+
 - Added the published IAM Roles and Least Privilege article at `/blog/iam-roles-and-least-privilege` on 2026-07-23; preserve its local cover image and role-assumption, policy-evaluation, `iam:PassRole`, cross-account, workload-role, troubleshooting, and practical-lab sections when editing it.
 
 - Updated the `/cron` editor to use one editable continuous five-token expression surface with labels, right-aligned secondary actions, validation, presets, and run previews on 2026-07-20; numeric-prefix and oversized steps such as `0/15` and weekday `*/8` are rejected before Croner previews to prevent client crashes.

@@ -17,6 +17,15 @@ Key pages:
 - https://gajan.dev/cron
 - https://gajan.dev/yaml
 
+## Developer tools
+
+### Cron Editor & Crontab Generator
+
+- URL: https://gajan.dev/cron
+- Description: Build and validate five-field Linux cron expressions, read plain-English explanations, and preview upcoming run times in the selected timezone.
+- Supported syntax: Numeric five-field schedules with wildcards, lists, ranges, wildcard or range steps, and numeric weekdays.
+- Unsupported syntax: Named months or weekdays, aliases such as `@daily`, numeric-prefix steps such as `0/15`, and platform-specific Quartz or AWS fields.
+
 ## Published articles
 
 ### CI/CD Pipelines Explained in Simple Terms
@@ -135,6 +144,8 @@ Common triggers include:
 -   Running it on a schedule
 
 For example, a team may run tests for every pull request but deploy only when code is merged into the main branch.
+
+For Linux tasks that run outside the pipeline platform, use the [online cron editor](https://gajan.dev/cron) to validate the five-field schedule and preview its upcoming run times.
 
 ### Common Pipeline Stages
 

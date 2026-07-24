@@ -27,12 +27,12 @@ export function cronExpression(fields: CronFields) { return fields.join(" "); }
 export function explainCron(fields: CronFields): string {
   if (validateCron(fields).length) return "Enter a valid five-field Linux cron expression.";
   const [minute, hour, dom, month, dow] = fields;
+  if (minute.startsWith("*/") && hour === "*" && dom === "*" && month === "*" && dow === "*") return `Every ${minute.slice(2)} minutes`;
   const time = minute === "*" && hour === "*" ? "Every minute" : minute === "0" && hour === "*" ? "At the start of every hour" : `At ${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
   if (dom === "*" && month === "*" && dow === "*") return time;
   if (dom === "*" && month === "*" && dow === "1-5") return `${time} on weekdays`;
   if (dom === "*" && month === "*" && dow === "1") return `${time} every Monday`;
   if (dom === "1" && month === "*" && dow === "*") return `${time} on the first day of every month`;
-  if (minute.startsWith("*/") && hour === "*" && dom === "*" && month === "*" && dow === "*") return `Every ${minute.slice(2)} minutes`;
   return `${time} when the schedule matches`;
 }
 export function upcomingRuns(fields: CronFields, timeZone: string, from = new Date()): Date[] {

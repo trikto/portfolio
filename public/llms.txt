@@ -16,7 +16,7 @@ Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrast
 ## Developer tools
 
 - [Free DevOps Tools](https://gajan.dev/tools): Browser-based utilities for infrastructure and automation work.
-- [Cron Expression Validator](https://gajan.dev/cron): Browser-based cron expression validation and schedule preview.
+- [Cron Editor & Crontab Generator](https://gajan.dev/cron): Build and validate five-field Linux cron expressions with human-readable explanations and timezone-aware run previews.
 - [YAML Validator and Formatter](https://gajan.dev/yaml): Browser-based YAML validation, formatting, and troubleshooting.
 
 ## Machine-readable resources

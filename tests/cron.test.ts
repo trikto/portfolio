@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { upcomingRuns, validateCron, type CronFields } from "../lib/cron.ts";
+import { explainCron, upcomingRuns, validateCron, type CronFields } from "../lib/cron.ts";
 
 const fields = (expression: string) => expression.split(" ") as CronFields;
 
@@ -9,6 +9,10 @@ test("accepts standard lists, ranges, and wildcard steps", () => {
     assert.equal(validateCron(fields(expression)).length, 0, expression);
     assert.equal(upcomingRuns(fields(expression), "UTC").length, 5, expression);
   }
+});
+
+test("explains wildcard minute steps before the generic daily match", () => {
+  assert.equal(explainCron(fields("*/5 * * * *")), "Every 5 minutes");
 });
 
 test("rejects malformed expressions without throwing during preview", () => {
