@@ -84,7 +84,6 @@
 .site:not(.blog-page) .project-card,.site:not(.blog-page) .capability-grid article,.site:not(.blog-page) .tool-card,.site:not(.blog-page) .service-card,.site:not(.blog-page) .service-detail,.site:not(.blog-page) .relevant-work-card,.site:not(.blog-page) .article-card { background:rgba(18,18,18,.82); }
 .site:not(.blog-page) .case-section { background:linear-gradient(90deg,transparent,rgba(255,255,255,.035),transparent); }
 .site:not(.blog-page) .writing-card { background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.025)); border-color:rgba(235,233,226,.24); }
-.site:not(.blog-page).concept-cloud { background:linear-gradient(180deg,#171716 0,#0a0a0a 58%); }
 .site:not(.blog-page).concept-cloud .hero-system { background:rgba(24,24,23,.86); }
 .site:not(.blog-page) .nav nav,.site:not(.blog-page) .experience-dialog { background:#171716; }
 .site:not(.blog-page) .experience-dialog::backdrop { background:rgba(0,0,0,.76); }

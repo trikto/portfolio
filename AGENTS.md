@@ -46,6 +46,8 @@
 
 ## Recent changes
 
+- Unified every route's dark-mode base background with article pages on 2026-07-24 by removing the homepage concept-cloud gradient override; retain the blog-only light-mode theme under `prefers-color-scheme`.
+
 - Extended the shared reading-progress percentage, clickable DevOps/SRE quote, green pulse, and reduced-motion behavior to the homepage on 2026-07-24. Homepage progress measures the complete page scroll; article routes still measure only from `.article-prose` through `.article-footer`.
 
 - Made the article reading-progress percentage a keyboard-accessible quote button on 2026-07-24. It keeps the live 0-100% scroll reading progress, uses a hand cursor and green pulse on click, and shows one of 100 original DevOps/SRE quotes for five seconds without immediate repeats; preserve the fixed mobile-safe popover and reduced-motion fallback.
