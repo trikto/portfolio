@@ -45,6 +45,8 @@
 
 ## Recent changes
 
+- Updated the article reading-progress percentage label to use the same `--good` green as its progress fill on 2026-07-24.
+
 - Added an article-only fixed reading-progress bar with a compact percentage on 2026-07-24. It measures from `.article-prose` through `.article-footer`, excludes related posts and the site footer, and uses a shared dependency-free client component with reduced-motion-safe styling.
 
 - Expanded `/cron` on 2026-07-23 with the `Online Cron Editor` heading, consolidated route metadata, server-rendered Linux cron guidance and FAQ content, WebApplication and FAQPage JSON-LD, an updated `/tools` card, and one contextual article link; fixed plain-English explanations for wildcard minute steps such as `*/5` and constrained editor grid items so the Copy button and fifth field label remain visible on mobile; preserve the interactive editor above the guide and do not claim support for names, aliases, numeric-prefix steps, or non-five-field platform syntax.
