@@ -46,6 +46,8 @@
 
 ## Recent changes
 
+- Extended the shared reading-progress percentage, clickable DevOps/SRE quote, green pulse, and reduced-motion behavior to the homepage on 2026-07-24. Homepage progress measures the complete page scroll; article routes still measure only from `.article-prose` through `.article-footer`.
+
 - Made the article reading-progress percentage a keyboard-accessible quote button on 2026-07-24. It keeps the live 0-100% scroll reading progress, uses a hand cursor and green pulse on click, and shows one of 100 original DevOps/SRE quotes for five seconds without immediate repeats; preserve the fixed mobile-safe popover and reduced-motion fallback.
 
 - Increased the article reading-progress percentage label to match article body text sizing: 17px desktop and 16px at the mobile breakpoint, on 2026-07-24.

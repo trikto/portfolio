@@ -110,7 +110,7 @@ function nextQuoteIndex(previous: number) {
   return index >= previous ? index + 1 : index;
 }
 
-export function ArticleReadingProgress() {
+function ReadingProgress({ articleOnly = false }: { articleOnly?: boolean }) {
   const [progress, setProgress] = useState(0);
   const [quote, setQuote] = useState<{ text: string; key: number } | null>(null);
   const [isPulsing, setIsPulsing] = useState(false);
@@ -123,10 +123,10 @@ export function ArticleReadingProgress() {
       frame = 0;
       const prose = document.querySelector(".article-prose");
       const footer = document.querySelector(".article-footer");
-      if (!prose || !footer) return;
-      const start = prose.getBoundingClientRect().top + window.scrollY;
-      const end = footer.getBoundingClientRect().bottom + window.scrollY;
-      const next = Math.round(Math.min(100, Math.max(0, ((window.scrollY - start) / (end - start)) * 100)));
+      if (articleOnly && (!prose || !footer)) return;
+      const start = articleOnly ? prose!.getBoundingClientRect().top + window.scrollY : 0;
+      const end = articleOnly ? footer!.getBoundingClientRect().bottom + window.scrollY : document.documentElement.scrollHeight - window.innerHeight;
+      const next = Math.round(Math.min(100, Math.max(0, end ? ((window.scrollY - start) / (end - start)) * 100 : 100)));
       setProgress((current) => current === next ? current : next);
     };
     const scheduleUpdate = () => {
@@ -156,4 +156,12 @@ export function ArticleReadingProgress() {
   };
 
   return <div className="article-reading-progress"><div className="article-reading-progress-track" aria-hidden="true"><span className="article-reading-progress-fill" style={{ transform: `scaleX(${progress / 100})` }} /></div><div className="article-reading-progress-control"><button className={`article-reading-progress-label${isPulsing ? " is-pulsing" : ""}`} type="button" onClick={showQuote} aria-label="Show a DevOps quote">{progress}%</button>{quote ? <span className="article-reading-progress-quote" role="status" key={quote.key}>{quote.text}</span> : null}</div></div>;
+}
+
+export function ArticleReadingProgress() {
+  return <ReadingProgress articleOnly />;
+}
+
+export function PageReadingProgress() {
+  return <ReadingProgress />;
 }
