@@ -37,6 +37,16 @@ test("article pages include the shared reading progress indicator", async () => 
   assert.match(styles, /\.article-reading-progress-label\s*\{[^}]*color:var\(--good\)/);
   assert.match(styles, /\.article-reading-progress-label\s*\{[^}]*font:17px\/1\.2/);
   assert.match(styles, /\.article-reading-progress-label\s*\{\s*font-size:16px/);
+  assert.match(progress, /const QUOTES = \[/);
+  assert.equal((progress.match(/^  ".+",$/gm) ?? []).length, 100);
+  assert.match(progress, /There is no cloud, only someone else's pager\./);
+  assert.match(progress, /Math\.random\(\) \* \(QUOTES\.length - 1\)/);
+  assert.match(progress, /return index >= previous \? index \+ 1 : index/);
+  assert.match(progress, /<button className=\{`article-reading-progress-label/);
+  assert.match(progress, /setIsPulsing\(false\);\s*requestAnimationFrame\(\(\) => setIsPulsing\(true\)\)/);
+  assert.match(styles, /\.article-reading-progress-label\s*\{[^}]*cursor:pointer/);
+  assert.match(styles, /\.article-reading-progress-label:focus-visible/);
+  assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[^}]*\{[^}]*\.article-reading-progress-fill/);
 });
 
 test("article-page images retain their source proportions while card covers stay fixed", async () => {
