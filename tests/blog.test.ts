@@ -35,6 +35,8 @@ test("article pages include the shared reading progress indicator", async () => 
   assert.match(progress, /document\.querySelector\("\.article-footer"\)/);
   assert.match(progress, /Math\.min\(100, Math\.max\(0,/);
   assert.match(styles, /\.article-reading-progress-label\s*\{[^}]*color:var\(--good\)/);
+  assert.match(styles, /\.article-reading-progress-label\s*\{[^}]*font:17px\/1\.2/);
+  assert.match(styles, /\.article-reading-progress-label\s*\{\s*font-size:16px/);
 });
 
 test("article-page images retain their source proportions while card covers stay fixed", async () => {

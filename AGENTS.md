@@ -45,6 +45,8 @@
 
 ## Recent changes
 
+- Increased the article reading-progress percentage label to match article body text sizing: 17px desktop and 16px at the mobile breakpoint, on 2026-07-24.
+
 - Updated the article reading-progress percentage label to use the same `--good` green as its progress fill on 2026-07-24.
 
 - Added an article-only fixed reading-progress bar with a compact percentage on 2026-07-24. It measures from `.article-prose` through `.article-footer`, excludes related posts and the site footer, and uses a shared dependency-free client component with reduced-motion-safe styling.
