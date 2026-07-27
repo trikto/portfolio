@@ -46,6 +46,8 @@
 
 ## Recent changes
 
+- Added the published Application Load Balancers article at `/blog/application-load-balancers` on 2026-07-27; preserve its full 44-section source structure, monospaced architecture and request-flow diagrams, listener and target-group coverage, health checks, TLS, routing, monitoring, troubleshooting, practical lab, interview questions, and completion standard when editing it.
+
 - Made the shared navigation neutral across routes and removed radial/glow effects on 2026-07-24. Desktop navigation no longer has a route-specific background; the mobile menu uses `var(--panel)` across routes. The homepage topology/pipeline surfaces have no diffuse shadow, and blog light mode uses a flat background too.
 
 - Unified every route's dark-mode base background with article pages on 2026-07-24 by removing the homepage concept-cloud gradient override; retain the blog-only light-mode theme under `prefers-color-scheme`.

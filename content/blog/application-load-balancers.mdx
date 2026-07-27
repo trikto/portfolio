@@ -1,0 +1,2780 @@
+---
+title: "Application Load Balancers"
+description: "A practical guide to AWS Application Load Balancers covering architecture, listeners, routing, target groups, health checks, TLS, monitoring, troubleshooting, and hands-on labs."
+publishedAt: "2026-07-27"
+updatedAt: "2026-07-27"
+author: "Gajan Rajah"
+tags:
+  - "aws"
+  - "application-load-balancer"
+  - "networking"
+  - "high-availability"
+  - "devops"
+mediumUrl: ""
+draft: false
+---
+
+### Scope
+
+This guide covers:
+
+1. Load-balancing fundamentals
+
+2. Application Load Balancer architecture
+
+3. Internet-facing and internal load balancers
+
+4. Listeners and listener rules
+
+5. Target groups and target types
+
+6. Health checks
+
+7. Request-routing algorithms
+
+8. Cross-zone load balancing
+
+9. Security groups and TLS
+
+10. Host-based and path-based routing
+
+11. Sticky sessions
+
+12. Deregistration delay and slow start
+
+13. HTTP headers and client IP addresses
+
+14. Authentication and AWS WAF
+
+15. Monitoring and logging
+
+16. Troubleshooting
+
+17. Practical laboratory exercises
+
+18. Interview-level questions
+
+## 1. Learning Outcomes
+
+After completing this guide, you should be able to:
+
+- Explain why an Application Load Balancer is used.
+
+- Describe how an ALB distributes requests across targets.
+
+- Distinguish an internet-facing ALB from an internal ALB.
+
+- Explain listeners, rules, conditions, actions, target groups, and health checks.
+
+- Configure host-based and path-based routing.
+
+- Design security groups for an ALB and its targets.
+
+- Explain TLS termination.
+
+- Explain cross-zone load balancing.
+
+- Select an appropriate target type.
+
+- Configure health checks that accurately represent application health.
+
+- Explain deregistration delay and connection draining.
+
+- Identify whether an HTTP error originated from the ALB or the target.
+
+- Design a highly available ALB architecture across multiple Availability Zones.
+
+- Troubleshoot unhealthy targets and failed client requests.
+
+## 2. What Is Load Balancing?
+
+Load balancing distributes incoming traffic across multiple backend resources.
+
+Without a load balancer:
+
+```text
+Client
+↓
+Single application server
+```
+
+Problems:
+
+- The server becomes a single point of failure.
+
+- The server has limited processing capacity.
+
+- Maintenance may cause downtime.
+
+- Clients must know the server's address.
+
+- Traffic cannot be distributed across several servers.
+
+- Failed servers may continue receiving requests.
+
+With a load balancer:
+
+```text
+┌── Application Server 1
+Client → Load Balancer ── Application Server 2
+└── Application Server 3
+```
+
+The load balancer provides one entry point while the application runs on several backend targets.
+
+A load balancer can:
+
+- Distribute traffic
+
+- Detect unhealthy targets
+
+- Stop routing traffic to failed targets
+
+- Spread traffic across Availability Zones
+
+- Terminate TLS
+
+- Route requests according to application-layer information
+
+- Support application scaling
+
+- Hide private application servers from direct public access
+
+## 3. What Is an Application Load Balancer?
+
+An Application Load Balancer, commonly called an ALB, is an AWS Elastic Load Balancing service designed primarily for HTTP and HTTPS applications.
+
+It operates at the application layer, commonly referred to as Layer 7 of the OSI model.
+
+This means the ALB can inspect parts of an HTTP request, such as:
+
+- Hostname
+
+- URL path
+
+- HTTP headers
+
+- HTTP method
+
+- Query-string parameters
+
+- Source IP address
+
+It can then route the request according to configurable listener rules. Application Load Balancers support HTTP and HTTPS traffic, HTTP/2 client connections through HTTPS listeners, WebSocket upgrades, and target protocol versions including HTTP/1.1, HTTP/2, and gRPC.
+
+### Appropriate ALB use cases
+
+Use an ALB for:
+
+- Websites
+
+- REST APIs
+
+- Microservices
+
+- Containerized applications
+
+- Host-based routing
+
+- Path-based routing
+
+- HTTP redirects
+
+- TLS termination
+
+- WebSocket applications
+
+- gRPC services
+
+- Authentication through Amazon Cognito or an OIDC provider
+
+- AWS WAF integration
+
+### ALB is not the correct choice for every workload
+
+An ALB is not normally selected when the primary requirement is:
+
+- Raw TCP traffic
+
+- UDP traffic
+
+- A static IP address per Availability Zone
+
+- Extremely high-performance Layer 4 connection handling
+
+- Preserving the original client source IP at the transport layer
+
+- Routing third-party virtual network appliances
+
+Those requirements may be better served by a Network Load Balancer or Gateway Load Balancer.
+
+## 4. Reference Architecture
+
+```text
+Internet
+│
+Route 53 DNS record
+│
+Internet Gateway
+│
+Application Load Balancer
+HTTPS listener on port 443
+/
+/
+Public Subnet A       Public Subnet B
+AZ A                  AZ B
+│                    │
+└────────┬───────────┘
+│
+Target Group: application
+/
+/
+Application Server A   Application Server B
+Private Subnet A       Private Subnet B
+AZ A                  AZ B
+│
+▼
+Private database
+```
+
+The ALB is placed across at least two Availability Zones. AWS creates and manages load-balancer capacity in the enabled zones. The ALB receives requests through its DNS name and routes them to registered healthy targets.
+
+The application servers remain private and do not need public IP addresses. Communication from the ALB to its targets uses private VPC routing.
+
+## 5. ALB Components
+
+An Application Load Balancer architecture contains the following main components:
+
+```text
+Application Load Balancer
+├── Scheme
+├── IP address type
+├── Availability Zones and subnets
+├── Security groups
+├── Listeners
+│   └── Listener rules
+│       ├── Conditions
+│       └── Actions
+└── Target groups
+├── Registered targets
+├── Health checks
+└── Target group attributes
+```
+
+Understanding the relationship between these components is essential.
+
+## 6. Internet-Facing and Internal ALBs
+
+### 6.1 Internet-facing ALB
+
+An internet-facing ALB accepts requests from internet clients.
+
+Typical architecture:
+
+```text
+Internet
+↓
+Internet Gateway
+↓
+Internet-facing ALB in public subnets
+↓
+Private application servers
+```
+
+For an internet-facing ALB:
+
+- The VPC must have an internet gateway.
+
+- The ALB is associated with public subnets.
+
+- Its DNS name resolves to publicly reachable load-balancer addresses.
+
+- The targets may remain private.
+
+- The ALB security group determines which client traffic is accepted.
+
+AWS requires a regional Application Load Balancer to use subnets from at least two Availability Zones.
+
+### 6.2 Internal ALB
+
+An internal ALB is reachable through private IP addresses.
+
+Typical users include:
+
+- Internal applications
+
+- Private APIs
+
+- Services accessed through VPN
+
+- Services accessed through Direct Connect
+
+- Internal microservices
+
+- Administrative applications
+
+- Multi-tier internal systems
+
+Example:
+
+```text
+Internal client
+↓
+Internal ALB
+↓
+Private application service
+```
+
+An internal ALB does not require direct internet exposure.
+
+### 6.3 Important distinction
+
+The ALB scheme determines whether the ALB is internet-facing or internal.
+
+It does not determine whether the targets are public or private.
+
+An internet-facing ALB can and normally should route to private targets.
+
+## 7. ALB Subnets and Availability Zones
+
+An ALB must be associated with one subnet in each enabled Availability Zone.
+
+Example:
+
+```text
+ALB
+├── Public Subnet A in ap-south-1a
+└── Public Subnet B in ap-south-1b
+```
+
+AWS creates and manages load-balancer nodes in the enabled Availability Zones.
+
+For high availability:
+
+- Enable at least two Availability Zones.
+
+- Deploy healthy targets across those zones.
+
+- Ensure each target tier has sufficient capacity.
+
+- Avoid placing every target in one zone.
+
+- Ensure the target security groups accept traffic from the ALB.
+
+AWS recommends having at least one registered target in each enabled Availability Zone. Application Load Balancers use cross-zone load balancing by default, allowing load-balancer nodes to route to healthy targets across the enabled zones.
+
+### Subnet capacity
+
+The selected ALB subnets must have sufficient free IP addresses.
+
+AWS may need additional IP addresses when scaling or replacing ALB nodes. Insufficient subnet address capacity can impair the load balancer's ability to scale.
+
+Required design rule:
+
+```text
+Do not create extremely small ALB subnets without calculating
+the IP capacity required for scaling and maintenance.
+```
+
+## 8. ALB DNS Name
+
+AWS assigns a DNS name to every ALB.
+
+Example format:
+
+```text
+production-alb-123456789.ap-south-1.elb.amazonaws.com
+```
+
+Clients should connect using:
+
+- The ALB DNS name
+
+- A Route 53 alias record
+
+- A custom DNS record pointing to the ALB
+
+Do not configure applications to use one resolved ALB IP address permanently.
+
+Elastic Load Balancing changes and scales the underlying load-balancer infrastructure over time and updates the DNS record. AWS documents a 60-second TTL for the load-balancer DNS entry.
+
+Recommended DNS design:
+
+```text
+app.example.com
+↓ Route 53 alias
+production-alb-123456789.ap-south-1.elb.amazonaws.com
+```
+
+A Route 53 alias record is preferable to manually copying resolved IP addresses.
+
+## 9. Listeners
+
+A listener checks for incoming connection requests using a configured protocol and port.
+
+Common listeners:
+
+```text
+HTTP  : port 80
+HTTPS : port 443
+```
+
+Example:
+
+```text
+Application Load Balancer
+├── Listener HTTP:80
+│   └── Redirect to HTTPS:443
+│
+└── Listener HTTPS:443
+└── Forward to application target group
+```
+
+Each listener has:
+
+- Protocol
+
+- Port
+
+- Default action
+
+- Optional rules
+
+- TLS certificate and security policy for HTTPS
+
+### HTTP listener
+
+An HTTP listener receives unencrypted HTTP traffic.
+
+Common use:
+
+```text
+HTTP:80
+↓
+Redirect to HTTPS:443
+```
+
+Do not serve sensitive production application traffic over unencrypted HTTP.
+
+### HTTPS listener
+
+An HTTPS listener:
+
+- Accepts encrypted client traffic
+
+- Requires at least one server certificate
+
+- Uses a TLS security policy
+
+- Can terminate TLS at the load balancer
+
+- Can authenticate users
+
+- Can support multiple certificates using Server Name Indication
+
+AWS Certificate Manager integrates with Application Load Balancers and can be used to deploy and manage certificates. An HTTPS listener requires at least one certificate. Additional certificates can be associated through the certificate list, and SNI allows the ALB to select a certificate according to the requested hostname.
+
+## 10. TLS Termination
+
+TLS termination means the encrypted client connection ends at the ALB.
+
+```text
+Client
+│ HTTPS
+▼
+Application Load Balancer
+│ HTTP or HTTPS
+▼
+Application server
+```
+
+The ALB performs:
+
+1. TLS negotiation
+
+2. Certificate presentation
+
+3. Traffic decryption
+
+4. HTTP request inspection
+
+5. Listener-rule evaluation
+
+6. Request forwarding to a target
+
+### Frontend encryption only
+
+```text
+Client → HTTPS → ALB → HTTP → Target
+```
+
+Advantages:
+
+- Simpler certificate management
+
+- Less TLS processing on application servers
+
+- ALB can inspect HTTP requests
+
+- Easy integration with ACM
+
+Risk:
+
+- Traffic between the ALB and target is unencrypted.
+
+This may be acceptable within a controlled VPC depending on the threat model and compliance requirements.
+
+### End-to-end encryption
+
+```text
+Client → HTTPS → ALB → HTTPS → Target
+```
+
+Advantages:
+
+- Encryption continues between the ALB and target.
+
+- Useful for stronger internal encryption requirements.
+
+Requirements:
+
+- Target must listen on HTTPS.
+
+- Target security group must permit the HTTPS target port.
+
+- Target health checks must be configured correctly.
+
+### Mutual TLS
+
+Application Load Balancers support mutual TLS on HTTPS listeners. Mutual TLS allows the load balancer to validate client certificates, providing certificate-based client authentication.
+
+## 11. Listener Rules
+
+A listener rule determines how matching requests are handled.
+
+Each rule contains:
+
+```text
+Priority
+Conditions
+Actions
+```
+
+Example:
+
+```text
+Priority: 10
+Condition: Path begins with /api/*
+Action: Forward to API target group
+```
+
+Rules are evaluated in priority order. When a request matches a rule, the associated action is performed. If no custom rule matches, the default rule is used.
+
+### Example rule set
+
+```text
+Priority 10:
+Host = api.example.com
+Forward to API target group
+```
+
+```text
+Priority 20:
+Path = /images/*
+Forward to image-service target group
+```
+
+```text
+Priority 30:
+Path = /admin/*
+Authenticate user, then forward to admin target group
+```
+
+```text
+Default:
+Forward to web target group
+```
+
+Rule priorities must be unique.
+
+Lower numeric values are evaluated before higher numeric values.
+
+## 12. Listener Rule Conditions
+
+Application Load Balancer rules can route requests using conditions including:
+
+- Host header
+
+- Path pattern
+
+- HTTP header
+
+- HTTP request method
+
+- Query string
+
+- Source IP address
+
+### 12.1 Host-based routing
+
+Host-based routing uses the requested hostname.
+
+Example:
+
+```text
+api.example.com   → API target group
+admin.example.com → Admin target group
+www.example.com   → Web target group
+```
+
+Architecture:
+
+```text
+┌── API service
+Client → One ALB ───────┼── Admin service
+└── Web service
+```
+
+This allows several domains or subdomains to share one ALB.
+
+### 12.2 Path-based routing
+
+Path-based routing uses the requested URL path.
+
+Example:
+
+```text
+/api/*      → API target group
+/images/*   → Image target group
+/payments/* → Payment target group
+/*          → Web target group
+```
+
+This is useful for microservices.
+
+### 12.3 HTTP-header routing
+
+Example:
+
+```text
+Header:
+X-Environment: beta
+```
+
+```text
+Action:
+Forward to beta target group
+```
+
+Possible uses:
+
+- Controlled beta testing
+
+- Device-specific routing
+
+- Internal testing
+
+- Feature segmentation
+
+Do not use an untrusted HTTP header as the sole security control for privileged access.
+
+### 12.4 HTTP-method routing
+
+Example:
+
+```text
+GET requests  → Read service
+POST requests → Write service
+```
+
+Use method-based routing carefully because application behaviour and caching requirements may differ across methods.
+
+### 12.5 Query-string routing
+
+Example:
+
+```text
+?version=v2 → Version 2 target group
+```
+
+### 12.6 Source-IP routing
+
+Example:
+
+```text
+Source: 203.0.113.0/24
+Action: Forward to administration target group
+```
+
+Source-IP routing is a routing mechanism, not a complete authentication system.
+
+## 13. Listener Actions
+
+A listener rule must ultimately perform one routing action:
+
+- Forward
+
+- Redirect
+
+- Fixed response
+
+HTTPS rules can also perform authentication actions before the final routing action.
+
+### 13.1 Forward
+
+Forwards a request to one or more target groups.
+
+```text
+/api/* → Forward to api-target-group
+```
+
+A forward action can distribute traffic between weighted target groups.
+
+Example:
+
+```text
+Production target group: weight 90
+New-version target group: weight 10
+```
+
+This can support:
+
+- Canary deployments
+
+- Gradual traffic migration
+
+- Blue-green deployment
+
+- Controlled version testing
+
+Weighted forwarding distributes requests according to configured target-group weights.
+
+### 13.2 Redirect
+
+Returns an HTTP redirect.
+
+Common example:
+
+```text
+HTTP:80
+↓
+301 redirect
+↓
+HTTPS:443
+```
+
+A redirect can modify parts of the destination URL, including:
+
+- Protocol
+
+- Host
+
+- Port
+
+- Path
+
+- Query string
+
+### 13.3 Fixed response
+
+Returns a response directly from the ALB without contacting a target.
+
+Example:
+
+```text
+Status: 403
+Body: Access denied
+Content-Type: text/plain
+```
+
+Possible uses:
+
+- Maintenance responses
+
+- Rejecting unsupported routes
+
+- Simple access blocks
+
+- Custom default responses
+
+## 14. Target Groups
+
+A target group is a logical collection of backend targets.
+
+A listener rule forwards matching traffic to a target group.
+
+```text
+Listener rule
+↓
+Target group
+├── Target A
+├── Target B
+└── Target C
+```
+
+A target group defines:
+
+- Target type
+
+- Protocol
+
+- Port
+
+- Protocol version
+
+- Health-check configuration
+
+- Registered targets
+
+- Routing algorithm
+
+- Deregistration delay
+
+- Stickiness
+
+- Slow start
+
+- Cross-zone behaviour
+
+Health checks are configured per target group. The ALB sends requests only to registered targets that are considered healthy, except in the fail-open situation described later.
+
+## 15. Target Types
+
+Application Load Balancer target groups support several target types.
+
+### 15.1 Instance targets
+
+Target type:
+
+```text
+instance
+```
+
+Targets are registered using EC2 instance IDs.
+
+Traffic is sent to the primary private IP address on the instance's primary network interface.
+
+Appropriate for:
+
+- EC2 Auto Scaling groups
+
+- Traditional EC2 applications
+
+- Fixed application ports on EC2
+
+### 15.2 IP targets
+
+Target type:
+
+```text
+ip
+```
+
+Targets are registered using IP addresses.
+
+Appropriate for:
+
+- Containers
+
+- ECS tasks
+
+- Multiple applications on one instance
+
+- Targets reachable through private connectivity
+
+- On-premises systems connected through VPN or Direct Connect
+
+- Workloads where the specific network-interface address matters
+
+IP targets allow the load balancer to route to an eligible private IP address rather than only the primary private address of an EC2 instance.
+
+### 15.3 Lambda targets
+
+Target type:
+
+```text
+lambda
+```
+
+The target group invokes a Lambda function.
+
+Appropriate for:
+
+- Serverless HTTP workloads
+
+- Lightweight APIs
+
+- Event-driven request handling
+
+- Applications that do not require a persistent server
+
+A Lambda target group registers one Lambda function.
+
+### Target type cannot be changed
+
+The target type is selected when the target group is created.
+
+If a different target type is required, create another target group.
+
+## 16. Target Group Protocol and Port
+
+A target group specifies how the ALB communicates with its targets.
+
+Example:
+
+```text
+Target protocol: HTTP
+Target port:     8080
+```
+
+Traffic flow:
+
+```text
+Client HTTPS:443
+↓
+ALB terminates TLS
+↓
+Target HTTP:8080
+```
+
+The client-facing listener port and backend target port do not need to be the same.
+
+Example:
+
+```text
+Listener: HTTPS 443
+Target:   HTTP 8080
+Health:   HTTP 8080 /health
+```
+
+The target port may also be overridden when registering individual targets.
+
+## 17. Health Checks
+
+A health check is a request sent by the ALB to determine whether a target can receive traffic.
+
+Example:
+
+```text
+Protocol: HTTP
+Port:     traffic-port
+Path:     /health
+Success:  200
+```
+
+The ALB periodically checks every registered target used by its listener rules. A target must pass health checks before it is considered healthy and receives normal traffic.
+
+### Health-check settings
+
+Common settings include:
+
+- Protocol
+
+- Port
+
+- Path
+
+- Interval
+
+- Timeout
+
+- Healthy threshold
+
+- Unhealthy threshold
+
+- Success-code matcher
+
+For ALB target groups, health-check protocols include HTTP and HTTPS. The default HTTP success code is 200, although configurable ranges can include other valid application responses.
+
+### Health state transitions
+
+```text
+Register target
+↓
+initial
+↓ Successful checks
+healthy
+↓ Failed checks
+unhealthy
+↓ Successful checks
+healthy
+```
+
+Other states include:
+
+- `draining`
+
+- `unused`
+
+- `unavailable`
+
+### Healthy threshold
+
+The healthy threshold is the number of consecutive successful checks required before an unhealthy target becomes healthy.
+
+### Unhealthy threshold
+
+The unhealthy threshold is the number of consecutive failed checks required before a healthy target becomes unhealthy.
+
+### Health-check interval
+
+The interval determines approximately how frequently the target is checked.
+
+### Health-check timeout
+
+The timeout determines how long the ALB waits for a health-check response.
+
+## 18. Designing a Health Endpoint
+
+A useful health endpoint should answer:
+
+```text
+Can this target safely process a new request now?
+```
+
+Example:
+
+```text
+GET /health
+Response: HTTP 200
+```
+
+### Good health endpoint properties
+
+It should be:
+
+- Fast
+
+- Predictable
+
+- Lightweight
+
+- Available without authentication
+
+- Accessible only through the intended network path
+
+- Representative of application readiness
+
+- Independent of unnecessary external services
+
+### Weak health endpoint
+
+```text
+GET /
+```
+
+Problems:
+
+- May perform database queries.
+
+- May load templates.
+
+- May call external services.
+
+- May redirect.
+
+- May require authentication.
+
+- May return different codes based on application content.
+
+### Better health endpoint
+
+```text
+GET /health
+```
+
+Possible response:
+
+```text
+{
+"status": "healthy"
+}
+```
+
+### Readiness versus liveness
+
+A load-balancer health check should usually represent readiness.
+
+A process may be running but still unable to accept traffic because:
+
+- Startup is incomplete.
+
+- Database migrations are running.
+
+- Required configuration is unavailable.
+
+- Connection pools are exhausted.
+
+- Critical dependencies are unavailable.
+
+Do not return HTTP 200 merely because the process exists.
+
+## 19. Health Check Fail-Open Behaviour
+
+A critical ALB behaviour is fail-open routing.
+
+If every registered target in a target group is unhealthy across all enabled Availability Zones, the ALB may route traffic to all registered targets regardless of health status. AWS describes this as failing open.
+
+This prevents the load balancer from guaranteeing total outage merely because every target fails the configured health check.
+
+However, it also means:
+
+```text
+An unhealthy health status is not a security boundary.
+```
+
+Your application must still safely handle requests even during widespread health-check failure.
+
+## 20. Target Security Groups
+
+Recommended architecture:
+
+```text
+Internet
+↓
+alb-sg
+↓
+app-sg
+```
+
+### ALB security group
+
+Inbound:
+
+```text
+TCP 443 from 0.0.0.0/0
+TCP 443 from ::/0, when IPv6 is used
+```
+
+Optional:
+
+```text
+TCP 80 from 0.0.0.0/0
+```
+
+Port 80 should normally redirect to HTTPS.
+
+Outbound:
+
+```text
+TCP 8080 to app-sg
+```
+
+Health check traffic must also be permitted when it uses a different port.
+
+### Application security group
+
+Inbound:
+
+```text
+TCP 8080 from alb-sg
+```
+
+This means the application accepts traffic from resources associated with the ALB security group.
+
+Do not use:
+
+```text
+TCP 8080 from 0.0.0.0/0
+```
+
+unless direct public access is intentionally required.
+
+AWS requires the ALB security group and target security group to permit both the application traffic and health-check traffic on the configured ports.
+
+### Important clarification
+
+A security-group reference does not mean:
+
+```text
+Allow traffic from the public client IPs accepted by alb-sg.
+```
+
+It means:
+
+```text
+Allow traffic originating from network interfaces associated
+with alb-sg.
+```
+
+## 21. Complete Request Flow
+
+Assume:
+
+```text
+Client:           198.51.100.20
+Domain:           app.example.com
+ALB listener:     HTTPS 443
+Target protocol:  HTTP
+Target port:      8080
+Target IP:        10.20.10.25
+```
+
+The request flow is:
+
+```text
+1. Client resolves app.example.com.
+2. Route 53 returns the ALB DNS destination.
+3. Client establishes a connection to an ALB node.
+4. The ALB security group checks inbound TCP 443.
+5. The ALB negotiates TLS and presents its certificate.
+6. The ALB decrypts the HTTP request.
+7. The listener evaluates rules in priority order.
+8. A rule selects the application target group.
+9. The ALB selects a healthy target.
+10. The ALB creates a separate backend connection.
+11. The target security group checks traffic from alb-sg.
+12. The target receives the request on TCP 8080.
+13. The target returns a response to the ALB.
+14. The ALB returns the response to the client.
+```
+
+The client connection and target connection are separate connections.
+
+The ALB acts as a reverse proxy.
+
+## 22. Cross-Zone Load Balancing
+
+Assume the ALB has nodes in two Availability Zones:
+
+```text
+ALB node A in AZ A
+ALB node B in AZ B
+```
+
+Targets:
+
+```text
+Target A1 in AZ A
+Target B1 in AZ B
+```
+
+With cross-zone load balancing:
+
+```text
+ALB node A may route to Target A1 or Target B1.
+ALB node B may route to Target A1 or Target B1.
+```
+
+Application Load Balancers use cross-zone load balancing at the load-balancer level. Target groups can override the inherited behaviour and disable it in supported configurations.
+
+### Advantages
+
+- Better use of healthy capacity
+
+- More even distribution
+
+- Resilience when one zone has fewer targets
+
+- Reduced impact from uneven target counts
+
+### Caution
+
+Cross-zone routing does not eliminate the need for sufficient capacity in every Availability Zone.
+
+A zone failure may shift more traffic to the remaining targets.
+
+You must ensure the remaining zones can handle the increased load.
+
+## 23. Load-Balancing Algorithms
+
+The target group controls how the ALB selects a target.
+
+Supported algorithms include:
+
+- Round robin
+
+- Least outstanding requests
+
+- Weighted random
+
+Weighted random can be combined with anomaly-mitigation capabilities.
+
+### 23.1 Round robin
+
+Round robin distributes requests sequentially across healthy targets.
+
+Example:
+
+```text
+Request 1 → Target A
+Request 2 → Target B
+Request 3 → Target C
+Request 4 → Target A
+```
+
+Appropriate when:
+
+- Targets have similar capacity.
+
+- Requests have similar processing time.
+
+- Application workload is relatively uniform.
+
+Round robin is the default algorithm.
+
+### 23.2 Least outstanding requests
+
+Routes a request to the target with the fewest requests currently being processed.
+
+Example:
+
+```text
+Target A: 20 outstanding requests
+Target B:  5 outstanding requests
+Target C: 12 outstanding requests
+```
+
+```text
+Next request → Target B
+```
+
+Appropriate when:
+
+- Request execution times vary.
+
+- Some requests are slow.
+
+- Workload is uneven.
+
+- Targets can become temporarily busy.
+
+### 23.3 Weighted random
+
+Weighted random distributes traffic according to dynamically determined or configured target weighting behaviour.
+
+It can be useful when:
+
+- Targets perform differently.
+
+- Anomaly mitigation is enabled.
+
+- The system needs to reduce traffic to anomalous targets.
+
+Do not confuse target-level weighted-random routing with weighted target groups in a listener forward action.
+
+They operate at different layers:
+
+```text
+Weighted target groups:
+Choose which target group receives the request.
+```
+
+```text
+Target-group algorithm:
+Choose which target inside that group receives the request.
+```
+
+## 24. Sticky Sessions
+
+By default, each request can be routed independently.
+
+A client's first request may reach Target A, while the next request may reach Target B.
+
+Sticky sessions bind a client session to a specific target.
+
+```text
+Client session
+↓
+Target A
+↓
+Subsequent requests continue to Target A
+```
+
+Application Load Balancers support duration-based and application-based cookie stickiness. Stickiness is configured at the target-group level.
+
+### Appropriate use
+
+Stickiness may be useful when:
+
+- The application stores session state in local server memory.
+
+- Migrating a legacy stateful application.
+
+- A workflow temporarily requires target affinity.
+
+### Risks
+
+- Uneven traffic distribution
+
+- Hot targets
+
+- Difficult scaling
+
+- Session loss when a target fails
+
+- Reduced resilience
+
+- More complicated deployments
+
+### Preferred architecture
+
+Store session state outside the application instance.
+
+Examples:
+
+- Amazon ElastiCache
+
+- Database
+
+- Signed client token
+
+- Distributed session store Then any healthy target can process any request.
+
+```text
+Client
+↓
+Any application target
+↓
+Shared session store
+```
+
+Stateless application servers are generally easier to scale and recover.
+
+## 25. Deregistration Delay and Connection Draining
+
+When a target is removed, the ALB should not immediately terminate every in-flight request.
+
+The target enters:
+
+```text
+draining
+```
+
+During draining:
+
+- New requests are routed to other healthy targets.
+
+- Existing requests are given time to complete.
+
+- The target is removed after the deregistration delay.
+
+The default deregistration delay is 300 seconds, but it is configurable per target group.
+
+### Deployment sequence
+
+```text
+1. Mark target for deregistration.
+2. Target enters draining state.
+3. ALB stops assigning new requests.
+4. Existing requests complete.
+5. Deregistration delay expires.
+6. Target becomes unused.
+7. Instance or task can be terminated.
+```
+
+### Incorrect deployment sequence
+
+```text
+1. Terminate application process.
+2. Deregister target.
+```
+
+This may interrupt active requests.
+
+### Correct deployment sequence
+
+```text
+1. Deregister target.
+2. Wait for draining.
+3. Stop the application.
+4. Terminate or replace the target.
+```
+
+The deregistration delay should match the application's normal request duration.
+
+A 300-second delay may be excessive for a simple API but necessary for long-running requests.
+
+## 26. Slow Start
+
+Slow start gradually increases the amount of traffic sent to a newly healthy target.
+
+Without slow start:
+
+```text
+New target becomes healthy
+↓
+Immediately receives a full share of traffic
+```
+
+With slow start:
+
+```text
+New target becomes healthy
+↓
+Receives a small traffic share
+↓
+Traffic increases gradually
+↓
+Receives a normal traffic share
+```
+
+Use slow start when an application requires warm-up, such as:
+
+- Cache initialization
+
+- JIT compilation
+
+- Connection-pool creation
+
+- Runtime optimization
+
+- Loading application data
+
+Slow start is configured as a target-group attribute.
+
+Do not use slow start as a substitute for an accurate readiness health check.
+
+## 27. WebSockets, HTTP/2, and gRPC
+
+### WebSockets
+
+An ALB supports upgrading an HTTP connection to a WebSocket connection.
+
+```text
+HTTP request
+↓ Upgrade
+WebSocket connection
+```
+
+After a successful upgrade, the connection remains associated with the selected target. WebSocket connections are inherently sticky for the lifetime of the connection.
+
+### HTTP/2
+
+Application Load Balancers support HTTP/2 for client connections through HTTPS listeners.
+
+Benefits can include:
+
+- Multiplexing several requests over one connection
+
+- Header compression
+
+- Reduced connection overhead
+
+The backend target protocol version can separately be configured as HTTP/1.1 or HTTP/2.
+
+### gRPC
+
+A target group can use the gRPC protocol version.
+
+This allows an ALB to route gRPC requests to compatible targets.
+
+gRPC health checks use gRPC status codes rather than ordinary HTTP status codes.
+
+## 28. Forwarded HTTP Headers
+
+Because the ALB acts as a reverse proxy, the target's direct network peer is the ALB, not the original client.
+
+The ALB adds forwarding headers such as:
+
+```text
+X-Forwarded-For
+X-Forwarded-Proto
+X-Forwarded-Port
+```
+
+### X-Forwarded-For
+
+Provides client-address information.
+
+Example:
+
+```text
+X-Forwarded-For: 198.51.100.20
+```
+
+When several proxies are present:
+
+```text
+X-Forwarded-For: client, proxy1, proxy2
+```
+
+Applications must parse the header safely.
+
+Do not automatically trust arbitrary client-supplied forwarding headers.
+
+Only trust values added or validated by controlled proxies.
+
+### X-Forwarded-Proto
+
+Indicates the protocol used between the client and ALB.
+
+Example:
+
+```text
+X-Forwarded-Proto: https
+```
+
+This is useful when the ALB terminates TLS but communicates with the target over HTTP.
+
+The application can still determine that the original client used HTTPS.
+
+### X-Forwarded-Port
+
+Indicates the client-facing listener port.
+
+Example:
+
+```text
+X-Forwarded-Port: 443
+```
+
+## 29. Authentication at the ALB
+
+An HTTPS listener can authenticate users before forwarding requests.
+
+Supported integrations include:
+
+- Amazon Cognito
+
+- OpenID Connect compatible identity providers
+
+A listener rule can perform authentication and then forward the request to a target.
+
+Example:
+
+```text
+Client
+↓
+ALB listener
+↓
+Authenticate with OIDC
+↓
+Forward authenticated request
+↓
+Private application
+```
+
+Appropriate uses:
+
+- Internal dashboards
+
+- Administrative interfaces
+
+- Simple authenticated web applications
+
+- Centralized authentication enforcement
+
+ALB authentication does not remove the need for application-level authorization.
+
+Authentication answers:
+
+```text
+Who is the user?
+```
+
+Authorization answers:
+
+```text
+What may the user do?
+```
+
+The application must still enforce authorization rules.
+
+## 30. AWS WAF Integration
+
+AWS WAF can be associated with an Application Load Balancer.
+
+WAF can inspect HTTP requests and apply rules such as:
+
+- IP allow lists
+
+- IP block lists
+
+- Rate-based rules
+
+- SQL injection protections
+
+- Cross-site scripting protections
+
+- Managed rule groups
+
+- Geographic restrictions
+
+- Header and URI matching
+
+- Bot-control rules
+
+AWS documents WAF as an application-layer protection option for Application Load Balancers.
+
+### Security layer model
+
+```text
+Internet
+↓
+AWS WAF
+↓
+ALB security group
+↓
+Listener rules
+↓
+Application security group
+↓
+Application authentication and authorization
+```
+
+These controls have different purposes.
+
+Control Primary responsibility
+
+WAF HTTP request inspection
+
+ALB security group Network source and port control
+
+Listener rules Request routing
+
+Target security group ALB-to-target access
+
+Application authorization User and business permissions
+
+## 31. ALB Attributes
+
+Important load-balancer attributes include:
+
+- Idle timeout
+
+- Client keepalive duration
+
+- Deletion protection
+
+- Access logging
+
+- Connection logging
+
+- HTTP header handling
+
+- Host-header preservation
+
+- Desync-mitigation behaviour
+
+AWS provides configurable ALB attributes including connection idle timeout, client keepalive, host-header preservation, and `X-Forwarded-For` handling.
+
+### Idle timeout
+
+The idle timeout is the period during which a connection can remain inactive before the ALB closes it.
+
+Symptoms of an unsuitable idle timeout may include:
+
+- Long-running requests ending unexpectedly
+
+- WebSocket disconnections
+
+- Upload interruptions
+
+- Gateway timeout errors
+
+- Connections remaining open unnecessarily
+
+Application, client, and load-balancer timeout values must be coordinated.
+
+### Deletion protection
+
+Deletion protection helps prevent accidental ALB deletion.
+
+It should normally be enabled for production load balancers.
+
+Deletion protection does not prevent:
+
+- Listener deletion
+
+- Rule changes
+
+- Target-group changes
+
+- Security-group changes
+
+- Target deregistration
+
+Infrastructure permissions and change controls are still required.
+
+## 32. Monitoring
+
+A production ALB requires monitoring at three levels:
+
+```text
+Load balancer
+Target group
+Application
+```
+
+AWS provides CloudWatch metrics, access logs, connection logs, health-check logs, and CloudTrail records for monitoring and troubleshooting.
+
+### Important CloudWatch metrics
+
+#### Traffic metrics
+
+- `RequestCount`
+
+- `ProcessedBytes`
+
+- `ActiveConnectionCount`
+
+- `NewConnectionCount`
+
+#### Latency metrics
+
+- `TargetResponseTime`
+
+#### Target health metrics
+
+- `HealthyHostCount`
+
+- `UnHealthyHostCount`
+
+#### ALB-generated errors
+
+- `HTTPCode_ELB_4XX_Count`
+
+- `HTTPCode_ELB_5XX_Count`
+
+#### Target-generated errors
+
+- `HTTPCode_Target_4XX_Count`
+
+- `HTTPCode_Target_5XX_Count`
+
+#### Capacity metric
+
+- `ConsumedLCUs`
+
+CloudWatch ALB metrics exclude health-check requests.
+
+### Recommended alarms
+
+Create alarms for:
+
+- Healthy targets below the required minimum
+
+- Unhealthy target count above zero for a sustained period
+
+- Elevated ALB 5XX responses
+
+- Elevated target 5XX responses
+
+- High target response time
+
+- Unexpected request-rate changes
+
+- Excessive rejected connections
+
+- Capacity-related anomalies
+
+Do not alert on every temporary metric variation.
+
+Alerts must represent an actionable service risk.
+
+## 33. Access Logs
+
+ALB access logs record details about requests processed by the load balancer.
+
+They can include:
+
+- Request timestamp
+
+- Client address
+
+- Target address
+
+- Request method
+
+- URL
+
+- User agent
+
+- Request-processing time
+
+- Target-processing time
+
+- Response-processing time
+
+- ALB status code
+
+- Target status code
+
+- TLS details
+
+- Listener rule
+
+- Trace information
+
+Access logs are optional and are stored in a configured S3 bucket as compressed files. AWS publishes a log file for each load-balancer node approximately every five minutes.
+
+Use access logs to investigate:
+
+- Slow requests
+
+- ALB-generated errors
+
+- Target-generated errors
+
+- Client source patterns
+
+- Rule routing
+
+- TLS negotiation
+
+- Request-volume analysis
+
+### ALB status code versus target status code
+
+These fields are distinct.
+
+```text
+elb_status_code
+target_status_code
+```
+
+Example:
+
+```text
+elb_status_code:    502
+target_status_code: -
+```
+
+This suggests the ALB could not obtain a valid response from the target.
+
+Example:
+
+```text
+elb_status_code:    500
+target_status_code: 500
+```
+
+This suggests the target application returned the error.
+
+## 34. Connection and Health Check Logs
+
+Connection logs provide information about connections and TLS negotiation.
+
+Health-check logs provide details such as:
+
+- Target address
+
+- Target group
+
+- Health state
+
+- Health-check result
+
+- Reason code
+
+- Timestamp
+
+AWS delivers ALB connection and health-check logs to configured S3 locations, with files generated for load- balancer nodes at regular intervals.
+
+These logs complement access logs:
+
+```text
+Access logs:
+What happened to an application request?
+```
+
+```text
+Connection logs:
+What happened while establishing the connection?
+```
+
+```text
+Health-check logs:
+Why did the target health check pass or fail?
+```
+
+## 35. Common HTTP Errors
+
+### HTTP 502: Bad Gateway
+
+Usually means the ALB could not obtain a valid response from the target.
+
+Possible causes:
+
+- Target closed the connection.
+
+- Target returned a malformed response.
+
+- Target reset the TCP connection.
+
+- Backend TLS negotiation failed.
+
+- Target process crashed.
+
+- Response headers were invalid.
+
+- Target protocol configuration is wrong.
+
+### HTTP 503: Service Unavailable
+
+Possible causes:
+
+- No registered targets
+
+- No available targets
+
+- Target group not correctly connected to a listener
+
+- Targets unavailable during deployment
+
+- Insufficient ready capacity
+
+### HTTP 504: Gateway Timeout
+
+Usually means the ALB could not establish or complete backend communication within the required timeout.
+
+Possible causes:
+
+- Target is too slow.
+
+- Target is overloaded.
+
+- Application dependency is slow.
+
+- Security rules silently drop traffic.
+
+- Backend connection cannot be established.
+
+- Idle timeout expires.
+
+- Database query is slow.
+
+AWS distinguishes load-balancer-generated errors from target-generated errors and records them in access logs and CloudWatch metrics.
+
+## 36. Troubleshooting Unhealthy Targets
+
+Use the following procedure.
+
+### Step 1: Check the target state
+
+```text
+aws elbv2 describe-target-health
+--target-group-arn <target-group-arn>
+```
+
+Review:
+
+- State
+
+- Reason code
+
+- Description
+
+### Step 2: Confirm registration
+
+Check:
+
+- Correct target
+
+- Correct target port
+
+- Correct target type
+
+- Correct target group
+
+- Correct Availability Zone
+
+### Step 3: Test the application locally
+
+On the target:
+
+```text
+curl -v http://127.0.0.1:8080/health
+```
+
+Then test using the target's private IP:
+
+```text
+curl -v http://10.20.10.25:8080/health
+```
+
+### Step 4: Confirm the listening address
+
+```text
+sudo ss -lntp
+```
+
+Incorrect:
+
+```text
+127.0.0.1:8080
+```
+
+This accepts local connections only.
+
+Correct for ALB access:
+
+```text
+0.0.0.0:8080
+```
+
+or the target's private interface address.
+
+### Step 5: Check the security groups
+
+ALB outbound:
+
+```text
+TCP 8080 to app-sg
+```
+
+Target inbound:
+
+```text
+TCP 8080 from alb-sg
+```
+
+### Step 6: Check the NACLs
+
+Confirm both forward and return traffic.
+
+NACLs are stateless, so return-path ephemeral ports must be permitted where restrictive custom NACLs are used.
+
+### Step 7: Check the health-check configuration
+
+Verify:
+
+- Protocol
+
+- Port
+
+- Path
+
+- Success codes
+
+- Timeout
+
+- Interval
+
+- Thresholds
+
+### Step 8: Check application behaviour
+
+Look for:
+
+- Redirect loops
+
+- Authentication requirement
+
+- HTTP 404
+
+- HTTP 500
+
+- Slow response
+
+- Dependency failure
+
+- Host-header restrictions
+
+- Application startup delay
+
+### Step 9: Review logs
+
+Use:
+
+- Application logs
+
+- ALB health-check logs
+
+- ALB access logs
+
+- Operating-system logs
+
+- VPC Flow Logs
+
+## 37. Troubleshooting Client Connection Failure
+
+### Problem
+
+```text
+Client cannot connect to the ALB.
+```
+
+Check in this order:
+
+1. Does DNS resolve?
+
+2. Is the ALB state active?
+
+3. Is the listener configured?
+
+4. Is the ALB internet-facing or internal?
+
+5. Are the correct subnets enabled?
+
+6. Does the VPC have the required internet path?
+
+7. Does the ALB security group allow the client port?
+
+8. Does the NACL allow forward and return traffic?
+
+9. Does the TLS certificate match the hostname?
+
+10. Does a listener rule process the request?
+
+11. Are healthy targets available?
+
+12. Does the application return a response?
+
+Useful commands:
+
+```text
+dig app.example.com
+```
+
+```text
+curl -vk https://app.example.com
+```
+
+```text
+openssl s_client
+-connect app.example.com:443
+-servername app.example.com
+```
+
+## 38. Common Architecture Mistakes
+
+### Mistake 1: Public application servers behind an ALB
+
+```text
+Internet
+↓
+Public ALB
+↓
+Public EC2 application servers
+```
+
+This unnecessarily increases direct exposure.
+
+Preferred:
+
+```text
+Internet
+↓
+Public ALB
+↓
+Private EC2 application servers
+```
+
+### Mistake 2: Application security group allows the entire internet
+
+Incorrect:
+
+```text
+TCP 8080 from 0.0.0.0/0
+```
+
+Preferred:
+
+```text
+TCP 8080 from alb-sg
+```
+
+### Mistake 3: Only one Availability Zone
+
+This creates an Availability Zone dependency.
+
+Use at least two zones for production.
+
+### Mistake 4: Health check uses the homepage
+
+The homepage may be slow, protected, or dependency-heavy.
+
+Create a dedicated readiness endpoint.
+
+### Mistake 5: Health endpoint always returns 200
+
+A process that cannot serve requests should not report healthy.
+
+### Mistake 6: Terminating targets before draining
+
+This interrupts active requests.
+
+Deregister and drain first.
+
+### Mistake 7: Hard-coding the ALB IP address
+
+ALB addresses can change as AWS scales and manages the service.
+
+Use DNS.
+
+### Mistake 8: Using stickiness instead of fixing state management
+
+Sticky sessions may hide poor session architecture.
+
+Prefer stateless servers with shared state.
+
+### Mistake 9: No access logs
+
+Without request-level logs, troubleshooting latency and response-code ownership becomes harder.
+
+### Mistake 10: No distinction between ALB and target errors
+
+Always compare:
+
+```text
+HTTPCode_ELB_5XX_Count
+HTTPCode_Target_5XX_Count
+```
+
+## 39. Allowed and Forbidden Designs
+
+### Allowed
+
+- Internet-facing ALB in public subnets
+
+- Private application targets
+
+- At least two Availability Zones
+
+- HTTPS listener using ACM
+
+- HTTP-to-HTTPS redirect
+
+- Target security group referencing the ALB security group
+
+- Dedicated health endpoint
+
+- Route 53 alias record
+
+- Access logging to S3
+
+- WAF for application-layer filtering
+
+- Weighted target groups for controlled releases
+
+- Connection draining during deployments
+
+- Internal ALB for private services
+
+- OIDC or Cognito authentication where appropriate
+
+### Forbidden Without Written Justification
+
+- One-AZ production ALB
+
+- Public IPs on application servers solely because an ALB is used
+
+- Application ports open to `0.0.0.0/0`
+
+- Database targets behind an ALB
+
+- Hard-coded ALB IP addresses
+
+- Unencrypted public application traffic
+
+- Health checks that require user authentication
+
+- Health checks that always return success
+
+- Immediate target termination without draining
+
+- Sticky sessions as the default design
+
+- No monitoring or access logging
+
+- Using source-IP routing as a replacement for authentication
+
+- Using the default security group for production ALBs
+
+- Allowing every outbound port from the ALB without review
+
+## 40. Practical Laboratory
+
+### Objective
+
+Deploy a highly available web application behind an internet-facing Application Load Balancer.
+
+### Required architecture
+
+```text
+VPC: 10.20.0.0/16
+```
+
+```text
+Public Subnet A:
+10.20.0.0/24
+Public Subnet B:
+10.20.1.0/24
+```
+
+```text
+Private App Subnet A:
+10.20.10.0/24
+```
+
+```text
+Private App Subnet B:
+10.20.11.0/24
+```
+
+Resources:
+
+- One internet-facing ALB
+
+- Two public subnets
+
+- Two private application subnets
+
+- One HTTPS listener
+
+- One HTTP-to-HTTPS redirect listener
+
+- One ACM certificate
+
+- One application target group
+
+- Two application targets
+
+- One ALB security group
+
+- One application security group
+
+- One `/health` endpoint
+
+- CloudWatch alarms
+
+- ALB access logs
+
+- Route 53 alias record
+
+### Required traffic rules
+
+#### ALB security group
+
+Inbound:
+
+```text
+TCP 80 from 0.0.0.0/0
+TCP 443 from 0.0.0.0/0
+```
+
+Outbound:
+
+```text
+TCP 8080 to app-sg
+```
+
+#### Application security group
+
+Inbound:
+
+```text
+TCP 8080 from alb-sg
+```
+
+### Required listeners
+
+```text
+HTTP:80
+→ Redirect to HTTPS:443
+```
+
+```text
+HTTPS:443
+→ Forward to application target group
+```
+
+### Required target group
+
+```text
+Target type: instance or ip
+Protocol: HTTP
+Port: 8080
+Health path: /health
+Success code: 200
+```
+
+### Required tests
+
+Test Expected result
+
+HTTP request Redirected to HTTPS
+
+HTTPS request Returns application response
+
+Direct public access to app server Blocked
+
+ALB to app port Allowed
+
+`/health` on healthy target HTTP 200
+
+Stop application on target A Target A becomes unhealthy
+
+Client requests after target A failure Served by target B
+
+Re-enable target A Target returns to healthy state
+
+Deregister target B Target enters draining state
+
+Invalid hostname certificate test TLS hostname error
+
+WAF block rule test Request blocked
+
+Access-log inspection Request appears in S3 logs
+
+## 41. Failure-Injection Exercises
+
+Deliberately create and diagnose the following failures:
+
+1. Remove the ALB inbound HTTPS rule.
+
+2. Remove the target inbound rule from `alb-sg` .
+
+3. Configure the wrong health-check port.
+
+4. Configure a nonexistent health-check path.
+
+5. Make the health endpoint return HTTP 500.
+
+6. Bind the application only to `127.0.0.1` .
+
+7. Remove one ALB subnet.
+
+8. Deregister every target.
+
+9. Configure the wrong TLS certificate.
+
+10. Set an unsuitable idle timeout.
+
+11. Terminate a target without draining.
+
+12. Create a listener rule with the wrong priority.
+
+13. Route `/api/*` to the wrong target group.
+
+14. Block return traffic using a custom NACL.
+
+15. Remove the public-subnet route to the internet gateway.
+
+For every failure, record:
+
+```text
+Symptom
+Client-visible result
+ALB metric
+Target health state
+Access-log evidence
+Root cause
+Immediate correction
+Permanent prevention
+Required alert
+```
+
+## 42. Interview Questions
+
+### What is an Application Load Balancer?
+
+An ALB is a managed Layer 7 load balancer that distributes HTTP and HTTPS requests according to application-level request information.
+
+### What is the difference between an ALB listener and a target group?
+
+A listener accepts client connections and evaluates routing rules.
+
+A target group contains the backend targets to which matching requests are forwarded.
+
+### Can an internet-facing ALB route to private EC2 instances?
+
+Yes.
+
+The ALB receives public traffic, then communicates with private targets through VPC routing.
+
+The targets do not need public IP addresses.
+
+### What makes an ALB highly available?
+
+The ALB is enabled in multiple Availability Zones, and healthy application capacity is deployed across those zones.
+
+### How does an ALB select a target?
+
+The listener selects a target group according to its rules.
+
+The target group's routing algorithm then selects a healthy registered target.
+
+### What is host-based routing?
+
+Routing according to the HTTP `Host` header.
+
+Example:
+
+```text
+api.example.com → API target group
+web.example.com → Web target group
+```
+
+### What is path-based routing?
+
+Routing according to the URL path.
+
+Example:
+
+```text
+/api/* → API target group
+/images/* → Image target group
+```
+
+### What happens when a target becomes unhealthy?
+
+The ALB normally stops routing new requests to that target and distributes traffic across the remaining healthy targets.
+
+### What happens if every target becomes unhealthy?
+
+The ALB can fail open and route to all registered targets despite their unhealthy status.
+
+### Why should the target security group reference the ALB security group?
+
+It limits application access to traffic originating from the load balancer instead of allowing the entire VPC or internet.
+
+### What is TLS termination?
+
+The ALB accepts and decrypts the client's HTTPS connection, then forwards the request to a backend target using HTTP or HTTPS.
+
+### What is connection draining?
+
+It is the process of allowing in-flight requests to complete while a target is being deregistered.
+
+### What is cross-zone load balancing?
+
+It allows a load-balancer node in one Availability Zone to distribute requests to healthy targets in other enabled zones.
+
+### What is the difference between ALB 5XX and target 5XX metrics?
+
+ALB 5XX errors are generated by the load-balancer layer.
+
+Target 5XX errors are returned by the backend application.
+
+### Why should ALB IP addresses not be hard-coded?
+
+AWS can change the underlying load-balancer addresses while scaling or maintaining the service.
+
+Clients should use the ALB DNS name.
+
+### When would you use sticky sessions?
+
+Only when a client must continue reaching the same target, usually because the application stores local session state.
+
+A shared session store is generally preferable.
+
+## 43. Knowledge Check
+
+Answer without notes:
+
+1. At which OSI layer does an ALB primarily operate?
+
+2. Which protocols does an ALB primarily handle?
+
+3. What is the difference between an internet-facing and internal ALB?
+
+4. Why can application targets remain private?
+
+5. Why should an ALB use multiple Availability Zones?
+
+6. What is a listener?
+
+7. What is a listener rule?
+
+8. In what order are listener rules evaluated?
+
+9. What happens when no custom rule matches?
+
+10. What is a target group?
+
+11. Which target types are supported?
+
+12. What is the difference between instance and IP targets?
+
+13. What does a health check verify?
+
+14. What is the healthy threshold?
+
+15. What is the unhealthy threshold?
+
+16. What is fail-open behaviour?
+
+17. Why should the health endpoint represent readiness?
+
+18. What is cross-zone load balancing?
+
+19. What is round-robin routing?
+
+20. What is least-outstanding-requests routing?
+
+21. What is sticky-session routing?
+
+22. Why are stateless targets preferred?
+
+23. What is deregistration delay?
+
+24. What is slow start?
+
+25. What is TLS termination?
+
+26. What does SNI provide?
+
+27. What does `X-Forwarded-For` contain?
+
+28. What is the difference between an ALB-generated 5XX and target-generated 5XX?
+
+29. Why should the target SG reference the ALB SG?
+
+30. Why must clients use the ALB DNS name?
+
+31. What does AWS WAF protect against?
+
+32. What is host-based routing?
+
+33. What is path-based routing?
+
+34. What is a weighted target group?
+
+35. What is the purpose of access logs?
+
+36. What causes a 502 error?
+
+37. What commonly causes a 503 error?
+
+38. What commonly causes a 504 error?
+
+39. Why should a target be drained before termination?
+
+40. What failure does a multi-AZ ALB architecture mitigate?
+
+## 44. Completion Standard
+
+This guide is complete only when you can:
+
+- Draw a two-AZ ALB architecture.
+
+- Explain every ALB component.
+
+- Create HTTP and HTTPS listeners.
+
+- Configure HTTP-to-HTTPS redirection.
+
+- Write host-based and path-based rules.
+
+- Create and configure a target group.
+
+- Explain all supported target types.
+
+- Design an accurate health endpoint.
+
+- Configure ALB and target security groups.
+
+- Explain TLS termination.
+
+- Explain cross-zone routing.
+
+- Compare target-routing algorithms.
+
+- Explain sticky sessions and their disadvantages.
+
+- Explain deregistration delay and slow start.
+
+- Trace a complete client-to-target request.
+
+- Differentiate ALB and target errors.
+
+- Use CloudWatch metrics and access logs.
+
+- Troubleshoot at least ten intentionally broken request paths.
+
+- Explain why every architecture component exists.
+
+- State which failure or risk every component mitigates.
