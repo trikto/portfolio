@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -69,6 +70,22 @@ test("article-page images retain their source proportions while card covers stay
   assert.match(styles, /\.article-prose img\s*\{[^}]*max-width:100%;\s*height:auto;/);
   assert.match(styles, /\.article-cover\s*\{[^}]*aspect-ratio:16\/9/);
   assert.match(styles, /\.article-cover img\s*\{[^}]*object-fit:cover/);
+});
+
+test("Application Load Balancer diagrams preserve PDF spacing and the machine-readable copy", async () => {
+  const source = (await readFile(path.join(process.cwd(), "content", "blog", "application-load-balancers.mdx"), "utf8")).replaceAll("\r\n", "\n");
+  const diagrams = [...source.matchAll(/```text\n([\s\S]*?)\n```/g)]
+    .map((match) => match[1])
+    .filter((block) => /[┌┐└┘├┤┬┴┼│─→↓↑▼]/u.test(block));
+  assert.equal(diagrams.length, 39);
+  assert.equal(
+    createHash("sha256").update(diagrams.join("\n---diagram---\n")).digest("hex"),
+    "eb0288b8e73f7dec537642a34c0fd8afd4cd0625972e8106efdf78eba1f6bdda",
+  );
+
+  const article = parseBlogPostSource("application-load-balancers", source);
+  const llmsFull = (await readFile(path.join(process.cwd(), "public", "llms-full.txt"), "utf8")).replaceAll("\r\n", "\n");
+  assert.ok(llmsFull.includes(article.content));
 });
 
 function source(overrides: Record<string, unknown> = {}, body = "A useful local article body.") {

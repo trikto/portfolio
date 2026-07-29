@@ -116,7 +116,7 @@ Without a load balancer:
 
 ```text
 Client
-↓
+   ↓
 Single application server
 ```
 
@@ -137,9 +137,9 @@ Problems:
 With a load balancer:
 
 ```text
-┌── Application Server 1
+                   ┌── Application Server 1
 Client → Load Balancer ── Application Server 2
-└── Application Server 3
+                   └── Application Server 3
 ```
 
 The load balancer provides one entry point while the application runs on several backend targets.
@@ -233,30 +233,30 @@ Those requirements may be better served by a Network Load Balancer or Gateway Lo
 ## 4. Reference Architecture
 
 ```text
-Internet
-│
-Route 53 DNS record
-│
-Internet Gateway
-│
-Application Load Balancer
-HTTPS listener on port 443
-/
-/
-Public Subnet A       Public Subnet B
-AZ A                  AZ B
-│                    │
-└────────┬───────────┘
-│
-Target Group: application
-/
-/
+                Internet
+                   │
+            Route 53 DNS record
+                   │
+          Internet Gateway
+                   │
+      Application Load Balancer
+       HTTPS listener on port 443
+            /
+           /
+ Public Subnet A       Public Subnet B
+       AZ A                  AZ B
+         │                    │
+         └────────┬───────────┘
+                  │
+       Target Group: application
+            /
+           /
 Application Server A   Application Server B
-Private Subnet A       Private Subnet B
-AZ A                  AZ B
-│
-▼
-Private database
+ Private Subnet A       Private Subnet B
+       AZ A                  AZ B
+                  │
+                  ▼
+            Private database
 ```
 
 The ALB is placed across at least two Availability Zones. AWS creates and manages load-balancer capacity in the enabled zones. The ALB receives requests through its DNS name and routes them to registered healthy targets.
@@ -278,9 +278,9 @@ Application Load Balancer
 │       ├── Conditions
 │       └── Actions
 └── Target groups
-├── Registered targets
-├── Health checks
-└── Target group attributes
+    ├── Registered targets
+    ├── Health checks
+    └── Target group attributes
 ```
 
 Understanding the relationship between these components is essential.
@@ -295,11 +295,11 @@ Typical architecture:
 
 ```text
 Internet
-↓
+   ↓
 Internet Gateway
-↓
+   ↓
 Internet-facing ALB in public subnets
-↓
+   ↓
 Private application servers
 ```
 
@@ -341,9 +341,9 @@ Example:
 
 ```text
 Internal client
-↓
+    ↓
 Internal ALB
-↓
+    ↓
 Private application service
 ```
 
@@ -424,7 +424,7 @@ Recommended DNS design:
 
 ```text
 app.example.com
-↓ Route 53 alias
+      ↓ Route 53 alias
 production-alb-123456789.ap-south-1.elb.amazonaws.com
 ```
 
@@ -449,7 +449,7 @@ Application Load Balancer
 │   └── Redirect to HTTPS:443
 │
 └── Listener HTTPS:443
-└── Forward to application target group
+    └── Forward to application target group
 ```
 
 Each listener has:
@@ -472,7 +472,7 @@ Common use:
 
 ```text
 HTTP:80
-↓
+   ↓
 Redirect to HTTPS:443
 ```
 
@@ -502,11 +502,11 @@ TLS termination means the encrypted client connection ends at the ALB.
 
 ```text
 Client
-│ HTTPS
-▼
+   │ HTTPS
+   ▼
 Application Load Balancer
-│ HTTP or HTTPS
-▼
+   │ HTTP or HTTPS
+   ▼
 Application server
 ```
 
@@ -652,9 +652,9 @@ www.example.com   → Web target group
 Architecture:
 
 ```text
-┌── API service
+                        ┌── API service
 Client → One ALB ───────┼── Admin service
-└── Web service
+                        └── Web service
 ```
 
 This allows several domains or subdomains to share one ALB.
@@ -779,9 +779,9 @@ Common example:
 
 ```text
 HTTP:80
-↓
+   ↓
 301 redirect
-↓
+   ↓
 HTTPS:443
 ```
 
@@ -827,11 +827,11 @@ A listener rule forwards matching traffic to a target group.
 
 ```text
 Listener rule
-↓
+    ↓
 Target group
-├── Target A
-├── Target B
-└── Target C
+    ├── Target A
+    ├── Target B
+    └── Target C
 ```
 
 A target group defines:
@@ -953,9 +953,9 @@ Traffic flow:
 
 ```text
 Client HTTPS:443
-↓
+      ↓
 ALB terminates TLS
-↓
+      ↓
 Target HTTP:8080
 ```
 
@@ -1012,13 +1012,13 @@ For ALB target groups, health-check protocols include HTTP and HTTPS. The defaul
 
 ```text
 Register target
-↓
+      ↓
 initial
-↓ Successful checks
+      ↓ Successful checks
 healthy
-↓ Failed checks
+      ↓ Failed checks
 unhealthy
-↓ Successful checks
+      ↓ Successful checks
 healthy
 ```
 
@@ -1153,9 +1153,9 @@ Recommended architecture:
 
 ```text
 Internet
-↓
+   ↓
 alb-sg
-↓
+   ↓
 app-sg
 ```
 
@@ -1397,9 +1397,9 @@ Sticky sessions bind a client session to a specific target.
 
 ```text
 Client session
-↓
+    ↓
 Target A
-↓
+    ↓
 Subsequent requests continue to Target A
 ```
 
@@ -1445,9 +1445,9 @@ Examples:
 
 ```text
 Client
-↓
+   ↓
 Any application target
-↓
+   ↓
 Shared session store
 ```
 
@@ -1515,7 +1515,7 @@ Without slow start:
 
 ```text
 New target becomes healthy
-↓
+       ↓
 Immediately receives a full share of traffic
 ```
 
@@ -1523,11 +1523,11 @@ With slow start:
 
 ```text
 New target becomes healthy
-↓
+       ↓
 Receives a small traffic share
-↓
+       ↓
 Traffic increases gradually
-↓
+       ↓
 Receives a normal traffic share
 ```
 
@@ -1555,7 +1555,7 @@ An ALB supports upgrading an HTTP connection to a WebSocket connection.
 
 ```text
 HTTP request
-↓ Upgrade
+   ↓ Upgrade
 WebSocket connection
 ```
 
@@ -1657,13 +1657,13 @@ Example:
 
 ```text
 Client
-↓
+   ↓
 ALB listener
-↓
+   ↓
 Authenticate with OIDC
-↓
+   ↓
 Forward authenticated request
-↓
+   ↓
 Private application
 ```
 
@@ -1723,15 +1723,15 @@ AWS documents WAF as an application-layer protection option for Application Load
 
 ```text
 Internet
-↓
+   ↓
 AWS WAF
-↓
+   ↓
 ALB security group
-↓
+   ↓
 Listener rules
-↓
+   ↓
 Application security group
-↓
+   ↓
 Application authentication and authorization
 ```
 
@@ -2256,9 +2256,9 @@ openssl s_client
 
 ```text
 Internet
-↓
+   ↓
 Public ALB
-↓
+   ↓
 Public EC2 application servers
 ```
 
@@ -2268,9 +2268,9 @@ Preferred:
 
 ```text
 Internet
-↓
+   ↓
 Public ALB
-↓
+   ↓
 Private EC2 application servers
 ```
 
