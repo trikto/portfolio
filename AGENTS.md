@@ -46,6 +46,8 @@
 
 ## Recent changes
 
+- Added the published Building a Three-Node HA K3s Homelab article at `/blog/three-node-ha-k3s-homelab` on 2026-08-02; preserve its RHEL 10.2 and VirtualBox architecture diagram, embedded-etcd topology, bastion and Cloudflare access paths, Prometheus and Grafana setup, two dashboard screenshots, operational troubleshooting, limitations, and improvement plan when editing it.
+
 - Added the published Application Load Balancers article and local cover image at `/blog/application-load-balancers` on 2026-07-27; all 39 topology and flow diagrams were reverified against the source PDF and restored to exact relative indentation on 2026-07-29; preserve its cover, full 44-section source structure, monospaced diagrams, listener and target-group coverage, health checks, TLS, routing, monitoring, troubleshooting, practical lab, interview questions, and completion standard when editing it.
 
 - Made the shared navigation neutral across routes and removed radial/glow effects on 2026-07-24. Desktop navigation no longer has a route-specific background; the mobile menu uses `var(--panel)` across routes. The homepage topology/pipeline surfaces have no diffuse shadow, and blog light mode uses a flat background too.
