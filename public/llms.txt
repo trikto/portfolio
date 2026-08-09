@@ -26,6 +26,7 @@ Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrast
 
 ## Articles
 
+- [Route 53 and TLS Certificates](https://gajan.dev/blog/route-53-and-tls-certificates): A practical guide to AWS Route 53 and TLS certificates covering hosted zones, record types, alias records, routing policies, health checks, ACM issuance and validation, certificate chains, SNI, and HTTPS troubleshooting.
 - [Building a Three-Node HA K3s Homelab](https://gajan.dev/blog/three-node-ha-k3s-homelab): A practical RHEL 10.2 and VirtualBox homelab build with three K3s server nodes, embedded etcd, Prometheus, Grafana, and secure Cloudflare Tunnel access.
 - [Application Load Balancers](https://gajan.dev/blog/application-load-balancers): A practical guide to AWS Application Load Balancers covering architecture, listeners, routing, target groups, health checks, TLS, monitoring, troubleshooting, and hands-on labs.
 - [IAM Roles and Least Privilege](https://gajan.dev/blog/iam-roles-and-least-privilege): A practical guide to AWS IAM roles, trust and permissions policies, temporary credentials, least-privilege design, cross-account access, PassRole, and AccessDenied troubleshooting.

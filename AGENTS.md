@@ -22,6 +22,7 @@
 
 - After making requested repository changes, validate them, commit only the scoped files, and push directly to `main` without waiting for a separate publishing reminder.
 - When the user asks to commit and push, commit the scoped changes and push directly to `main`; do not create a separate branch or pull request unless they explicitly ask for one.
+- Never add `Co-authored-by` trailers, Cursor or AI attribution, or generated-with notices to commit messages, pull request descriptions, code comments, article content, or any other file in this repository. Commits are authored solely by `Gajan <work@gajan.dev>`.
 
 ## SEO maintenance
 
@@ -45,6 +46,8 @@
 - The Observability dashboard is a client-side simulator with seeded local data; it must not fetch Grafana or Prometheus data.
 
 ## Recent changes
+
+- Added the published Route 53 and TLS Certificates article and local cover image at `/blog/route-53-and-tls-certificates` on 2026-08-09; preserve its cover, Scope and Learning Outcomes opening, DNS resolution and delegation sections, alias-versus-CNAME and zone-apex rules, routing-policy and health-check coverage, TLS handshake and certificate-chain material, ACM validation, renewal, and Region rules, the five-step DNS and certificate troubleshooting procedures, practical laboratory, interview questions, knowledge check, and completion standard when editing it.
 
 - Added the published Building a Three-Node HA K3s Homelab article at `/blog/three-node-ha-k3s-homelab` on 2026-08-02; preserve its RHEL 10.2 and VirtualBox architecture diagram, embedded-etcd topology, bastion and Cloudflare access paths, Prometheus and Grafana setup, two dashboard screenshots, operational troubleshooting, limitations, and improvement plan when editing it.
 

@@ -1,0 +1,31 @@
+{
+  "terminalAllowlist": [
+    "git status",
+    "git diff",
+    "git log",
+    "git show",
+    "git branch",
+    "git remote",
+    "git add",
+    "git commit",
+    "git push",
+    "npm install",
+    "npm ci",
+    "npm run build",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run test:blog",
+    "npm run test:cron",
+    "npm run dev",
+    "npm run start",
+    "node -v",
+    "npx tsc --noEmit"
+  ],
+  "autoRun": {
+    "block_instructions": [
+      "Require approval for any git command that force-pushes, rewrites history, or discards work, including git push --force, git push -f, git reset --hard, git rebase, git checkout -- , git clean, and git branch -D.",
+      "Require approval for any command that deletes files or directories, such as rm, rmdir, or Remove-Item.",
+      "Require approval for any git command that changes remotes, credentials, or git config."
+    ]
+  }
+}

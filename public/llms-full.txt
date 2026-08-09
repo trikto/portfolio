@@ -28,6 +28,872 @@ Key pages:
 
 ## Published articles
 
+### Route 53 and TLS Certificates
+
+- URL: https://gajan.dev/blog/route-53-and-tls-certificates
+- Published: 2026-08-09
+- Author: Gajan Rajah
+- Tags: aws, route-53, dns, tls, acm, devops
+- Description: A practical guide to AWS Route 53 and TLS certificates covering hosted zones, record types, alias records, routing policies, health checks, ACM issuance and validation, certificate chains, SNI, and HTTPS troubleshooting.
+
+## Scope
+
+This guide covers:
+
+1. DNS resolution fundamentals
+2. Route 53 hosted zones
+3. Domain registration and delegation
+4. DNS record types
+5. Alias records
+6. TTL and caching behaviour
+7. Routing policies
+8. Health checks and DNS failover
+9. Private hosted zones and Route 53 Resolver
+10. TLS handshake fundamentals
+11. Certificate anatomy and chains of trust
+12. AWS Certificate Manager
+13. Domain validation and automatic renewal
+14. Attaching certificates to AWS services
+15. SNI and multi-certificate listeners
+16. TLS termination and re-encryption
+17. Security policies and cipher suites
+18. DNS and certificate troubleshooting
+19. Practical exercises
+
+## Learning Outcomes
+
+After completing this guide, you should be able to:
+
+- Trace a DNS query from a client to an authoritative Route 53 name server.
+- Explain the relationship between a registrar, a hosted zone, and a name server.
+- Choose between an alias record and a CNAME record correctly.
+- Explain why a CNAME cannot exist at a zone apex.
+- Select the correct routing policy for a given availability requirement.
+- Configure DNS failover using Route 53 health checks.
+- Explain what a TLS certificate proves and what it does not.
+- Describe the TLS handshake and where the certificate is presented.
+- Issue and validate an ACM certificate using DNS validation.
+- Explain why ACM certificates renew automatically and when renewal fails.
+- Attach the correct certificate to an ALB, CloudFront, and API Gateway.
+- Diagnose common DNS and HTTPS failures methodically.
+
+## DNS Mental Model
+
+DNS answers one question:
+
+```text
+Given a name, which value should the client use?
+```
+
+Most often the value is an IP address, but it may be another name, a mail server, or arbitrary text.
+
+DNS is a distributed, hierarchical, cached database. Every part of that sentence matters operationally:
+
+- Distributed means no single server holds the whole answer.
+- Hierarchical means authority is delegated downward.
+- Cached means a change is not visible everywhere at once.
+
+Read a domain name from right to left:
+
+```text
+www.example.com.
+ |    |      |  |
+ |    |      |  Root
+ |    |      Top-level domain
+ |    Second-level domain
+ Subdomain
+```
+
+The trailing dot is the root. It is usually implied rather than typed.
+
+### Resolution Flow
+
+A cold lookup with no cached entries proceeds as follows:
+
+```text
+1. Application asks the operating system stub resolver.
+2. Stub resolver asks the configured recursive resolver.
+3. Recursive resolver asks a root name server.
+4. Root refers it to the .com TLD name servers.
+5. TLD refers it to the authoritative name servers for example.com.
+6. Authoritative name server returns the answer.
+7. Recursive resolver caches the answer for the TTL.
+8. Recursive resolver returns the answer to the client.
+```
+
+Route 53 acts at step 6. It is an authoritative name service.
+
+Route 53 does not control steps 1 through 5, which is why a correct Route 53 configuration can still appear broken to a client holding a cached answer.
+
+### Three Separate Route 53 Functions
+
+Route 53 performs three jobs that are commonly confused:
+
+| Function | Purpose |
+|---|---|
+| Domain registration | Buying and renewing the domain name itself |
+| Authoritative DNS | Answering queries for a hosted zone |
+| Health checking | Testing endpoint health and driving failover |
+
+You may use any one without the others. A domain registered elsewhere can be served by Route 53, and a domain registered in Route 53 can be served by another provider.
+
+## Hosted Zones
+
+A hosted zone is a container for the records of one domain.
+
+Creating a public hosted zone for `example.com` immediately creates two records:
+
+```text
+NS  example.com.   -> four assigned Route 53 name servers
+SOA example.com.   -> start of authority metadata
+```
+
+Do not delete these. They define the zone.
+
+### Delegation
+
+Creating a hosted zone does not make it authoritative. The parent zone must point to it.
+
+```text
+Registrar for example.com
+    stores NS records in the .com TLD
+        pointing to
+Route 53 assigned name servers
+    which serve
+The hosted zone records
+```
+
+If the registrar still points at the previous provider's name servers, Route 53 answers nobody, no matter how correct its records are.
+
+Verify delegation directly against the parent rather than trusting the console:
+
+```bash
+dig NS example.com @a.gtld-servers.net
+```
+
+Compare the result with the four name servers listed on the hosted zone. They must match.
+
+### A Common Delegation Mistake
+
+Deleting and recreating a hosted zone assigns a **new** set of four name servers. The registrar continues pointing at the old set, and the domain stops resolving. If you must recreate a zone, update the registrar afterwards.
+
+### Public and Private Hosted Zones
+
+A public hosted zone answers queries from the internet.
+
+A private hosted zone answers queries only from associated VPCs.
+
+A private hosted zone requires both of these VPC attributes to be enabled:
+
+```text
+enableDnsSupport
+enableDnsHostnames
+```
+
+The same domain name may exist in both a public and a private hosted zone. This is split-horizon DNS. Instances inside the associated VPC receive the private answer, and everyone else receives the public answer. It is useful for pointing internal traffic at an internal load balancer while external traffic reaches a public one.
+
+When both zones exist, the private zone wins for the associated VPC. This is a frequent cause of "it resolves differently on my laptop" confusion.
+
+## Record Types
+
+The record types encountered most often in infrastructure work:
+
+| Type | Purpose |
+|---|---|
+| `A` | Maps a name to an IPv4 address |
+| `AAAA` | Maps a name to an IPv6 address |
+| `CNAME` | Maps a name to another name |
+| `ALIAS` | Route 53 extension mapping a name to an AWS resource |
+| `MX` | Mail exchange servers, with priority |
+| `TXT` | Arbitrary text, used for verification and mail policy |
+| `NS` | Delegates a zone to name servers |
+| `SOA` | Zone authority metadata |
+| `SRV` | Service location, with port |
+| `PTR` | Reverse lookup from address to name |
+| `CAA` | Restricts which certificate authorities may issue |
+
+### CNAME Constraints
+
+Two rules cause most CNAME problems:
+
+1. A CNAME cannot coexist with any other record of the same name.
+2. A CNAME cannot exist at the zone apex.
+
+The apex is the bare domain, `example.com`, with no subdomain. The apex must hold `NS` and `SOA` records, and rule one forbids a CNAME alongside them.
+
+This is a DNS protocol constraint, not a Route 53 limitation. It is the reason alias records exist.
+
+### Alias Records
+
+An alias record is a Route 53 feature that maps a name directly to an AWS resource.
+
+```text
+example.com.  ALIAS  ->  my-alb-1234567890.eu-west-1.elb.amazonaws.com
+```
+
+Alias records solve the apex problem because Route 53 resolves the target internally and returns the resulting addresses as if they were `A` records. The client never sees a CNAME.
+
+Alias advantages over CNAME:
+
+- Permitted at the zone apex.
+- Queries to AWS resources are not billed.
+- The target's address changes are followed automatically.
+- Health of the target can be evaluated natively.
+
+Valid alias targets include:
+
+- Application, Network, and Gateway Load Balancers
+- CloudFront distributions
+- S3 buckets configured for static website hosting
+- API Gateway custom domains
+- VPC interface endpoints
+- Global Accelerator accelerators
+- Another record in the same hosted zone
+
+An alias cannot point at an arbitrary external hostname. Use a CNAME for that, on a subdomain.
+
+### Choosing Between Them
+
+```text
+Is the target an AWS resource that supports alias?
+    Yes -> Use an alias record.
+    No  -> Is the record at the zone apex?
+             Yes -> The design must change. Apex requires A/AAAA or alias.
+             No  -> Use a CNAME.
+```
+
+## TTL and Caching
+
+Time to live tells resolvers how long they may cache an answer, in seconds.
+
+```text
+Low TTL  (60)    Fast change propagation, more queries, higher cost
+High TTL (86400) Slow change propagation, fewer queries, lower cost
+```
+
+Alias records to AWS resources do not accept a user-defined TTL. Route 53 uses the target's own TTL.
+
+### Planning a Cutover
+
+TTL must be reduced *before* a migration, not during it. Reducing the TTL at the moment of the change has no effect on answers already cached under the old, longer value.
+
+```text
+1. Days before: lower the TTL to 60 seconds.
+2. Wait for the old TTL to fully expire everywhere.
+3. Perform the cutover.
+4. Verify from several networks and resolvers.
+5. Raise the TTL again once the change is proven stable.
+```
+
+Be aware that some resolvers and many applications ignore TTL. Java runtimes historically cached DNS answers for the process lifetime. Plan for stragglers rather than assuming clean expiry.
+
+## Routing Policies
+
+A routing policy determines which value Route 53 returns when several records share a name.
+
+| Policy | Selection basis |
+|---|---|
+| Simple | One record, no logic |
+| Weighted | Proportional split by assigned weight |
+| Latency | Lowest network latency to an AWS Region |
+| Failover | Primary while healthy, otherwise secondary |
+| Geolocation | Physical location of the querying resolver |
+| Geoproximity | Distance to a resource, adjustable with bias |
+| Multivalue answer | Up to eight healthy records, returned together |
+| IP-based | The querying resolver's CIDR block |
+
+### Simple
+
+One record, one answer. Health checks are not evaluated. Suitable only where there is a single endpoint and no availability requirement expressed through DNS.
+
+### Weighted
+
+Weights are relative, not percentages.
+
+```text
+Record A weight 90  -> 90/100 of traffic
+Record B weight 10  -> 10/100 of traffic
+```
+
+Setting a weight to `0` stops traffic to that record unless all records are `0`, in which case they are treated as equal.
+
+Weighted routing is the standard mechanism for canary releases and blue/green traffic shifting at the DNS layer. Its weakness is caching: a client that resolved five minutes ago stays where it landed until the TTL expires, so it is a coarse instrument compared with load balancer target group weighting.
+
+### Latency
+
+Returns the record associated with the AWS Region offering the lowest latency to the resolver, based on measurements AWS maintains rather than raw geographic distance.
+
+Latency records are tied to Regions. Two records in the same Region make no sense within one latency set.
+
+### Failover
+
+Requires a health check on the primary record.
+
+```text
+Primary healthy   -> return primary
+Primary unhealthy -> return secondary
+```
+
+The secondary is typically a static maintenance page on S3 or CloudFront. Failover is only as fast as the health check interval plus the failure threshold plus the TTL, which means DNS failover is measured in minutes, not seconds.
+
+### Geolocation and Geoproximity
+
+Geolocation routes on where the user appears to be, and is the correct choice for language, licensing, and data residency requirements. Always configure a default record to catch locations that match no rule; without it those users receive no answer at all.
+
+Geoproximity routes on distance to the resource and supports a bias value that expands or shrinks a resource's effective service area. It requires Route 53 traffic flow.
+
+### Multivalue Answer
+
+Returns up to eight healthy records in a single response and relies on the client to choose. Unhealthy records are withdrawn from the answer.
+
+This is not load balancing. There is no connection distribution, no session awareness, and no capacity awareness. It improves availability of the answer, not distribution of the load.
+
+## Health Checks
+
+Route 53 health checks run from multiple AWS Regions and evaluate an endpoint independently of any load balancer.
+
+Three types exist:
+
+| Type | Evaluates |
+|---|---|
+| Endpoint | An IP or hostname over HTTP, HTTPS, or TCP |
+| Calculated | The combined status of other health checks |
+| CloudWatch alarm | The state of a CloudWatch alarm |
+
+### Endpoint Health Check Behaviour
+
+```text
+1. Checkers in multiple Regions request the endpoint.
+2. Each checker records pass or fail.
+3. The endpoint is healthy when more than 18% of checkers report success.
+4. Consecutive failures beyond the threshold mark it unhealthy.
+```
+
+Key configuration values:
+
+- Request interval: 30 seconds standard, or 10 seconds fast.
+- Failure threshold: typically three consecutive failures.
+- String matching: optionally require a string in the first 5120 bytes of the response body.
+
+Because checkers originate from published AWS IP ranges, a security group or firewall that only permits your own addresses will report a healthy service as down. This is the most common false failure.
+
+### HTTPS Health Checks and Certificates
+
+An HTTPS health check validates the server certificate. A self-signed or expired certificate fails the check even when the application is serving traffic correctly. Health checks also require SNI support on the endpoint when several certificates share a listener.
+
+### Calculated Health Checks
+
+A calculated health check combines child checks with a threshold, which is how you express "the service is up if at least two of three Regions are up". It avoids failing over an entire service because one dependency flapped.
+
+## Route 53 Resolver
+
+Inside a VPC, the Amazon-provided DNS server sits at the VPC base CIDR plus two, and also at `169.254.169.253`.
+
+For hybrid environments, Route 53 Resolver provides endpoints:
+
+```text
+Inbound endpoint   On-premises  ->  AWS      Resolve AWS private names from on-premises
+Outbound endpoint  AWS          ->  On-prem  Resolve on-premises names from AWS
+```
+
+Outbound endpoints work with resolver rules that forward a specified domain to your own DNS servers. This is how an EC2 instance resolves `internal.corp.example.com` against a corporate domain controller.
+
+Resolver query logging records every DNS query made from the VPC. It is one of the most useful and least used sources of evidence during an incident, because it shows what a workload actually tried to resolve rather than what you assumed it would.
+
+## TLS Fundamentals
+
+TLS provides three properties:
+
+```text
+Confidentiality  Traffic cannot be read in transit.
+Integrity        Traffic cannot be modified undetected.
+Authentication   The server is who the name says it is.
+```
+
+A certificate delivers the third property. It does not make an application secure, and it says nothing about the trustworthiness of the operator. It binds a public key to a domain name, attested by a certificate authority the client already trusts.
+
+### The Handshake
+
+TLS 1.3, simplified:
+
+```text
+1. Client sends ClientHello with supported ciphers, a key share, and the SNI hostname.
+2. Server replies with ServerHello, its key share, and its certificate chain.
+3. Client validates the chain against its trust store.
+4. Client verifies the hostname against the certificate's SAN entries.
+5. Both sides derive session keys.
+6. Encrypted application data flows.
+```
+
+TLS 1.2 requires an additional round trip. TLS 1.3 completes in one, which is a measurable latency improvement on high-latency connections.
+
+Two details matter operationally. The SNI hostname is sent in the clear, which is what lets one listener serve many certificates. And hostname verification is performed by the client, not the server, so a mismatch produces a client-side error the server never observes.
+
+### Certificate Anatomy
+
+```text
+Subject              CN=example.com
+Subject Alternative  DNS:example.com, DNS:www.example.com
+Issuer               CN=Amazon RSA 2048 M01
+Validity             Not Before / Not After
+Public Key           RSA 2048 or ECDSA P-256
+Signature            Issuer's signature over the above
+```
+
+Modern clients ignore the Common Name entirely and match only against Subject Alternative Name entries. A certificate whose CN is correct but whose SAN list omits the hostname will fail. Always populate SAN.
+
+### Wildcards
+
+`*.example.com` matches exactly one label:
+
+```text
+www.example.com       Matches
+api.example.com       Matches
+example.com           Does not match
+a.b.example.com       Does not match
+```
+
+The bare apex needs its own SAN entry. Request both `example.com` and `*.example.com` on the same certificate.
+
+### Chain of Trust
+
+```text
+Root CA          In the client trust store, offline, long-lived
+    signs
+Intermediate CA  Presented by the server
+    signs
+Leaf certificate The server's own certificate
+```
+
+The server must present the leaf **and** the intermediates. It must not present the root, which the client already holds.
+
+An incomplete chain is insidious because browsers often paper over it using cached intermediates or AIA fetching, while `curl`, Java clients, and mobile applications fail outright. "It works in Chrome but the API client rejects it" is nearly always a missing intermediate.
+
+## AWS Certificate Manager
+
+ACM issues, stores, and renews certificates.
+
+| Certificate type | Cost | Exportable | Renewal |
+|---|---|---|---|
+| ACM public | Free | No | Automatic when validated |
+| ACM Private CA | Charged per CA and certificate | Yes | Automatic |
+| Imported | Free to store | Already held | Manual |
+
+The critical constraint is that a public ACM certificate's private key cannot be exported. The certificate can only be used by integrated AWS services. If you need the key on an EC2 instance or a container running its own TLS stack, ACM public certificates are the wrong tool; use ACM Private CA or an external authority.
+
+### Integrated Services
+
+Certificates can be attached to:
+
+- Application and Network Load Balancers
+- CloudFront distributions
+- API Gateway
+- AppSync
+- Elastic Beanstalk
+- Amazon CloudFront functions via distributions
+
+### The Region Rule
+
+ACM is a regional service. A certificate must exist in the same Region as the resource that uses it.
+
+```text
+ALB in eu-west-1        -> certificate in eu-west-1
+API Gateway in ap-south-1 -> certificate in ap-south-1
+CloudFront (global)     -> certificate in us-east-1
+```
+
+CloudFront is the exception that catches everyone. Because its configuration is managed from `us-east-1`, its certificate must be issued there regardless of where the origin lives.
+
+### Domain Validation
+
+ACM must confirm you control the domain before issuing.
+
+DNS validation asks you to publish a CNAME record:
+
+```text
+_a79865eb4cd1a6ab9c00295a3d3b7f1c.example.com.  CNAME  _424c7224e9b0146f9a8808af955727d0.acm-validations.aws.
+```
+
+Email validation sends messages to the domain's WHOIS contacts and to five fixed addresses such as `admin@example.com`.
+
+Prefer DNS validation without exception. Email validation requires a human to click a link every renewal cycle, which guarantees an eventual expiry incident.
+
+When the domain is in a Route 53 public hosted zone in the same account, ACM can create the validation record for you in one action.
+
+### Automatic Renewal
+
+ACM attempts renewal starting 60 days before expiry.
+
+Renewal succeeds only if the validation CNAME record still exists. Deleting that record after issuance is the single most common cause of an unexpected certificate expiry, because nothing appears wrong for up to a year.
+
+Additional renewal conditions:
+
+- The certificate must be associated with a supported AWS resource, or ACM may treat it as unused.
+- The domain must still resolve publicly.
+- Any CAA record must still permit Amazon to issue.
+
+### CAA Records
+
+A CAA record states which authorities may issue for a domain. If you publish one and omit Amazon, ACM issuance and renewal fail.
+
+```text
+example.com.  CAA  0 issue "amazon.com"
+```
+
+To also permit wildcards and a secondary authority:
+
+```text
+example.com.  CAA  0 issue "amazon.com"
+example.com.  CAA  0 issuewild "amazon.com"
+```
+
+CAA is the point where DNS configuration and certificate issuance intersect most directly, and it is easy to forget when a security team adds one months after the certificate was issued.
+
+## Attaching Certificates
+
+### Application Load Balancer
+
+An HTTPS listener requires a default certificate. Additional certificates can be attached to the same listener and selected by SNI.
+
+```text
+Listener :443
+    Default certificate  example.com
+    SNI certificate      partner.example.net
+    SNI certificate      legacy.example.org
+```
+
+The default is served to clients that do not send SNI, which in practice means very old clients and some scanners.
+
+### Security Policies
+
+The security policy selects the TLS protocol versions and cipher suites the listener will negotiate.
+
+```text
+ELBSecurityPolicy-TLS13-1-2-2021-06   TLS 1.2 and 1.3, current default choice
+ELBSecurityPolicy-TLS-1-2-2017-01     TLS 1.2 only
+ELBSecurityPolicy-2016-08             Includes TLS 1.0 and 1.1, avoid
+```
+
+Removing TLS 1.0 and 1.1 is required by PCI DSS and is now safe for essentially all clients. Verify with access logs before changing it, because the failure mode is a silent handshake rejection that never reaches your application logs.
+
+### Termination and Re-encryption
+
+```text
+Client --HTTPS--> ALB --HTTP--> Targets      TLS termination
+Client --HTTPS--> ALB --HTTPS--> Targets     Re-encryption
+```
+
+With re-encryption, the ALB does **not** validate the target's certificate. Targets may therefore use self-signed certificates. This protects traffic on the wire inside the VPC but provides no authentication of the target, so do not treat it as mutual trust.
+
+### Redirecting HTTP to HTTPS
+
+Perform the redirect at the load balancer rather than in the application:
+
+```text
+Listener :80
+    Action: redirect to HTTPS :443, status 301
+```
+
+This costs nothing, removes a request from the application entirely, and cannot be forgotten by a new service that joins the target group.
+
+## Troubleshooting
+
+### DNS Diagnostic Procedure
+
+#### Step 1: Confirm Delegation
+
+```bash
+dig NS example.com +short
+```
+
+Compare against the hosted zone's assigned name servers. A mismatch means the registrar is wrong and nothing else matters.
+
+#### Step 2: Query the Authority Directly
+
+```bash
+dig A www.example.com @ns-1234.awsdns-56.org
+```
+
+Querying Route 53 directly bypasses every cache. If the authoritative answer is correct but clients disagree, the problem is caching, not configuration.
+
+#### Step 3: Compare Against a Public Resolver
+
+```bash
+dig A www.example.com @1.1.1.1
+dig A www.example.com @8.8.8.8
+```
+
+Differences between resolvers indicate propagation still in progress.
+
+#### Step 4: Inspect the Full Chain
+
+```bash
+dig +trace www.example.com
+```
+
+This walks from the root downward and exposes exactly which delegation step fails.
+
+#### Step 5: Check for Split-Horizon
+
+If the name resolves differently inside a VPC, look for a private hosted zone associated with that VPC holding the same domain.
+
+### Certificate Diagnostic Procedure
+
+#### Step 1: Inspect What the Server Presents
+
+```bash
+openssl s_client -connect example.com:443 -servername example.com
+```
+
+The `-servername` flag sends SNI. Omitting it returns the listener's default certificate, which is a useful comparison when diagnosing SNI problems.
+
+#### Step 2: Read the Names and Dates
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -dates -ext subjectAltName
+```
+
+Confirm the requested hostname appears in the SAN list and that the validity window includes today.
+
+#### Step 3: Verify the Chain Is Complete
+
+```bash
+echo | openssl s_client -connect example.com:443 -servername example.com -showcerts 2>/dev/null \
+  | grep -c "BEGIN CERTIFICATE"
+```
+
+A result of one usually means intermediates are missing.
+
+#### Step 4: Test With a Strict Client
+
+```bash
+curl -vI https://example.com
+```
+
+`curl` does not fetch missing intermediates the way browsers do, which makes it a better oracle for chain problems.
+
+#### Step 5: Check ACM Status
+
+```bash
+aws acm describe-certificate --certificate-arn arn:aws:acm:eu-west-1:111122223333:certificate/abcd1234
+```
+
+Inspect `Status`, `RenewalEligibility`, and `DomainValidationOptions`. A status of `PENDING_VALIDATION` long after issuance means the validation record was never published correctly.
+
+### Common Failure Scenarios
+
+#### Certificate Is Stuck Pending Validation
+
+The validation CNAME is missing, mistyped, or published in the wrong zone. A frequent cause is appending the domain twice, producing `_abc.example.com.example.com`. Route 53 appends the zone name automatically, so paste only the name portion.
+
+#### Certificate Not Selectable on a Load Balancer
+
+The certificate exists in a different Region from the load balancer, or it is still pending validation.
+
+#### CloudFront Will Not Offer the Certificate
+
+The certificate was issued outside `us-east-1`. Reissue it there. Certificates cannot be moved between Regions.
+
+#### Browser Works, API Client Fails
+
+An incomplete chain. Confirm the intermediate is being presented, and remember that ACM-attached listeners handle this automatically while imported certificates do not unless the chain was supplied at import.
+
+#### NET::ERR_CERT_COMMON_NAME_INVALID
+
+The hostname is absent from the SAN list. Often a wildcard was assumed to cover the apex, or a second-level subdomain was assumed to be covered by a single-label wildcard.
+
+#### Certificate Expired Despite ACM Automation
+
+The validation record was deleted after issuance, the domain stopped resolving publicly, or a CAA record was introduced that excludes Amazon.
+
+#### DNS Failover Did Not Trigger
+
+Health checkers are blocked by a security group, the health check evaluates a path that returns a redirect, or the TTL is long enough that clients retained the old answer.
+
+#### Records Changed but Traffic Did Not Move
+
+TTL was reduced at the same time as the change rather than beforehand, or a client runtime is caching DNS for its process lifetime.
+
+## Practical Laboratory
+
+### Objective
+
+Serve a single application over HTTPS at both the apex and the `www` subdomain, with automatic certificate renewal and DNS failover to a static maintenance page.
+
+### Architecture
+
+```text
+Client
+    ↓ DNS
+Route 53 public hosted zone (example.com)
+    ↓ Alias, failover primary, health checked
+Application Load Balancer :443
+    ↓ HTTP
+Target group (EC2 or ECS)
+
+Route 53 failover secondary
+    ↓ Alias
+S3 static website (maintenance page)
+```
+
+### Build Steps
+
+1. Create a public hosted zone for the domain.
+2. Update the registrar to the four assigned name servers and verify with `dig NS`.
+3. Request an ACM certificate in the load balancer's Region for `example.com` and `*.example.com`.
+4. Create the validation records in Route 53 and wait for the status to become `ISSUED`.
+5. Create an HTTPS listener on the ALB using that certificate and a TLS 1.2/1.3 security policy.
+6. Create an HTTP listener that redirects to HTTPS with status 301.
+7. Create an alias record at the apex pointing to the ALB.
+8. Create an alias record for `www` pointing to the ALB.
+9. Create a Route 53 health check against `/healthz` on the ALB.
+10. Convert the apex record to failover primary and attach the health check.
+11. Create an S3 static website with a maintenance page and add it as the failover secondary.
+12. Publish a CAA record permitting `amazon.com`.
+
+### Required Tests
+
+| Test | Expected result |
+|---|---|
+| `dig NS example.com` | Matches hosted zone name servers |
+| `curl -I http://example.com` | 301 redirect to HTTPS |
+| `curl -I https://example.com` | 200 from the application |
+| `curl -I https://www.example.com` | 200 from the application |
+| SAN inspection | Contains both apex and wildcard |
+| Chain count via `-showcerts` | More than one certificate |
+| `openssl` without `-servername` | Returns the default certificate |
+| Stop all targets, wait, re-query | Resolves to the maintenance page |
+| Restore targets, wait, re-query | Resolves to the application |
+| `aws acm describe-certificate` | Status `ISSUED`, renewal eligible |
+
+### Failure-Injection Exercises
+
+1. Remove the ACM validation CNAME and describe precisely when the impact would appear.
+2. Block the Route 53 health checker ranges in the security group and observe the false failure.
+3. Publish a CAA record listing only a different authority and attempt to request a new certificate.
+4. Attach a certificate from the wrong Region and record the exact error.
+5. Set a TTL of 86400, change the record, and measure how long stale answers persist.
+6. Request a certificate covering only `*.example.com` and load the apex in a browser.
+
+## Interview Questions
+
+### Why can a CNAME not exist at the zone apex?
+
+The apex must hold `NS` and `SOA` records, and DNS forbids a CNAME from coexisting with any other record of the same name.
+
+### How does an alias record solve that?
+
+Route 53 resolves the target internally and returns address records, so no CNAME is exposed to the client.
+
+### What is the difference between a registrar and a hosted zone?
+
+The registrar holds ownership of the domain and publishes the delegation. The hosted zone holds the records answered by the authoritative name servers.
+
+### When would you choose weighted over latency routing?
+
+Weighted for deliberate traffic proportion, such as a canary release. Latency for automatically directing users to the fastest Region.
+
+### Why is DNS failover slow?
+
+Detection requires several consecutive failed health checks, and clients continue using cached answers until the TTL expires.
+
+### Is multivalue answer routing load balancing?
+
+No. It returns several healthy records and leaves selection to the client, with no awareness of connections or capacity.
+
+### What does a TLS certificate actually prove?
+
+That the holder of the private key controls the named domain, as attested by a trusted authority. It says nothing about application security.
+
+### Why must a CloudFront certificate live in us-east-1?
+
+CloudFront is a global service configured from `us-east-1`, and it reads its certificate from that Region.
+
+### Can you export an ACM public certificate?
+
+No. The private key cannot be retrieved. Use ACM Private CA or an external authority when you need the key on a host.
+
+### Why would a certificate expire despite automatic renewal?
+
+The DNS validation record was deleted, the domain no longer resolves publicly, or a CAA record now excludes Amazon.
+
+### Why does a site work in a browser but fail in curl?
+
+The chain is incomplete. Browsers often recover using cached intermediates or AIA fetching, while stricter clients do not.
+
+### What does SNI make possible?
+
+Multiple certificates on a single listener and IP address, because the client sends the requested hostname in the clear during the handshake.
+
+### Does re-encryption to targets validate the target certificate?
+
+No. The load balancer encrypts the connection but does not verify the target's certificate, so self-signed certificates are acceptable.
+
+### What is split-horizon DNS?
+
+The same domain served from both a private and a public hosted zone, returning internal answers inside associated VPCs and public answers elsewhere.
+
+### How would you diagnose a name that resolves incorrectly?
+
+Verify delegation at the registrar, query the authoritative name server directly, compare public resolvers, run `dig +trace`, and check for a private hosted zone overriding the answer.
+
+## Knowledge Check
+
+Answer without notes:
+
+1. What is an authoritative name server?
+2. What are the two records created with every hosted zone?
+3. What breaks if the registrar's name servers are wrong?
+4. Why does recreating a hosted zone break resolution?
+5. What is the zone apex?
+6. Name two rules constraining CNAME records.
+7. Give three advantages of alias records over CNAMEs.
+8. Which alias targets are valid?
+9. Why do alias records have no configurable TTL?
+10. When should TTL be lowered before a migration?
+11. Which routing policy suits a canary release?
+12. Which routing policy requires a health check?
+13. What must geolocation routing always include?
+14. How many records can multivalue answer routing return?
+15. What percentage of health checkers must succeed?
+16. Why do health checks fail against a correctly running service?
+17. What does a calculated health check express?
+18. What are the two Route 53 Resolver endpoint types?
+19. What three properties does TLS provide?
+20. Which certificate field do modern clients match against?
+21. What does `*.example.com` fail to cover?
+22. Which certificates must a server present?
+23. Why is an incomplete chain hard to detect?
+24. Where must a CloudFront certificate be issued?
+25. Why is DNS validation preferred over email validation?
+26. What single deletion causes a silent expiry a year later?
+27. What does a CAA record control?
+28. What does the ALB default certificate serve?
+29. Does re-encryption authenticate the target?
+30. Where should HTTP to HTTPS redirection be performed?
+
+## Completion Standard
+
+This guide is complete only when you can:
+
+- Draw the full resolution path from client to authoritative name server.
+- Explain delegation and verify it from the command line.
+- Choose correctly between alias and CNAME in any position.
+- Explain why the apex is constrained.
+- Select an appropriate routing policy for a stated requirement.
+- Configure failover with a health check and predict its detection time.
+- Explain split-horizon resolution.
+- Describe the TLS handshake and where the certificate appears.
+- Explain SAN matching and wildcard limits.
+- Explain the chain of trust and which certificates the server sends.
+- Issue and validate an ACM certificate using DNS validation.
+- State the Region rule, including the CloudFront exception.
+- Explain every condition required for automatic renewal.
+- Diagnose at least five DNS or certificate failures from evidence.
+- Prove HTTPS works at both the apex and a subdomain.
+- Prove that failover serves the maintenance page.
+
 ### Building a Three-Node HA K3s Homelab
 
 - URL: https://gajan.dev/blog/three-node-ha-k3s-homelab
