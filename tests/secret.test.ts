@@ -87,7 +87,7 @@ test("the client size limit matches the ciphertext limit the service enforces", 
 
 test("the shared link carries the key in the fragment and nowhere else", () => {
   const link = secretLink("https://gajan.dev", "abc123", "SGVsbG8");
-  assert.equal(link, "https://gajan.dev/secret/abc123#SGVsbG8");
+  assert.equal(link, "https://gajan.dev/clipboard/abc123#SGVsbG8");
   assert.equal(new URL(link).search, "");
   assert.equal(secretLink("https://gajan.dev/", "abc123", "SGVsbG8"), link);
 });
@@ -131,7 +131,7 @@ test("service failures map to distinct, recoverable outcomes", async () => {
 });
 
 test("the reveal page never retrieves a secret on mount", async () => {
-  const source = await readSource("app", "secret", "[id]", "secret-reveal.tsx");
+  const source = await readSource("app", "clipboard", "[id]", "secret-reveal.tsx");
   assert.doesNotMatch(source, /useEffect\(/, "startup must not use an effect that could grow into an automatic burn");
   assert.match(source, /useSyncExternalStore\(subscribeHash, readHashKey/);
   assert.match(source, /window\.location\.hash/);
@@ -144,7 +144,7 @@ test("the reveal page never retrieves a secret on mount", async () => {
 });
 
 test("the key and the plaintext are never persisted or logged", async () => {
-  for (const file of [["lib", "secret.ts"], ["app", "secret", "secret-composer.tsx"], ["app", "secret", "[id]", "secret-reveal.tsx"]]) {
+  for (const file of [["lib", "secret.ts"], ["app", "clipboard", "secret-composer.tsx"], ["app", "clipboard", "[id]", "secret-reveal.tsx"]]) {
     const source = await readSource(...file);
     assert.doesNotMatch(source, /localStorage|sessionStorage|document\.cookie|console\./, file.join("/"));
   }

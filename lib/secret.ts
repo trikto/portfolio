@@ -43,7 +43,7 @@ export function isSecretTtl(value: unknown): value is SecretTtl { return typeof 
 export function secretTtlLabel(value: SecretTtl): string { return SECRET_TTLS.find((ttl) => ttl.value === value)?.label ?? ""; }
 export function secretPayloadBytes(plaintext: string): number { return SECRET_IV_BYTES + new TextEncoder().encode(plaintext).length + SECRET_TAG_BYTES; }
 export function exceedsSecretLimit(plaintext: string): boolean { return secretPayloadBytes(plaintext) > MAX_SECRET_PAYLOAD_BYTES; }
-export function secretLink(origin: string, id: string, key: string): string { return `${origin.replace(/\/+$/, "")}/secret/${id}#${key}`; }
+export function secretLink(origin: string, id: string, key: string): string { return `${origin.replace(/\/+$/, "")}/clipboard/${id}#${key}`; }
 
 export async function encryptSecret(plaintext: string): Promise<{ payload: string; key: string }> {
   const key = await globalThis.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);

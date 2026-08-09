@@ -16,7 +16,7 @@ Key pages:
 - https://gajan.dev/blog
 - https://gajan.dev/cron
 - https://gajan.dev/yaml
-- https://gajan.dev/secret
+- https://gajan.dev/clipboard
 
 ## Developer tools
 
@@ -29,7 +29,7 @@ Key pages:
 
 ### One-Time Secret Sharing
 
-- URL: https://gajan.dev/secret
+- URL: https://gajan.dev/clipboard
 - Description: Share a password, API token, or private note as a self-destructing link that can be opened exactly once.
 - Encryption: The browser generates a fresh 256-bit AES-GCM key and a random 12-byte initialization vector for every secret, encrypts the text with the Web Crypto API, and uploads only the base64url-encoded initialization vector and ciphertext.
 - Key handling: The raw key is base64url-encoded and placed in the URL fragment after `#`. Browsers do not transmit fragments, so the key never reaches the storage service, and a link truncated after the `#` is permanently unrecoverable.

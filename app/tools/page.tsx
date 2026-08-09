@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMetadata({
 const tools = [
   { title: "Cron Editor & Crontab Generator", description: "Build and validate cron expressions with human-readable explanations and upcoming run previews.", action: "Cron Editor & Crontab Generator", href: "/cron", icon: "◷" },
   { title: "YAML Validator and Formatter", description: "Validate, format, and troubleshoot YAML syntax directly in the browser.", action: "YAML Validator and Formatter", href: "/yaml", icon: "✓" },
-  { title: "One-Time Secret Sharing", description: "Share a password or token as a self-destructing link. Encrypted in your browser, readable exactly once.", action: "One-Time Secret Sharing", href: "/secret", icon: "⊘" },
+  { title: "One-Time Secret Sharing", description: "Share a password or token as a self-destructing link. Encrypted in your browser, readable exactly once.", action: "One-Time Secret Sharing", href: "/clipboard", icon: "⊘" },
 ];
 
 export default function ToolsPage() {

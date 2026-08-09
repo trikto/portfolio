@@ -7,7 +7,7 @@ import { SecretComposer } from "./secret-composer";
 const title = "One-Time Secret Sharing – Encrypted Self-Destructing Links";
 const description = "Share a password, token, or private note through a self-destructing link. Your browser encrypts the secret with AES-GCM before anything is uploaded, the decryption key stays in the URL fragment, and the link can be opened exactly once.";
 
-export const metadata: Metadata = pageMetadata({ title, description, path: "/secret" });
+export const metadata: Metadata = pageMetadata({ title, description, path: "/clipboard" });
 
 const exposure = [
   ["The plaintext secret", "Never", "It is encrypted in this browser before any request is made."],
@@ -65,7 +65,7 @@ const structuredData = {
       description,
       applicationCategory: "SecurityApplication",
       operatingSystem: "Any",
-      url: absoluteUrl("/secret"),
+      url: absoluteUrl("/clipboard"),
       isAccessibleForFree: true,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     },
