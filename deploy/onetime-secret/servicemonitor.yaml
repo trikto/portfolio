@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: onetime-secret
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: onetime-secret
+    # Required: kube-prometheus-stack release "kps" selects ServiceMonitors
+    # with this label. Without it, scrape config never appears.
+    release: kps
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: onetime-secret
+  namespaceSelector:
+    matchNames:
+      - secrets
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s

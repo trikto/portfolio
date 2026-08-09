@@ -16,6 +16,7 @@ Key pages:
 - https://gajan.dev/blog
 - https://gajan.dev/cron
 - https://gajan.dev/yaml
+- https://gajan.dev/secret
 
 ## Developer tools
 
@@ -25,6 +26,17 @@ Key pages:
 - Description: Build and validate five-field Linux cron expressions, read plain-English explanations, and preview upcoming run times in the selected timezone.
 - Supported syntax: Numeric five-field schedules with wildcards, lists, ranges, wildcard or range steps, and numeric weekdays.
 - Unsupported syntax: Named months or weekdays, aliases such as `@daily`, numeric-prefix steps such as `0/15`, and platform-specific Quartz or AWS fields.
+
+### One-Time Secret Sharing
+
+- URL: https://gajan.dev/secret
+- Description: Share a password, API token, or private note as a self-destructing link that can be opened exactly once.
+- Encryption: The browser generates a fresh 256-bit AES-GCM key and a random 12-byte initialization vector for every secret, encrypts the text with the Web Crypto API, and uploads only the base64url-encoded initialization vector and ciphertext.
+- Key handling: The raw key is base64url-encoded and placed in the URL fragment after `#`. Browsers do not transmit fragments, so the key never reaches the storage service, and a link truncated after the `#` is permanently unrecoverable.
+- Retrieval: Reading is an explicit action on the reveal page rather than an automatic fetch, so link previews, mail scanners, and browser prefetch do not consume the secret. Retrieval and deletion are one atomic operation, so exactly one reader wins.
+- Expiry: Secrets carry a lifetime of 1 hour, 24 hours, or 7 days and are removed when it elapses even if never read.
+- Storage: Ciphertext is held by a self-hosted Contabo K3s service at api.gajan.dev, with Cloudflare DNS and proxy in front, TLS terminated at Traefik via cert-manager, and a memory-only Valkey store, so it is never written to disk. Not-found responses are deliberately identical for never-existed, already-read, and expired secrets.
+- Limits: Maximum encrypted payload of 65536 bytes. Client-side encryption does not protect against a compromised endpoint, a recipient who copies the secret after reading it, or anyone who obtains the link before the intended recipient.
 
 ## Published articles
 

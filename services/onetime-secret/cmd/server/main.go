@@ -1,0 +1,86 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/trikto/portfolio/services/onetime-secret/internal/api"
+	"github.com/trikto/portfolio/services/onetime-secret/internal/config"
+	"github.com/trikto/portfolio/services/onetime-secret/internal/store"
+)
+
+func main() {
+	cfg, err := config.LoadFromOS()
+	if err != nil {
+		slog.Error("config", "err", err)
+		os.Exit(1)
+	}
+
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
+	slog.SetDefault(log)
+
+	valkey := store.NewValkey(cfg.ValkeyAddr)
+	defer func() { _ = valkey.Close() }()
+
+	metrics := api.NewMetrics(prometheus.DefaultRegisterer)
+	server := api.New(cfg, valkey, metrics, log)
+
+	apiSrv := &http.Server{
+		Addr:              ":" + cfg.Port,
+		Handler:           server.Handler(),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	metricsMux := http.NewServeMux()
+	metricsMux.Handle("GET /metrics", promhttp.Handler())
+	metricsSrv := &http.Server{
+		Addr:              ":" + cfg.MetricsPort,
+		Handler:           metricsMux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	errCh := make(chan error, 2)
+	go func() {
+		log.Info("api listening", "addr", apiSrv.Addr)
+		if err := apiSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errCh <- err
+		}
+	}()
+	go func() {
+		log.Info("metrics listening", "addr", metricsSrv.Addr)
+		if err := metricsSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errCh <- err
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case err := <-errCh:
+		log.Error("server failed", "err", err)
+		os.Exit(1)
+	case sig := <-stop:
+		log.Info("shutting down", "signal", sig.String())
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_ = apiSrv.Shutdown(ctx)
+	_ = metricsSrv.Shutdown(ctx)
+}

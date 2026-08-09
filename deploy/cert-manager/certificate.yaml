@@ -1,0 +1,23 @@
+# Wildcard certificate for *.gajan.dev (+ apex). Traefik Ingresses reference
+# secretName: gajan-dev-tls (see deploy/onetime-secret/ingress.yaml).
+#
+# Order of operations matters:
+#   1. Issue this Certificate and wait until Ready=True
+#   2. Confirm Traefik serves the LE cert on 443
+#   3. Only then switch Cloudflare SSL/TLS mode to Full (strict)
+#
+# Switching to Full (strict) before the origin cert is live breaks HTTPS for
+# every proxied hostname on this zone.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gajan-dev-wildcard
+  namespace: secrets
+spec:
+  secretName: gajan-dev-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-dns
+  dnsNames:
+    - "*.gajan.dev"
+    - gajan.dev

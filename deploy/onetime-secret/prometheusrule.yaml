@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: onetime-secret
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: onetime-secret
+    release: kps
+spec:
+  groups:
+    - name: onetime-secret
+      rules:
+        - alert: OnetimeSecretStoreDown
+          expr: onetime_secret_store_up == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: One-time secret Valkey store is down
+            description: onetime_secret_store_up has been 0 for more than 2 minutes.
+        - alert: OnetimeSecretHighBurnMissRatio
+          expr: |
+            (
+              sum(rate(onetime_secrets_burn_misses_total[15m]))
+              /
+              clamp_min(sum(rate(onetime_secrets_burned_total[15m])) + sum(rate(onetime_secrets_burn_misses_total[15m])), 1e-9)
+            ) > 0.9
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Elevated one-time secret burn miss ratio
+            description: More than 90% of burn attempts are misses over 15m (stale links or probing).
+        - alert: OnetimeSecretNoScrapes
+          expr: absent(up{job="onetime-secret", namespace="secrets"} == 1)
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Prometheus is not scraping onetime-secret
+            description: Check ServiceMonitor release=kps label and NetworkPolicy allow-prometheus-to-api.

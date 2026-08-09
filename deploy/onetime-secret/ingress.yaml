@@ -1,0 +1,40 @@
+# Public surface: host api.gajan.dev, path Prefix /api/v1/secrets only.
+# /healthz, /readyz, and /metrics are intentionally NOT on this Ingress —
+# probes stay on the Service, metrics stay on :9090 for Prometheus alone.
+#
+# TLS: Traefik terminates with the cert-manager Certificate secret
+# (wildcard *.gajan.dev from deploy/cert-manager). Cloudflare must be set to
+# SSL/TLS mode Full (strict) only AFTER the Certificate is Ready.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: onetime-secret
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: onetime-secret
+    app.kubernetes.io/part-of: onetime-secret
+  annotations:
+    # TLS secret is issued by deploy/cert-manager Certificate
+    # (ClusterIssuer letsencrypt-dns → Secret gajan-dev-tls). Do not also set
+    # cert-manager.io/cluster-issuer here: that would create a second Certificate
+    # fighting the shared wildcard for the same secretName.
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - api.gajan.dev
+      # Covered by the wildcard Certificate in deploy/cert-manager
+      # (dnsNames: *.gajan.dev, gajan.dev) which writes this secret.
+      secretName: gajan-dev-tls
+  rules:
+    - host: api.gajan.dev
+      http:
+        paths:
+          - path: /api/v1/secrets
+            pathType: Prefix
+            backend:
+              service:
+                name: onetime-secret
+                port:
+                  name: http

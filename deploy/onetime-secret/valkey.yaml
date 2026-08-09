@@ -1,0 +1,96 @@
+# Memory-only Valkey: no PVC, no RDB, no AOF. A restart drops every pending
+# secret — the safe failure direction for ciphertext at rest.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valkey
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/part-of: onetime-secret
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: valkey
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: valkey
+        app.kubernetes.io/part-of: onetime-secret
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: valkey
+          image: valkey/valkey:8.0-alpine
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--save"
+            - ""
+            - "--appendonly"
+            - "no"
+            - "--maxmemory"
+            - "64mb"
+            - "--maxmemory-policy"
+            - "noeviction"
+            - "--protected-mode"
+            - "no"
+            - "--bind"
+            - "0.0.0.0"
+            - "--port"
+            - "6379"
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/part-of: onetime-secret
+spec:
+  selector:
+    app.kubernetes.io/name: valkey
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis

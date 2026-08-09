@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: onetime-secret-dashboard
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: onetime-secret
+    # Grafana sidecar (separate Grafana release) picks up ConfigMaps with this label.
+    grafana_dashboard: "1"
+data:
+  onetime-secret.json: |
+    {
+      "uid": "onetime-secret",
+      "title": "One-time Secret",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "tags": ["onetime-secret", "secrets"],
+      "templating": { "list": [] },
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Store up",
+          "id": 1,
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+          "targets": [
+            { "expr": "onetime_secret_store_up", "legendFormat": "up", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+              ]
+            }
+          }
+        },
+        {
+          "type": "timeseries",
+          "title": "Creates / burns / misses",
+          "id": 2,
+          "gridPos": { "h": 8, "w": 12, "x": 4, "y": 0 },
+          "targets": [
+            { "expr": "sum(rate(onetime_secrets_created_total[5m]))", "legendFormat": "created/s", "refId": "A" },
+            { "expr": "sum(rate(onetime_secrets_burned_total[5m]))", "legendFormat": "burned/s", "refId": "B" },
+            { "expr": "sum(rate(onetime_secrets_burn_misses_total[5m]))", "legendFormat": "misses/s", "refId": "C" }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "HTTP duration (p95 by route)",
+          "id": 3,
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, route) (rate(onetime_secret_http_request_duration_seconds_bucket[5m])))",
+              "legendFormat": "{{route}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "s" } }
+        },
+        {
+          "type": "heatmap",
+          "title": "Payload size",
+          "id": 4,
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            {
+              "expr": "sum by (le) (rate(onetime_secret_payload_bytes_bucket[5m]))",
+              "legendFormat": "{{le}}",
+              "format": "heatmap",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Time to burn (p50 / p95)",
+          "id": 5,
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(onetime_secret_time_to_burn_seconds_bucket[15m])))",
+              "legendFormat": "p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(onetime_secret_time_to_burn_seconds_bucket[15m])))",
+              "legendFormat": "p95",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "s" } }
+        }
+      ]
+    }

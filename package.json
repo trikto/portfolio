@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test:blog": "node --experimental-strip-types --test tests/blog.test.ts",
     "test:cron": "node --experimental-strip-types --test tests/cron.test.ts",
+    "test:secret": "node --experimental-strip-types --test tests/secret.test.ts",
     "import:medium": "node scripts/import-medium-posts.mjs"
   },
   "dependencies": {

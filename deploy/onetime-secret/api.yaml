@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onetime-secret
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: onetime-secret
+    app.kubernetes.io/part-of: onetime-secret
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: onetime-secret
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: onetime-secret
+        app.kubernetes.io/part-of: onetime-secret
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: onetime-secret
+                topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: ghcr.io/trikto/portfolio/onetime-secret:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9090
+          env:
+            - name: PORT
+              value: "8080"
+            - name: METRICS_PORT
+              value: "9090"
+            - name: VALKEY_ADDR
+              value: "valkey.secrets.svc.cluster.local:6379"
+            - name: ALLOWED_ORIGINS
+              value: "https://gajan.dev"
+            - name: MAX_PAYLOAD_BYTES
+              value: "65536"
+            - name: RATE_LIMIT_PER_HOUR
+              value: "60"
+            - name: LOG_LEVEL
+              value: "info"
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: onetime-secret
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: onetime-secret
+    app.kubernetes.io/part-of: onetime-secret
+spec:
+  selector:
+    app.kubernetes.io/name: onetime-secret
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: onetime-secret
+  namespace: secrets
+  labels:
+    app.kubernetes.io/name: onetime-secret
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: onetime-secret

@@ -17,6 +17,9 @@
 - Lint: `npm run lint`
 - Type check: `npm run typecheck`
 - Blog tests: `npm run test:blog`
+- Cron tests: `npm run test:cron`
+- Secret-tool tests: `npm run test:secret`
+- One-time secret API (from `services/onetime-secret/`): `go test ./...`
 
 ## Publishing
 
@@ -44,8 +47,11 @@
 ## Product note
 
 - The Observability dashboard is a client-side simulator with seeded local data; it must not fetch Grafana or Prometheus data.
+- One-time secret sharing at `/secret` encrypts in the browser with AES-GCM, keeps the key in the URL fragment only, and stores ciphertext on the Contabo K3s cluster at `https://api.gajan.dev` (path `/api/v1/secrets`). The Go API lives under `services/onetime-secret/`; manifests under `deploy/onetime-secret/` and `deploy/cert-manager/`. Preserve browser-side encryption, fragment-only keys, POST-only burn (no fetch-on-mount / no GET burn), atomic `GETDEL`, memory-only Valkey (no RDB/AOF/PVC), Ingress limited to `/api/v1/secrets`, and cert-manager DNS-01 wildcard TLS with Cloudflare Full (strict) only after the origin certificate is Ready. Do not move ciphertext storage onto Vercel or a managed KV unless the architecture is intentionally redesigned.
 
 ## Recent changes
+
+- Added one-time secret sharing at `/secret` on 2026-08-09: browser AES-GCM encryption with the key in the URL fragment, Contabo K3s Go API at `api.gajan.dev` with memory-only Valkey, Traefik Ingress path `/api/v1/secrets`, cert-manager Let's Encrypt DNS-01 wildcard TLS, Prometheus ServiceMonitor/PrometheusRule labelled `release: kps`, Grafana dashboard ConfigMap, and GHCR CI that builds but does not deploy; preserve the zero-knowledge invariants, click-to-reveal burn flow, and Contabo/direct-DNS exposure model when editing it.
 
 - Added the published Route 53 and TLS Certificates article and local cover image at `/blog/route-53-and-tls-certificates` on 2026-08-09; preserve its cover, Scope and Learning Outcomes opening, DNS resolution and delegation sections, alias-versus-CNAME and zone-apex rules, routing-policy and health-check coverage, TLS handshake and certificate-chain material, ACM validation, renewal, and Region rules, the five-step DNS and certificate troubleshooting procedures, practical laboratory, interview questions, knowledge check, and completion standard when editing it.
 
@@ -120,7 +126,7 @@
 - Migrated browser tool SEO routes to `/cron` and `/yaml`, with permanent legacy redirects, on 2026-07-13.
 - Replaced the `/cron` placeholder with a browser-only five-field Linux cron editor, validator, explainer, and timezone-aware run preview on 2026-07-13; preserve its client-side-only behavior and shared portfolio visual language.
 - Confirmed the current stack on 2026-07-14: Next.js App Router, React, TypeScript, Tailwind CSS v4, and Vercel; no database or backend runtime is used by the portfolio.
-- Changed GitHub repository visibility to private on 2026-07-14.
+- Changed GitHub repository visibility to private on 2026-07-14; the repository is public again as of 2026-08-09.
 - CodeRabbit CLI review could not run locally on 2026-07-14 because its installer does not support Git Bash on Windows; use a supported shell/OS for CodeRabbit reviews.
 - Replaced the `/cron` minute-by-minute preview scan with Croner and a 250 ms client-side debounce on 2026-07-14; preserve immediate validation and the explicit updating-preview state.
 - Identified the browser search-result icon as the site favicon (also called the site icon) on 2026-07-14.

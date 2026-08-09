@@ -1,0 +1,28 @@
+# ClusterIssuer for Let's Encrypt via Cloudflare DNS-01.
+# Requires Secret cloudflare-api-token in namespace cert-manager
+# (created out-of-band — never commit the token).
+#
+#   kubectl create secret generic cloudflare-api-token \
+#     -n cert-manager \
+#     --from-literal=api-token='REPLACE_ME'
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns
+spec:
+  acme:
+    email: work@gajan.dev
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-dns-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+        # Restrict challenges to this zone so a broader token cannot be abused
+        # against unrelated Cloudflare zones if the secret is ever over-scoped.
+        selector:
+          dnsZones:
+            - gajan.dev
