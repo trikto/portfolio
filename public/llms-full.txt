@@ -46,7 +46,7 @@ Key pages:
 - Published: 2026-08-10
 - Author: Gajan Rajah
 - Tags: security, cryptography, kubernetes, k3s, devops, observability
-- Description: How gajan.dev/clipboard encrypts secrets in the browser, stores only ciphertext on Contabo K3s with memory-only Valkey, and burns the record on first read — with the design choices behind each decision.
+- Description: How gajan.dev/clipboard encrypts secrets in the browser, stores only ciphertext on Contabo K3s with memory-only Valkey, and burns the record on first read, with the design choices behind each decision.
 
 Freelance and ops work constantly requires handing someone a database password, an API token, or a kubeconfig fragment. Chat history is a searchable archive. Email is worse. Paste sites that store plaintext in the clear are not an improvement.
 
@@ -79,7 +79,7 @@ The design targets a specific failure mode: credentials surviving forever in Sla
 It assumes:
 
 - The sender and recipient can share a URL out of band.
-- An attacker who obtains the complete URL (including the fragment) can decrypt the secret — that is the same as holding the envelope and the key.
+- An attacker who obtains the complete URL (including the fragment) can decrypt the secret - that is the same as holding the envelope and the key.
 - The Contabo API operator can see ciphertext size, timing, and identifiers, but not plaintext or the key.
 
 It deliberately does **not** claim to protect against:
@@ -87,7 +87,7 @@ It deliberately does **not** claim to protect against:
 - A compromised recipient machine that screenshots or copies the revealed secret
 - A malicious or fully compromised API that substitutes ciphertext (the recipient gets a decryption failure; authenticity is for the key holder, not the server)
 - Shoulder-surfing while the link is on screen
-- Long-term credential storage — this is transport, not a password manager
+- Long-term credential storage - this is transport, not a password manager
 
 Those boundaries matter. Overclaiming is how security tools lose trust.
 
@@ -135,7 +135,7 @@ The cost of the fragment approach is operational: chat clients and mail scanners
 
 ## Browser encryption details
 
-Encryption uses the Web Crypto API only — no extra npm crypto dependency.
+Encryption uses the Web Crypto API only - no extra npm crypto dependency.
 
 For each secret the browser:
 
@@ -232,7 +232,7 @@ Only the first two paths are on the public Ingress. Health and metrics stay clus
 
 TTL values are fixed: `3600`, `86400`, `604800` seconds. Create is rate-limited per IP via Valkey counters and fails closed if the store is down.
 
-The service is a small Go binary in a distroless image, built by GitHub Actions to `ghcr.io/trikto/portfolio/onetime-secret`. CI does not deploy into the cluster — Contabo has no inbound path from Actions by design — so rollout is pull-based or manual `kubectl apply -k`.
+The service is a small Go binary in a distroless image, built by GitHub Actions to `ghcr.io/trikto/portfolio/onetime-secret`. CI does not deploy into the cluster - Contabo has no inbound path from Actions by design, so rollout is pull-based or manual `kubectl apply -k`.
 
 ## Observability without reading secrets
 
@@ -276,7 +276,7 @@ The live tool is at [gajan.dev/clipboard](https://gajan.dev/clipboard). The API 
 
 The hard part was not AES. The hard part was refusing convenience that would quietly break the guarantee: GET burns, managed plaintext stores, keys in query strings, and persistence “just in case.”
 
-One-time secret sharing is a small tool. The design is the product. If the server cannot read the secret, a privacy policy is not doing the work — the request path is.
+One-time secret sharing is a small tool. The design is the product. If the server cannot read the secret, a privacy policy is not doing the work - the request path is.
 
 ### Route 53 and TLS Certificates
 
