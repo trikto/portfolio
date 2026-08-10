@@ -40,6 +40,244 @@ Key pages:
 
 ## Published articles
 
+### Building a Zero-Knowledge One-Time Secret Sharing Tool
+
+- URL: https://gajan.dev/blog/zero-knowledge-one-time-secret-sharing
+- Published: 2026-08-10
+- Author: Gajan Rajah
+- Tags: security, cryptography, kubernetes, k3s, devops, observability
+- Description: How gajan.dev/clipboard encrypts secrets in the browser, stores only ciphertext on Contabo K3s with memory-only Valkey, and burns the record on first read — with the design choices behind each decision.
+
+Freelance and ops work constantly requires handing someone a database password, an API token, or a kubeconfig fragment. Chat history is a searchable archive. Email is worse. Paste sites that store plaintext in the clear are not an improvement.
+
+I built a one-time secret sharing tool at [gajan.dev/clipboard](https://gajan.dev/clipboard) so that:
+
+1. The browser encrypts the secret before anything leaves the machine.
+2. The server stores only ciphertext it cannot read.
+3. The decryption key lives in the URL fragment, which browsers never send to a server.
+4. The first successful read atomically deletes the stored copy.
+5. Unopened secrets expire on a TTL.
+
+The interesting claim is architectural: you cannot disclose what you never had. This article explains how that claim is enforced, and why each major choice was made.
+
+## What the tool does
+
+A sender pastes a secret, chooses a lifetime (1 hour, 24 hours, or 7 days), and receives a link shaped like:
+
+```text
+https://gajan.dev/clipboard/<id>#<key>
+```
+
+The recipient opens the link, presses **Reveal secret**, reads the plaintext once, and the server-side copy is gone. A second open returns the same not-found response as an expired or never-existing link.
+
+The UI runs on Vercel with the rest of the portfolio. The storage API runs on my Contabo K3s cluster at `https://api.gajan.dev`.
+
+## Threat model and non-goals
+
+The design targets a specific failure mode: credentials surviving forever in Slack, email, or ticket systems.
+
+It assumes:
+
+- The sender and recipient can share a URL out of band.
+- An attacker who obtains the complete URL (including the fragment) can decrypt the secret — that is the same as holding the envelope and the key.
+- The Contabo API operator can see ciphertext size, timing, and identifiers, but not plaintext or the key.
+
+It deliberately does **not** claim to protect against:
+
+- A compromised recipient machine that screenshots or copies the revealed secret
+- A malicious or fully compromised API that substitutes ciphertext (the recipient gets a decryption failure; authenticity is for the key holder, not the server)
+- Shoulder-surfing while the link is on screen
+- Long-term credential storage — this is transport, not a password manager
+
+Those boundaries matter. Overclaiming is how security tools lose trust.
+
+## End-to-end architecture
+
+```text
+Sender browser                         Contabo K3s
+─────────────────                      ──────────────────────────────
+plaintext                              Traefik (TLS, api.gajan.dev)
+   |                                     |
+AES-GCM-256 + random IV                  v
+   |                                   Go API  (2 replicas)
+ciphertext = iv || ciphertext+tag        |
+key = raw AES key                        v
+   |                                   Valkey (memory only)
+POST ciphertext + ttl  ----------------> SET NX EX
+   |                                   GETDEL on burn
+returns id
+   |
+link = /clipboard/<id>#<keyB64url>
+   |
+   +---- shared out of band ----> Recipient browser
+                                    |
+                                    reads key from location.hash
+                                    clicks Reveal
+                                    POST .../burn
+                                    decrypt locally
+```
+
+Nothing in that diagram requires the server to hold the key. The fragment never appears in access logs, reverse-proxy request lines, or CDN analytics as part of the HTTP request.
+
+## Why the key sits after `#`
+
+Everything after `#` is the URL fragment. Browsers keep fragments local. They are not included in the request URI sent to the origin, and they are stripped from `Referer` in normal navigation.
+
+That property is older than this tool. Using it for key transport is a known pattern (similar in spirit to zero-knowledge paste services). I chose it over:
+
+| Alternative | Why not |
+|---|---|
+| Query parameter `?key=` | Sent to the server, logged, often captured by proxies and analytics |
+| Separate “enter passphrase” step | Worse UX for one-shot credential handoff; people reuse weak phrases |
+| Server-held key encrypted with a password | The server becomes capable of reading secrets again |
+
+The cost of the fragment approach is operational: chat clients and mail scanners truncate or rewrite URLs. A truncated link is permanently unrecoverable because there is no backup of the key. The UI warns about this explicitly.
+
+## Browser encryption details
+
+Encryption uses the Web Crypto API only — no extra npm crypto dependency.
+
+For each secret the browser:
+
+1. Generates an AES-GCM 256-bit key (`crypto.subtle.generateKey`)
+2. Generates a random 12-byte IV
+3. Encrypts UTF-8 plaintext
+4. Concatenates `iv || ciphertext` (ciphertext includes the GCM auth tag)
+5. Base64url-encodes the blob for upload
+6. Exports the raw key, base64url-encodes it, and places it in the fragment
+
+AES-GCM provides confidentiality and integrity for the blob relative to the key holder. A wrong key or flipped byte fails decryption. The server never runs decrypt.
+
+Payload size is capped at 65,536 encrypted bytes. The composer shows a live estimate (`IV + UTF-8 length + tag`) so large pastes fail before the request.
+
+## Why retrieval is POST-only and click-gated
+
+This is the detail most one-time link implementations get wrong.
+
+Slack, Outlook Safe Links, iMessage, corporate mail gateways, and browser prefetch commonly issue **GET** requests to URLs they see. If opening the page automatically burned the secret, the recipient would arrive to an empty vault.
+
+The reveal page therefore:
+
+- Reads the key from `window.location.hash` without fetching
+- Shows an explicit **Reveal secret** button
+- Only then `POST`s to `/api/v1/secrets/{id}/burn`
+
+The API rejects `GET` on the burn route. Automated unfurlers that only GET cannot consume the secret by accident.
+
+## Atomic burn with `GETDEL`
+
+Burn must be one Redis/Valkey command, not `GET` followed by `DEL`.
+
+With two separate commands, two concurrent readers can both receive the payload. `GETDEL` returns the value and deletes it in one step, so exactly one caller wins. Everyone else sees not-found.
+
+Not-found responses are intentionally identical for:
+
+- Never existed
+- Already burned
+- Expired by TTL
+
+That prevents an attacker from distinguishing “this id was real yesterday” from “this id is garbage.”
+
+Create uses `SET key value EX ttl NX`. The `NX` flag refuses to overwrite an existing id if a collision ever occurs; the API regenerates and retries instead of silently replacing a live secret.
+
+## Why Contabo K3s instead of managed KV
+
+The first sketch used Upstash Redis from Vercel route handlers. That works, and it is less operational work. I rejected it for this portfolio because the backend **is** part of the artifact.
+
+Running the API on Contabo K3s means the tool exercises:
+
+- A real Deployment with probes, resource limits, and a PodDisruptionBudget
+- NetworkPolicy (default deny; only Traefik reaches the API, only the API reaches Valkey, Prometheus scrapes metrics)
+- Traefik Ingress on `api.gajan.dev` limited to `/api/v1/secrets`
+- cert-manager with Let's Encrypt DNS-01 via Cloudflare for a wildcard `*.gajan.dev` certificate
+- Cloudflare Full (strict) once the origin certificate is Ready
+- Prometheus ServiceMonitor / PrometheusRule labelled for the existing `kps` stack
+- A Grafana dashboard ConfigMap for the sidecar
+
+The frontend stays on Vercel at `/clipboard` and calls the API cross-origin. CORS allows `https://gajan.dev` only.
+
+I also considered fragment-only encrypted links with no server at all. That removes infrastructure, but it also removes burn-after-read and enforceable TTL. One-time delivery is a statefulness problem; encryption alone cannot refuse the second reader.
+
+## Why Valkey is memory-only
+
+Valkey runs with:
+
+```text
+--save ""
+--appendonly no
+```
+
+There is no PVC. Ciphertext never reaches disk. A pod or node restart drops every pending secret.
+
+That is a deliberate trade:
+
+- Positive: no volume to seize, no snapshot to recover, no backup containing client credentials
+- Negative: in-flight secrets die if the store restarts before they are read
+
+For a freelance credential handoff tool, the safe failure direction is “the link stops working” rather than “ciphertext survives on disk.” The UI treats store outages as temporary and tells the sender that nothing was saved when create fails.
+
+`maxmemory-policy` is `noeviction`. Silent eviction of a live secret would look identical to a successful burn to the next reader. Refusing writes under memory pressure is louder and safer.
+
+## API surface
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/secrets` | Store ciphertext + TTL, return `id` and `expiresAt` |
+| `POST` | `/api/v1/secrets/{id}/burn` | Atomic read-and-delete |
+| `GET` | `/healthz` | Liveness (does not depend on Valkey) |
+| `GET` | `/readyz` | Readiness (requires Valkey `PING`) |
+| `GET` | `/metrics` | Prometheus exposition on a separate port |
+
+Only the first two paths are on the public Ingress. Health and metrics stay cluster-local.
+
+TTL values are fixed: `3600`, `86400`, `604800` seconds. Create is rate-limited per IP via Valkey counters and fails closed if the store is down.
+
+The service is a small Go binary in a distroless image, built by GitHub Actions to `ghcr.io/trikto/portfolio/onetime-secret`. CI does not deploy into the cluster — Contabo has no inbound path from Actions by design — so rollout is pull-based or manual `kubectl apply -k`.
+
+## Observability without reading secrets
+
+Prometheus metrics track envelope behaviour, never contents:
+
+- Secrets created and burned
+- Burn misses
+- Payload size histogram
+- Time-to-burn
+- Store availability
+- HTTP latency by route and status class
+
+Logs must not include payloads or ids. A dashboard that shows “37 created, 31 burned, 6 expired unread” on a system that cannot decrypt any of them is a stronger privacy argument than a policy page.
+
+## What operators can still see
+
+Honesty matters here. Cluster access still reveals:
+
+- Ciphertext bytes in Valkey memory
+- Approximate secret size
+- Create and burn timing
+- Client IP for rate limiting
+- Opaque ids
+
+None of that is plaintext. None of it includes the fragment key. The architecture reduces disclosure risk; it does not make the operator omniscient-proof against metadata.
+
+## Repository layout
+
+| Path | Role |
+|---|---|
+| `app/clipboard/` | Next.js UI (compose + reveal) |
+| `lib/secret.ts` | Browser crypto and API client |
+| `services/onetime-secret/` | Go API |
+| `deploy/onetime-secret/` | Kustomize manifests |
+| `deploy/cert-manager/` | ClusterIssuer + wildcard Certificate runbook |
+| `.github/workflows/onetime-secret.yml` | Test, build, push image to GHCR |
+
+The live tool is at [gajan.dev/clipboard](https://gajan.dev/clipboard). The API contract and deploy steps live next to the manifests so the writeup and the running system stay aligned.
+
+## Closing
+
+The hard part was not AES. The hard part was refusing convenience that would quietly break the guarantee: GET burns, managed plaintext stores, keys in query strings, and persistence “just in case.”
+
+One-time secret sharing is a small tool. The design is the product. If the server cannot read the secret, a privacy policy is not doing the work — the request path is.
+
 ### Route 53 and TLS Certificates
 
 - URL: https://gajan.dev/blog/route-53-and-tls-certificates

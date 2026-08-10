@@ -51,6 +51,8 @@
 
 ## Recent changes
 
+- Added the published Building a Zero-Knowledge One-Time Secret Sharing Tool article and local cover image at `/blog/zero-knowledge-one-time-secret-sharing` on 2026-08-10; preserve its threat model, fragment-key and POST-only burn rationale, AES-GCM browser encryption details, Contabo K3s and memory-only Valkey choices, atomic GETDEL semantics, Ingress and cert-manager notes, observability-without-plaintext section, and honest operator-metadata limitations when editing it.
+
 - Added one-time secret sharing at `/clipboard` on 2026-08-09: browser AES-GCM encryption with the key in the URL fragment, Contabo K3s Go API at `api.gajan.dev` with memory-only Valkey, Traefik Ingress path `/api/v1/secrets`, cert-manager Let's Encrypt DNS-01 wildcard TLS, Prometheus ServiceMonitor/PrometheusRule labelled `release: kps`, Grafana dashboard ConfigMap, and GHCR CI that builds but does not deploy; preserve the zero-knowledge invariants, click-to-reveal burn flow, and Contabo/direct-DNS exposure model when editing it.
 
 - Added the published Route 53 and TLS Certificates article and local cover image at `/blog/route-53-and-tls-certificates` on 2026-08-09; preserve its cover, Scope and Learning Outcomes opening, DNS resolution and delegation sections, alias-versus-CNAME and zone-apex rules, routing-policy and health-check coverage, TLS handshake and certificate-chain material, ACM validation, renewal, and Region rules, the five-step DNS and certificate troubleshooting procedures, practical laboratory, interview questions, knowledge check, and completion standard when editing it.
