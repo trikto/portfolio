@@ -79,7 +79,7 @@ export function FileComposer() {
       let grant: string | undefined;
       if (paywall.enabled) {
         const charged = await chargeForFile(msisdn.trim());
-        if (!charged.ok) { setError(failures[charged.error]); return; }
+        if (!charged.ok) { setError(charged.detail ? `${failures[charged.error]} ${charged.detail}` : failures[charged.error]); return; }
         grant = charged.grant;
       }
       const bytes = new Uint8Array(await file.arrayBuffer());

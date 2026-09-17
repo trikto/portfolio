@@ -247,6 +247,9 @@ func TestPaywallConfigErrorIsNotBadGateway(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
 	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("E1303")) {
+		t.Fatalf("expected platform code in body: %s", rec.Body.String())
+	}
 	if rec.Header().Get("Access-Control-Allow-Origin") != "https://gajan.dev" {
 		t.Fatal("missing CORS")
 	}

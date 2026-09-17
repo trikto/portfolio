@@ -126,7 +126,7 @@ func (s *Server) handleCharge(w http.ResponseWriter, r *http.Request) {
 			status, bodyCode, message := mapChargeError(apiErr.StatusCode)
 			_ = s.ledger.UpdateStatus(trxID, ledgerStatus(apiErr.StatusCode), "")
 			s.log.Info("charge", "statusCode", apiErr.StatusCode, "subscriber", charge.Subscriber, "externalTrxId", trxID)
-			writeError(w, status, bodyCode, message)
+			writeChargeError(w, status, bodyCode, message, apiErr.StatusCode)
 			s.observe("charge", status, start)
 			return
 		}
@@ -206,7 +206,15 @@ func mapChargeError(code string) (int, string, string) {
 		return http.StatusPaymentRequired, "insufficient_funds", "the mobile account does not have enough balance"
 	case "E1406":
 		return http.StatusPaymentRequired, "payment_declined", "the charge was declined"
+	case "E1303":
+		return http.StatusBadRequest, "payment_failed", "Contabo egress IP is not in the IdeaPro allowed-host list"
+	case "E1313":
+		return http.StatusBadRequest, "payment_failed", "Ideamart application id or password was rejected"
+	case "E1328":
+		return http.StatusBadRequest, "payment_failed", "CaaS debit is not enabled for this application"
+	case "E1329", "E1330", "E1336", "E1606":
+		return http.StatusBadRequest, "payment_failed", "FILE_SHARE_PRICE does not match the amount provisioned in NCS"
 	default:
-		return http.StatusBadRequest, "payment_failed", "the charge could not be completed"
+		return http.StatusBadRequest, "payment_failed", "the charge could not be completed (" + code + ")"
 	}
 }

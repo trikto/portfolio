@@ -6,8 +6,9 @@ import (
 )
 
 type errorBody struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
+	Error      string `json:"error"`
+	Message    string `json:"message"`
+	StatusCode string `json:"statusCode,omitempty"`
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -19,4 +20,8 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
 	writeJSON(w, status, errorBody{Error: code, Message: message})
+}
+
+func writeChargeError(w http.ResponseWriter, status int, code, message, platformCode string) {
+	writeJSON(w, status, errorBody{Error: code, Message: message, StatusCode: platformCode})
 }

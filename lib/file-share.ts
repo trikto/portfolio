@@ -12,7 +12,7 @@ export type FileShareFailure = "invalid_request" | "payload_too_large" | "rate_l
 export type CreateStoredFileResult = { ok: true; id: string } | { ok: false; error: FileShareFailure };
 export type FetchStoredFileResult = { ok: true; payload: Uint8Array } | { ok: false; error: FileShareFailure };
 export type FilePaywall = { enabled: boolean; amount: string; currency: string };
-export type ChargeFileResult = { ok: true; grant: string; status: string } | { ok: false; error: FileShareFailure };
+export type ChargeFileResult = { ok: true; grant: string; status: string } | { ok: false; error: FileShareFailure; detail?: string };
 export type SharedFile = { name: string; type: string; bytes: Uint8Array };
 
 const textEncoder = new TextEncoder();
@@ -142,17 +142,30 @@ export async function chargeForFile(subscriberId: string): Promise<ChargeFileRes
       const grant = typeof body === "object" && body !== null ? (body as { grant?: unknown }).grant : undefined;
       if (typeof grant !== "string" || !grant) return { ok: false, error: "payment_failed" };
       const charged = await waitForGrant(grant);
-      if (!charged) return { ok: false, error: "payment_failed" };
+      if (!charged) return { ok: false, error: "payment_failed", detail: "The charge is still waiting for phone confirmation." };
       return { ok: true, grant, status: "CHARGED" };
     } catch { return { ok: false, error: "unexpected" }; }
   }
-  if (!response.ok) return { ok: false, error: await failureFrom(response) };
+  if (!response.ok) return chargeFailureFrom(response);
   try {
     const body: unknown = await response.json();
     const { grant, status } = body as { grant?: unknown; status?: unknown };
     if (typeof grant !== "string" || !grant) return { ok: false, error: "unexpected" };
     return { ok: true, grant, status: typeof status === "string" ? status : "CHARGED" };
   } catch { return { ok: false, error: "unexpected" }; }
+}
+
+async function chargeFailureFrom(response: Response): Promise<ChargeFileResult> {
+  const known: FileShareFailure[] = ["invalid_request", "payload_too_large", "rate_limited", "store_unavailable", "not_found", "payment_required", "insufficient_funds", "payment_declined", "payment_failed"];
+  try {
+    const body: unknown = await response.json();
+    const record = typeof body === "object" && body !== null ? body as { error?: unknown; message?: unknown; statusCode?: unknown } : {};
+    const error = known.find((candidate) => candidate === record.error) ?? (response.status === 402 ? "payment_required" : "payment_failed");
+    const parts = [typeof record.message === "string" ? record.message : "", typeof record.statusCode === "string" ? record.statusCode : ""].filter(Boolean);
+    return { ok: false, error, detail: parts.join(" · ") || undefined };
+  } catch {
+    return { ok: false, error: "payment_failed" };
+  }
 }
 
 async function waitForGrant(grant: string): Promise<boolean> {
