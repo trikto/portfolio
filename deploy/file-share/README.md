@@ -32,6 +32,11 @@ This package issues a second Certificate in the `files` namespace so Ingress
 can use `secretName: gajan-dev-tls` there. Wait until that Certificate is
 Ready before expecting HTTPS on the new path.
 
+If the UI shows a browser CORS error with status null, check the API from
+curl first. Cloudflare `502` on `/api/v1/files` while `/api/v1/secrets`
+succeeds usually means Traefik cannot reach the pod (NetworkPolicy), not a
+frontend bug.
+
 ### 2. K3s local-path storage
 
 The PVC uses StorageClass `local-path` (Rancher local-path-provisioner, included
@@ -153,6 +158,7 @@ is **not** deleted on fetch.
 | Cloudflare 413 / failed large upload | Free Cloudflare proxy caps uploads at 100 MB. A 100 MB file plus GCM overhead can exceed that. Grey-cloud `api.gajan.dev` or raise the Cloudflare plan if you need the full limit. |
 | ServiceMonitor never scraped | Missing `release: kps` |
 | Browser CORS errors | `ALLOWED_ORIGINS` must include `https://gajan.dev` exactly |
+| Browser CORS with null status / Cloudflare 502 on `/api/v1/files` | NetworkPolicy `from.podSelector` must match Traefik only (`app.kubernetes.io/name: traefik`). Re-apply this package after the kustomize selector fix. |
 | Two pods, missing files | Do not scale above 1 replica while the volume is RWO |
 
 ## Security notes

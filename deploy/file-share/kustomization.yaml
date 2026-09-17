@@ -11,5 +11,19 @@ resources:
   - servicemonitor.yaml
   - prometheusrule.yaml
 
-commonLabels:
-  app.kubernetes.io/managed-by: kustomize
+# Avoid commonLabels: it stamps managed-by onto NetworkPolicy from.podSelector
+# and blocks Traefik. Keep it on Deployment/Service selectors (immutable).
+labels:
+  - pairs:
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
+    fields:
+      - kind: Service
+        path: spec/selector
+        create: true
+      - kind: Deployment
+        path: spec/selector/matchLabels
+        create: true
+      - kind: Deployment
+        path: spec/template/metadata/labels
+        create: true
