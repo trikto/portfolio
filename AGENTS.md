@@ -19,7 +19,9 @@
 - Blog tests: `npm run test:blog`
 - Cron tests: `npm run test:cron`
 - Secret-tool tests: `npm run test:secret`
+- File-share tests: `npm run test:file`
 - One-time secret API (from `services/onetime-secret/`): `go test ./...`
+- Encrypted file-share API (from `services/file-share/`): `go test ./...`
 
 ## Publishing
 
@@ -48,8 +50,11 @@
 
 - The Observability dashboard is a client-side simulator with seeded local data; it must not fetch Grafana or Prometheus data.
 - One-time secret sharing at `/clipboard` encrypts in the browser with AES-GCM, keeps the key in the URL fragment only, and stores ciphertext on the Contabo K3s cluster at `https://api.gajan.dev` (path `/api/v1/secrets`). The Go API lives under `services/onetime-secret/`; manifests under `deploy/onetime-secret/` and `deploy/cert-manager/`. Preserve browser-side encryption, fragment-only keys, POST-only burn (no fetch-on-mount / no GET burn), atomic `GETDEL`, memory-only Valkey (no RDB/AOF/PVC), Ingress limited to `/api/v1/secrets`, and cert-manager DNS-01 wildcard TLS with Cloudflare Full (strict) only after the origin certificate is Ready. Do not move ciphertext storage onto Vercel or a managed KV unless the architecture is intentionally redesigned.
+- Encrypted file sharing at `/files` encrypts in the browser with AES-GCM, keeps the key in the URL fragment only, and stores ciphertext on a volume-mounted path in the Contabo K3s cluster at `https://api.gajan.dev` (path `/api/v1/files`). The Go API lives under `services/file-share/`; manifests under `deploy/file-share/`. Preserve browser-side encryption, fragment-only keys, POST-only retrieve (no fetch-on-mount / no GET download), reusable links (no burn), a single replica with an RWO `local-path` PVC at `/data`, Ingress limited to `/api/v1/files`, and a 100 MB plaintext cap. Do not store plaintext filenames or keys on the volume.
 
 ## Recent changes
+
+- Added encrypted file sharing at `/files` on 2026-09-17: browser AES-GCM encryption with the key in the URL fragment, Contabo K3s Go API at `api.gajan.dev` with a volume-mounted `local-path` PVC, Traefik Ingress path `/api/v1/files`, POST-only retrieve without burn, and GHCR CI that builds but does not deploy; preserve the zero-knowledge invariants, click-to-download flow, 100 MB cap, and single-replica RWO volume when editing it.
 
 - Added the published Building a Zero-Knowledge One-Time Secret Sharing Tool article and local cover image at `/blog/zero-knowledge-one-time-secret-sharing` on 2026-08-10; preserve its threat model, fragment-key and POST-only burn rationale, AES-GCM browser encryption details, Contabo K3s and memory-only Valkey choices, atomic GETDEL semantics, Ingress and cert-manager notes, observability-without-plaintext section, and honest operator-metadata limitations when editing it.
 

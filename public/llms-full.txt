@@ -17,6 +17,7 @@ Key pages:
 - https://gajan.dev/cron
 - https://gajan.dev/yaml
 - https://gajan.dev/clipboard
+- https://gajan.dev/files
 
 ## Developer tools
 
@@ -26,6 +27,17 @@ Key pages:
 - Description: Build and validate five-field Linux cron expressions, read plain-English explanations, and preview upcoming run times in the selected timezone.
 - Supported syntax: Numeric five-field schedules with wildcards, lists, ranges, wildcard or range steps, and numeric weekdays.
 - Unsupported syntax: Named months or weekdays, aliases such as `@daily`, numeric-prefix steps such as `0/15`, and platform-specific Quartz or AWS fields.
+
+### Encrypted File Sharing
+
+- URL: https://gajan.dev/files
+- Description: Share a file of up to 100 MB as an encrypted link. The file is encrypted in the browser with AES-GCM, the decryption key stays in the URL fragment, and downloads are reusable.
+- Encryption: The browser generates a fresh 256-bit AES-GCM key and a random 12-byte initialization vector, packs the file name and bytes into a binary envelope, and encrypts that envelope with the Web Crypto API.
+- Key handling: The raw key is base64url-encoded and placed in the URL fragment after `#`. Browsers do not transmit fragments, so the key never reaches the storage service, and a link truncated after the `#` is permanently unrecoverable.
+- Retrieval: Downloading is an explicit action rather than an automatic fetch. The stored copy is not deleted on download.
+- Size: One file, maximum 100 MB, rejected in the browser before encryption.
+- Storage: Ciphertext sits on a volume-mounted path inside the file-sharing container on Contabo K3s at api.gajan.dev. Retrieval is POST-only so link unfurlers do not pull the object. The stored copy is not deleted on download. There is no TTL yet.
+- Limits: Client-side encryption does not protect against a compromised endpoint, anyone who obtains the full link, or a recipient who keeps the decrypted file.
 
 ### One-Time Secret Sharing
 

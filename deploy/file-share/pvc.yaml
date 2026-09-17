@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: file-share-data
+  namespace: files
+  labels:
+    app.kubernetes.io/name: file-share
+    app.kubernetes.io/part-of: file-share
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 20Gi

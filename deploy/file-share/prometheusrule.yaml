@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: file-share
+  namespace: files
+  labels:
+    app.kubernetes.io/name: file-share
+    release: kps
+spec:
+  groups:
+    - name: file-share
+      rules:
+        - alert: FileShareStoreDown
+          expr: file_share_store_up == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: Encrypted file share disk store is down
+            description: file_share_store_up has been 0 for more than 2 minutes.
+        - alert: FileShareNoScrapes
+          expr: absent(up{job="file-share", namespace="files"} == 1)
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Prometheus is not scraping file-share
+            description: Check ServiceMonitor release=kps label and NetworkPolicy allow-prometheus-to-api.

@@ -1,0 +1,16 @@
+# TLS secret in the files namespace. The wildcard Certificate in
+# deploy/cert-manager writes gajan-dev-tls in secrets; this copy lets the
+# files Ingress terminate TLS without sharing that namespace.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gajan-dev-wildcard
+  namespace: files
+spec:
+  secretName: gajan-dev-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-dns
+  dnsNames:
+    - "*.gajan.dev"
+    - gajan.dev
