@@ -18,6 +18,10 @@ func TestToTelAddress(t *testing.T) {
 	if _, err := ToTelAddress("12345"); err == nil {
 		t.Fatal("short numbers must be rejected")
 	}
+	got, err = ToCaasSubscriberID("0776351232")
+	if err != nil || got != "94776351232" {
+		t.Fatalf("caas: %q err=%v", got, err)
+	}
 }
 
 func TestMaskAddress(t *testing.T) {

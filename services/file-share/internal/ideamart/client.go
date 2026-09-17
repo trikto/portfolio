@@ -55,19 +55,19 @@ func (c *Client) Debit(ctx context.Context, subscriberID, amount, currency, exte
 	if externalTrxID == "" || len(externalTrxID) > 32 {
 		return "", "", fmt.Errorf("externalTrxId is invalid")
 	}
-	address, err := ToTelAddress(subscriberID)
+	subscriber, err := ToCaasSubscriberID(subscriberID)
 	if err != nil {
 		return "", "", err
 	}
 	if currency == "" {
 		currency = "LKR"
 	}
-	// CaaS debit sample uses tel:9477…; the gateway returns E1325 when this format is missing or malformed.
 	data, err := c.post(ctx, map[string]any{
-		"externalTrxId": externalTrxID,
-		"subscriberId":  address,
-		"amount":        amount,
-		"currency":      currency,
+		"externalTrxId":     externalTrxID,
+		"subscriberId":      subscriber,
+		"paymentInstrument": "MobileAccount",
+		"amount":            amount,
+		"currency":          currency,
 	})
 	if err != nil {
 		return "", "", err
