@@ -54,7 +54,7 @@ spec:
             - name: FILE_SHARE_PAYWALL
               value: "true"
             - name: FILE_SHARE_PRICE
-              value: "1.00"
+              value: "5"
             - name: FILE_SHARE_CURRENCY
               value: "LKR"
           envFrom:

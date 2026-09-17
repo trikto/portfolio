@@ -67,7 +67,7 @@ Set Charging Notification URL to:
 `https://api.gajan.dev/api/v1/ideamart/charging/notification`
 
 `FILE_SHARE_PRICE` in the Deployment must match the CaaS amount provisioned in NCS.
-Default in the manifest is `1.00` LKR.
+Default in the manifest is `5` LKR.
 
 ### 4. Apply this package
 

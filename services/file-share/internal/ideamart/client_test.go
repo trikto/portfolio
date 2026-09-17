@@ -9,7 +9,17 @@ import (
 	"testing"
 )
 
-func TestDebitSendsMobileAccountAndDigits(t *testing.T) {
+func TestGenerateExternalTrxIDIsDigits(t *testing.T) {
+	id, err := GenerateExternalTrxID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !digitsOnly.MatchString(id) || len(id) != 32 {
+		t.Fatalf("id=%q", id)
+	}
+}
+
+func TestDebitSendsTelPrefixAndNumericTrx(t *testing.T) {
 	var body map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		raw, err := io.ReadAll(r.Body)
@@ -25,16 +35,16 @@ func TestDebitSendsMobileAccountAndDigits(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	client := NewClient("APP_TEST", "secret", server.URL)
-	if _, _, err := client.Debit(context.Background(), "0776351232", "1", "LKR", "12345678901234567890123456789012"); err != nil {
+	if _, _, err := client.Debit(context.Background(), "0777172633", "5", "LKR", "256091234"); err != nil {
 		t.Fatal(err)
 	}
-	if body["subscriberId"] != "94776351232" {
+	if body["subscriberId"] != "tel:94777172633" {
 		t.Fatalf("subscriberId=%v", body["subscriberId"])
 	}
-	if body["paymentInstrument"] != "MobileAccount" {
-		t.Fatalf("paymentInstrument=%v", body["paymentInstrument"])
+	if body["paymentInstrument"] != nil || body["paymentInstrumentName"] != nil || body["invoiceNo"] != nil {
+		t.Fatalf("unexpected extra fields: %v", body)
 	}
-	if body["amount"] != "1" || body["currency"] != "LKR" {
-		t.Fatalf("amount/currency=%v %v", body["amount"], body["currency"])
+	if body["externalTrxId"] != "256091234" || body["amount"] != "5" || body["currency"] != "LKR" {
+		t.Fatalf("trx/amount=%v %v %v", body["externalTrxId"], body["amount"], body["currency"])
 	}
 }

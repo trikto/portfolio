@@ -33,7 +33,7 @@ const (
 	DefaultAllowedOrigins   = "https://gajan.dev"
 	DefaultMaxPayloadBytes  = 104858014 // 100 MiB plaintext + AES-GCM envelope overhead
 	DefaultRateLimitPerHour = 20
-	DefaultPrice            = "1.00"
+	DefaultPrice            = "5"
 	DefaultCurrency         = "LKR"
 )
 

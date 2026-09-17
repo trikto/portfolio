@@ -31,15 +31,6 @@ func ToTelAddress(msisdnRaw string) (string, error) {
 	return "tel:" + digits, nil
 }
 
-// ToCaasSubscriberID is the Direct Debit subscriberId: 94XXXXXXXXX with no tel: prefix.
-func ToCaasSubscriberID(msisdnRaw string) (string, error) {
-	address, err := ToTelAddress(msisdnRaw)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimPrefix(address, "tel:"), nil
-}
-
 // MaskAddress masks a subscriber address for logs and the charge ledger.
 func MaskAddress(address string) string {
 	body := address
