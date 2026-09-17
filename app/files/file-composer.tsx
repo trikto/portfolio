@@ -143,6 +143,7 @@ export function FileComposer() {
         <label className="secret-field file-msisdn-field" htmlFor="file-msisdn">
           <span>Paying mobile number</span>
           <input id="file-msisdn" name="msisdn" inputMode="tel" autoComplete="tel" value={msisdn} onChange={(event) => setMsisdn(event.target.value)} placeholder="0771234567" />
+          <small>Use 07XXXXXXXX or 947XXXXXXXX. Limited Production only charges numbers IdeaPro has whitelisted.</small>
         </label>
         <label className="file-consent" htmlFor="file-consent">
           <input id="file-consent" name="consent" type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />

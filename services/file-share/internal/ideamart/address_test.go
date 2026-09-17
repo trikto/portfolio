@@ -7,9 +7,16 @@ func TestToTelAddress(t *testing.T) {
 	if err != nil || got != "tel:94771234567" {
 		t.Fatalf("got %q err=%v", got, err)
 	}
+	got, err = ToTelAddress("0741469028")
+	if err != nil || got != "tel:94741469028" {
+		t.Fatalf("local 074: %q err=%v", got, err)
+	}
 	got, err = ToTelAddress("tel:94771234567")
 	if err != nil || got != "tel:94771234567" {
 		t.Fatalf("prefixed: %q err=%v", got, err)
+	}
+	if _, err := ToTelAddress("12345"); err == nil {
+		t.Fatal("short numbers must be rejected")
 	}
 }
 

@@ -62,6 +62,7 @@ func (c *Client) Debit(ctx context.Context, subscriberID, amount, currency, exte
 	if currency == "" {
 		currency = "LKR"
 	}
+	// CaaS debit sample uses tel:9477…; the gateway returns E1325 when this format is missing or malformed.
 	data, err := c.post(ctx, map[string]any{
 		"externalTrxId": externalTrxID,
 		"subscriberId":  address,

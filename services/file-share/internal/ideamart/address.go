@@ -6,23 +6,26 @@ import (
 	"strings"
 )
 
-var separators = regexp.MustCompile(`[\s()\-]`)
+var (
+	separators = regexp.MustCompile(`[\s()\-]`)
+	msisdn     = regexp.MustCompile(`^94[0-9]{9}$`)
+)
 
-// ToTelAddress is the only place "tel:" is added.
-func ToTelAddress(msisdn string) (string, error) {
-	trimmed := strings.TrimSpace(msisdn)
+// ToTelAddress is the only place "tel:" is added. Output is always tel:94XXXXXXXXX.
+func ToTelAddress(msisdnRaw string) (string, error) {
+	trimmed := strings.TrimSpace(msisdnRaw)
 	if trimmed == "" {
 		return "", fmt.Errorf("empty subscriber address")
 	}
 	if strings.HasPrefix(strings.ToLower(trimmed), "tel:") {
-		return trimmed, nil
+		trimmed = trimmed[4:]
 	}
 	digits := strings.TrimPrefix(separators.ReplaceAllString(trimmed, ""), "+")
 	digits = strings.TrimPrefix(digits, "00")
 	if strings.HasPrefix(digits, "0") && len(digits) == 10 {
 		digits = "94" + digits[1:]
 	}
-	if len(digits) < 11 {
+	if !msisdn.MatchString(digits) {
 		return "", fmt.Errorf("invalid subscriber address")
 	}
 	return "tel:" + digits, nil

@@ -210,8 +210,12 @@ func mapChargeError(code string) (int, string, string) {
 		return http.StatusBadRequest, "payment_failed", "Contabo egress IP is not in the IdeaPro allowed-host list"
 	case "E1313":
 		return http.StatusBadRequest, "payment_failed", "Ideamart application id or password was rejected"
+	case "E1325":
+		return http.StatusBadRequest, "invalid_request", "use a Sri Lankan mobile number as 07XXXXXXXX or 947XXXXXXXX"
 	case "E1328":
 		return http.StatusBadRequest, "payment_failed", "CaaS debit is not enabled for this application"
+	case "E1343":
+		return http.StatusBadRequest, "payment_failed", "this number is not on the IdeaPro Limited Production whitelist"
 	case "E1329", "E1330", "E1336", "E1606":
 		return http.StatusBadRequest, "payment_failed", "FILE_SHARE_PRICE does not match the amount provisioned in NCS"
 	default:

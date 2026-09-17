@@ -255,6 +255,21 @@ func TestPaywallConfigErrorIsNotBadGateway(t *testing.T) {
 	}
 }
 
+func TestPaywallInvalidAddressFormat(t *testing.T) {
+	h := paywallServer(t, &fakeDebit{code: "E1325"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/files/charge", bytes.NewReader([]byte(`{"subscriberId":"0771234567","consent":true}`)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://gajan.dev")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("07XXXXXXXX")) {
+		t.Fatalf("expected format hint: %s", rec.Body.String())
+	}
+}
+
 func TestChargingNotificationAcksAndMarksPaid(t *testing.T) {
 	h := paywallServer(t, &fakeDebit{err: errors.New("timeout")})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/files/charge", bytes.NewReader([]byte(`{"subscriberId":"0771234567","consent":true}`)))
