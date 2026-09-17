@@ -177,7 +177,7 @@ func paywallServer(t *testing.T, debit api.Debiter) http.Handler {
 		MaxPayloadBytes:  1024,
 		RateLimitPerHour: 1000,
 		Paywall:          true,
-		Price:            "1.00",
+		Price:            "5",
 		Currency:         "LKR",
 		IdeamartAppID:    "APP_TEST",
 	}
