@@ -226,10 +226,29 @@ func TestPaywallInsufficientFunds(t *testing.T) {
 	h := paywallServer(t, &fakeDebit{code: "E1378"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/files/charge", bytes.NewReader([]byte(`{"subscriberId":"0771234567","consent":true}`)))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://gajan.dev")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusPaymentRequired {
 		t.Fatalf("status=%d", rec.Code)
+	}
+	if rec.Header().Get("Access-Control-Allow-Origin") != "https://gajan.dev" {
+		t.Fatal("charge errors must keep CORS")
+	}
+}
+
+func TestPaywallConfigErrorIsNotBadGateway(t *testing.T) {
+	h := paywallServer(t, &fakeDebit{code: "E1303"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/files/charge", bytes.NewReader([]byte(`{"subscriberId":"0771234567","consent":true}`)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://gajan.dev")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	if rec.Header().Get("Access-Control-Allow-Origin") != "https://gajan.dev" {
+		t.Fatal("missing CORS")
 	}
 }
 

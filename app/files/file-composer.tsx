@@ -140,11 +140,11 @@ export function FileComposer() {
       </label>
       <p className="secret-size" id="file-size">{oversized ? `Too large by ${formatFileBytes(file.size - MAX_FILE_BYTES)}` : file ? `${formatFileBytes(file.size)} of ${formatFileBytes(MAX_FILE_BYTES)}` : `Ready for a file up to ${formatFileBytes(MAX_FILE_BYTES)}`}</p>
       {paywall.enabled && <>
-        <label className="secret-ttl" htmlFor="file-msisdn">
+        <label className="secret-field file-msisdn-field" htmlFor="file-msisdn">
           <span>Paying mobile number</span>
           <input id="file-msisdn" name="msisdn" inputMode="tel" autoComplete="tel" value={msisdn} onChange={(event) => setMsisdn(event.target.value)} placeholder="0771234567" />
         </label>
-        <label className="secret-note" htmlFor="file-consent" style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
+        <label className="file-consent" htmlFor="file-consent">
           <input id="file-consent" name="consent" type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
           <span>I agree to a one-time charge of {paywall.amount} {paywall.currency} on this Dialog, Hutch, or Airtel account to create the encrypted share link. Downloads stay free for anyone with the full URL.</span>
         </label>

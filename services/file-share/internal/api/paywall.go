@@ -207,6 +207,6 @@ func mapChargeError(code string) (int, string, string) {
 	case "E1406":
 		return http.StatusPaymentRequired, "payment_declined", "the charge was declined"
 	default:
-		return http.StatusBadGateway, "payment_failed", "the charge could not be completed"
+		return http.StatusBadRequest, "payment_failed", "the charge could not be completed"
 	}
 }
