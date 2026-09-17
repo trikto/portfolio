@@ -4,7 +4,7 @@ import { SiteHeader } from "../components/site-header";
 import { absoluteUrl, pageMetadata } from "@/lib/site";
 import { FileComposer } from "./file-composer";
 
-const title = "Encrypted File Sharing – Browser AES-GCM Links";
+const title = "EncryFy – Encrypted File Sharing";
 const description = "Share a file of up to 100 MB through an encrypted link. Your browser encrypts the file with AES-GCM before anything is uploaded, the decryption key stays in the URL fragment, and anyone with the full link can download it.";
 
 export const metadata: Metadata = pageMetadata({ title, description, path: "/files" });
@@ -60,7 +60,7 @@ const structuredData = {
   "@graph": [
     {
       "@type": "WebApplication",
-      name: "Encrypted File Sharing",
+      name: "EncryFy",
       description,
       applicationCategory: "SecurityApplication",
       operatingSystem: "Any",
@@ -87,7 +87,8 @@ export default function FilesPage() {
       <SiteHeader />
       <section className="secret-hero" aria-labelledby="files-title">
         <p className="eyebrow">DEVOPS UTILITIES / <Link href="/tools">ALL TOOLS</Link></p>
-        <h1 id="files-title">Encrypted File Sharing</h1>
+        <img className="encryfy-logo" src="/files/encryfy.png" alt="EncryFy" width={320} height={320} />
+        <h1 id="files-title">EncryFy</h1>
         <p>Send a file of up to 100 MB as an encrypted link. The file is encrypted in your browser, only ciphertext is stored, and the decryption key stays in the URL fragment.</p>
       </section>
 
@@ -145,7 +146,7 @@ export default function FilesPage() {
 
         <section className="secret-section" aria-labelledby="files-faq">
           <p className="eyebrow">FREQUENTLY ASKED QUESTIONS</p>
-          <h2 id="files-faq">Encrypted File Sharing FAQ</h2>
+          <h2 id="files-faq">EncryFy FAQ</h2>
           <div className="secret-faq-list">
             {faqs.map(({ question, answer }) => <article key={question}><h3>{question}</h3><p>{answer}</p></article>)}
           </div>

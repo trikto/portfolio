@@ -68,7 +68,7 @@ export function FileDownload({ id }: { id: string }) {
 
   return <div className="secret-composer">
     <section className="secret-panel">
-      <p className="eyebrow">ENCRYPTED FILE</p>
+      <p className="eyebrow">ENCRYFY</p>
       <h2>Someone shared a file with you</h2>
       <p className="secret-warn">Downloading decrypts the file in this browser. The link is reusable: opening it does not destroy the stored copy.</p>
       <div className="secret-actions">

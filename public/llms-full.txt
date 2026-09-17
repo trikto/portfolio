@@ -28,7 +28,7 @@ Key pages:
 - Supported syntax: Numeric five-field schedules with wildcards, lists, ranges, wildcard or range steps, and numeric weekdays.
 - Unsupported syntax: Named months or weekdays, aliases such as `@daily`, numeric-prefix steps such as `0/15`, and platform-specific Quartz or AWS fields.
 
-### Encrypted File Sharing
+### EncryFy
 
 - URL: https://gajan.dev/files
 - Description: Share a file of up to 100 MB as an encrypted link. The file is encrypted in the browser with AES-GCM, the decryption key stays in the URL fragment, downloads are reusable, and the sender pays a one-time Ideamart CaaS charge from the Contabo API.
