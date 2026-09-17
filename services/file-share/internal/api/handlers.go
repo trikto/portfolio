@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log/slog"
@@ -8,26 +9,35 @@ import (
 	"strings"
 	"time"
 
+	"github.com/trikto/portfolio/services/file-share/internal/billing"
 	"github.com/trikto/portfolio/services/file-share/internal/config"
 	"github.com/trikto/portfolio/services/file-share/internal/store"
 )
 
+type Debiter interface {
+	Debit(ctx context.Context, subscriberID, amount, currency, externalTrxID string) (internalTrxID, statusCode string, err error)
+}
+
 type Server struct {
 	cfg     config.Config
 	store   store.Store
+	ledger  *billing.Ledger
+	debit   Debiter
 	metrics *Metrics
 	log     *slog.Logger
 	now     func() time.Time
 	limit   *limiter
 }
 
-func New(cfg config.Config, s store.Store, metrics *Metrics, log *slog.Logger) *Server {
+func New(cfg config.Config, s store.Store, ledger *billing.Ledger, debit Debiter, metrics *Metrics, log *slog.Logger) *Server {
 	if log == nil {
 		log = slog.Default()
 	}
 	return &Server{
 		cfg:     cfg,
 		store:   s,
+		ledger:  ledger,
+		debit:   debit,
 		metrics: metrics,
 		log:     log,
 		now:     time.Now,
@@ -39,6 +49,11 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
+	mux.HandleFunc("GET /api/v1/files/paywall", s.handlePaywall)
+	mux.HandleFunc("GET /api/v1/files/grants/{grant}", s.handleGrantStatus)
+	mux.HandleFunc("POST /api/v1/files/charge", s.handleCharge)
+	mux.HandleFunc("OPTIONS /api/v1/files/charge", s.handleCharge)
+	mux.HandleFunc("POST /api/v1/ideamart/charging/notification", s.handleChargingNotification)
 	mux.HandleFunc("POST /api/v1/files", s.handleCreate)
 	mux.HandleFunc("OPTIONS /api/v1/files", s.handleCreate)
 	mux.HandleFunc("POST /api/v1/files/{id}", s.handleFetch)
@@ -115,6 +130,20 @@ func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	grant := strings.TrimSpace(r.Header.Get("X-Upload-Grant"))
+	if s.cfg.Paywall {
+		if grant == "" || !validID(grant) {
+			writeError(w, http.StatusPaymentRequired, "payment_required", "create a charge grant before uploading")
+			s.observe("create", http.StatusPaymentRequired, start)
+			return
+		}
+		if s.ledger == nil {
+			writeError(w, http.StatusServiceUnavailable, "store_unavailable", "billing ledger is not reachable")
+			s.observe("create", http.StatusServiceUnavailable, start)
+			return
+		}
+	}
+
 	var id string
 	for attempt := 0; attempt < 3; attempt++ {
 		id, err = newID()
@@ -124,14 +153,31 @@ func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 			s.observe("create", http.StatusServiceUnavailable, start)
 			return
 		}
+		if s.cfg.Paywall {
+			if _, ok, consumeErr := s.ledger.ConsumeGrant(grant, id); consumeErr != nil {
+				writeError(w, http.StatusServiceUnavailable, "store_unavailable", "billing ledger is not reachable")
+				s.observe("create", http.StatusServiceUnavailable, start)
+				return
+			} else if !ok {
+				writeError(w, http.StatusPaymentRequired, "payment_required", "charge grant is missing, unpaid, or already used")
+				s.observe("create", http.StatusPaymentRequired, start)
+				return
+			}
+		}
 		stored, putErr := s.store.Put(r.Context(), id, payload)
 		if putErr != nil {
+			if s.cfg.Paywall {
+				_ = s.ledger.ReleaseGrant(grant)
+			}
 			writeError(w, http.StatusServiceUnavailable, "store_unavailable", "store is not reachable")
 			s.observe("create", http.StatusServiceUnavailable, start)
 			return
 		}
 		if stored {
 			break
+		}
+		if s.cfg.Paywall {
+			_ = s.ledger.ReleaseGrant(grant)
 		}
 		if attempt == 2 {
 			s.log.Error("id collision retries exhausted")

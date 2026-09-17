@@ -18,6 +18,12 @@ type Config struct {
 	MaxPayloadBytes  int
 	RateLimitPerHour int
 	LogLevel         slog.Level
+	Paywall          bool
+	Price            string
+	Currency         string
+	IdeamartAppID    string
+	IdeamartPassword string
+	CaasDebitURL     string
 }
 
 const (
@@ -27,6 +33,8 @@ const (
 	DefaultAllowedOrigins   = "https://gajan.dev"
 	DefaultMaxPayloadBytes  = 104858014 // 100 MiB plaintext + AES-GCM envelope overhead
 	DefaultRateLimitPerHour = 20
+	DefaultPrice            = "1.00"
+	DefaultCurrency         = "LKR"
 )
 
 func Load(getenv func(string) string) (Config, error) {
@@ -50,6 +58,21 @@ func Load(getenv func(string) string) (Config, error) {
 	}
 	if cfg.LogLevel, err = parseLevel(getenv("LOG_LEVEL")); err != nil {
 		return Config{}, fmt.Errorf("LOG_LEVEL: %w", err)
+	}
+
+	cfg.Paywall = parseBool(getenv("FILE_SHARE_PAYWALL"))
+	cfg.Price = firstNonEmpty(getenv("FILE_SHARE_PRICE"), DefaultPrice)
+	cfg.Currency = firstNonEmpty(getenv("FILE_SHARE_CURRENCY"), DefaultCurrency)
+	cfg.IdeamartAppID = strings.TrimSpace(getenv("IDEAMART_APP_ID"))
+	cfg.IdeamartPassword = getenv("IDEAMART_PASSWORD")
+	cfg.CaasDebitURL = strings.TrimSpace(getenv("IDEAMART_CAAS_DEBIT_URL"))
+	if cfg.Paywall {
+		if cfg.IdeamartAppID == "" || cfg.IdeamartPassword == "" || cfg.CaasDebitURL == "" {
+			return Config{}, fmt.Errorf("FILE_SHARE_PAYWALL requires IDEAMART_APP_ID, IDEAMART_PASSWORD, and IDEAMART_CAAS_DEBIT_URL")
+		}
+		if cfg.Price == "" {
+			return Config{}, fmt.Errorf("FILE_SHARE_PRICE is required when the paywall is on")
+		}
 	}
 
 	return cfg, nil
@@ -108,6 +131,15 @@ func parseLevel(raw string) (slog.Level, error) {
 		return slog.LevelError, nil
 	default:
 		return 0, fmt.Errorf("unknown level %q", raw)
+	}
+}
+
+func parseBool(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
 	}
 }
 

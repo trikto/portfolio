@@ -34,6 +34,10 @@ const faqs = [
     answer: "No. Unlike one-time secret sharing, this link is reusable. Anyone who has the complete URL can download the file until a later retention policy removes it.",
   },
   {
+    question: "Who pays to share a file?",
+    answer: "The sender pays a one-time Dialog, Hutch, or Airtel mobile charge through Ideamart CaaS before the ciphertext is stored. The charge runs on the Contabo API, not in this browser. Anyone with the full link can still download for free.",
+  },
+  {
     question: "How large can the file be?",
     answer: "One file of up to 100 MB. Larger files are rejected in the browser before encryption starts.",
   },

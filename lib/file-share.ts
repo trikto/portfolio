@@ -8,9 +8,11 @@ export const MAX_FILE_NAME_BYTES = 255;
 export const MAX_FILE_TYPE_BYTES = 127;
 export const MAX_STORED_PAYLOAD_BYTES = MAX_FILE_BYTES + FILE_IV_BYTES + FILE_TAG_BYTES + 4 + MAX_FILE_NAME_BYTES + MAX_FILE_TYPE_BYTES;
 
-export type FileShareFailure = "invalid_request" | "payload_too_large" | "rate_limited" | "store_unavailable" | "not_found" | "network" | "unexpected";
+export type FileShareFailure = "invalid_request" | "payload_too_large" | "rate_limited" | "store_unavailable" | "not_found" | "network" | "unexpected" | "payment_required" | "insufficient_funds" | "payment_declined" | "payment_failed";
 export type CreateStoredFileResult = { ok: true; id: string } | { ok: false; error: FileShareFailure };
 export type FetchStoredFileResult = { ok: true; payload: Uint8Array } | { ok: false; error: FileShareFailure };
+export type FilePaywall = { enabled: boolean; amount: string; currency: string };
+export type ChargeFileResult = { ok: true; grant: string; status: string } | { ok: false; error: FileShareFailure };
 export type SharedFile = { name: string; type: string; bytes: Uint8Array };
 
 const textEncoder = new TextEncoder();
@@ -50,13 +52,14 @@ export function placeholderFileId(): string {
 }
 
 async function failureFrom(response: Response): Promise<FileShareFailure> {
-  const known: FileShareFailure[] = ["invalid_request", "payload_too_large", "rate_limited", "store_unavailable", "not_found"];
+  const known: FileShareFailure[] = ["invalid_request", "payload_too_large", "rate_limited", "store_unavailable", "not_found", "payment_required", "insufficient_funds", "payment_declined", "payment_failed"];
   try {
     const body: unknown = await response.json();
     const error = typeof body === "object" && body !== null ? (body as { error?: unknown }).error : undefined;
     const match = known.find((candidate) => candidate === error);
     if (match) return match;
   } catch { /* the API may return a non-JSON body from an intermediate proxy */ }
+  if (response.status === 402) return "payment_required";
   if (response.status === 404) return "not_found";
   if (response.status === 413) return "payload_too_large";
   if (response.status === 429) return "rate_limited";
@@ -114,10 +117,64 @@ export async function decryptFile(payload: Uint8Array, key: string): Promise<Sha
   return decodeEnvelope(envelope);
 }
 
-export async function createStoredFile(payload: Uint8Array): Promise<CreateStoredFileResult> {
+export async function fetchFilePaywall(): Promise<FilePaywall> {
+  try {
+    const response = await fetch(`${FILE_API_BASE_URL}/api/v1/files/paywall`, { method: "GET", mode: "cors", credentials: "omit", cache: "no-store" });
+    if (!response.ok) return { enabled: false, amount: "", currency: "LKR" };
+    const body: unknown = await response.json();
+    const enabled = typeof body === "object" && body !== null && (body as { enabled?: unknown }).enabled === true;
+    const amount = typeof body === "object" && body !== null && typeof (body as { amount?: unknown }).amount === "string" ? (body as { amount: string }).amount : "";
+    const currency = typeof body === "object" && body !== null && typeof (body as { currency?: unknown }).currency === "string" ? (body as { currency: string }).currency : "LKR";
+    return { enabled, amount, currency };
+  } catch {
+    return { enabled: false, amount: "", currency: "LKR" };
+  }
+}
+
+export async function chargeForFile(subscriberId: string): Promise<ChargeFileResult> {
   let response: Response;
   try {
-    response = await fetch(`${FILE_API_BASE_URL}/api/v1/files`, { method: "POST", mode: "cors", credentials: "omit", cache: "no-store", headers: { "content-type": "application/octet-stream" }, body: asCryptoBytes(payload) });
+    response = await fetch(`${FILE_API_BASE_URL}/api/v1/files/charge`, { method: "POST", mode: "cors", credentials: "omit", cache: "no-store", headers: { "content-type": "application/json" }, body: JSON.stringify({ subscriberId, consent: true }) });
+  } catch { return { ok: false, error: "network" }; }
+  if (response.status === 202) {
+    try {
+      const body: unknown = await response.json();
+      const grant = typeof body === "object" && body !== null ? (body as { grant?: unknown }).grant : undefined;
+      if (typeof grant !== "string" || !grant) return { ok: false, error: "payment_failed" };
+      const charged = await waitForGrant(grant);
+      if (!charged) return { ok: false, error: "payment_failed" };
+      return { ok: true, grant, status: "CHARGED" };
+    } catch { return { ok: false, error: "unexpected" }; }
+  }
+  if (!response.ok) return { ok: false, error: await failureFrom(response) };
+  try {
+    const body: unknown = await response.json();
+    const { grant, status } = body as { grant?: unknown; status?: unknown };
+    if (typeof grant !== "string" || !grant) return { ok: false, error: "unexpected" };
+    return { ok: true, grant, status: typeof status === "string" ? status : "CHARGED" };
+  } catch { return { ok: false, error: "unexpected" }; }
+}
+
+async function waitForGrant(grant: string): Promise<boolean> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      const response = await fetch(`${FILE_API_BASE_URL}/api/v1/files/grants/${encodeURIComponent(grant)}`, { method: "GET", mode: "cors", credentials: "omit", cache: "no-store" });
+      if (response.ok) {
+        const body: unknown = await response.json();
+        if (typeof body === "object" && body !== null && (body as { charged?: unknown }).charged === true) return true;
+      }
+    } catch { /* keep polling */ }
+    await new Promise((resolve) => window.setTimeout(resolve, 3000));
+  }
+  return false;
+}
+
+export async function createStoredFile(payload: Uint8Array, grant?: string): Promise<CreateStoredFileResult> {
+  const headers: Record<string, string> = { "content-type": "application/octet-stream" };
+  if (grant) headers["X-Upload-Grant"] = grant;
+  let response: Response;
+  try {
+    response = await fetch(`${FILE_API_BASE_URL}/api/v1/files`, { method: "POST", mode: "cors", credentials: "omit", cache: "no-store", headers, body: asCryptoBytes(payload) });
   } catch { return { ok: false, error: "network" }; }
   if (!response.ok) return { ok: false, error: await failureFrom(response) };
   try {

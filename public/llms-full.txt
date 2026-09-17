@@ -31,7 +31,7 @@ Key pages:
 ### Encrypted File Sharing
 
 - URL: https://gajan.dev/files
-- Description: Share a file of up to 100 MB as an encrypted link. The file is encrypted in the browser with AES-GCM, the decryption key stays in the URL fragment, and downloads are reusable.
+- Description: Share a file of up to 100 MB as an encrypted link. The file is encrypted in the browser with AES-GCM, the decryption key stays in the URL fragment, downloads are reusable, and the sender pays a one-time Ideamart CaaS charge from the Contabo API.
 - Encryption: The browser generates a fresh 256-bit AES-GCM key and a random 12-byte initialization vector, packs the file name and bytes into a binary envelope, and encrypts that envelope with the Web Crypto API.
 - Key handling: The raw key is base64url-encoded and placed in the URL fragment after `#`. Browsers do not transmit fragments, so the key never reaches the storage service, and a link truncated after the `#` is permanently unrecoverable.
 - Retrieval: Downloading is an explicit action rather than an automatic fetch. The stored copy is not deleted on download.

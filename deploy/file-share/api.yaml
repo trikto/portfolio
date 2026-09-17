@@ -51,6 +51,15 @@ spec:
               value: "20"
             - name: LOG_LEVEL
               value: "info"
+            - name: FILE_SHARE_PAYWALL
+              value: "true"
+            - name: FILE_SHARE_PRICE
+              value: "1.00"
+            - name: FILE_SHARE_CURRENCY
+              value: "LKR"
+          envFrom:
+            - secretRef:
+                name: file-share-ideamart
           volumeMounts:
             - name: data
               mountPath: /data

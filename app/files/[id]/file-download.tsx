@@ -11,6 +11,10 @@ const failures: Record<FileShareFailure, string> = {
   not_found: "This file could not be found. The identifier may be wrong, or the stored copy may have been removed.",
   network: "The file service could not be reached. It is self-hosted on a homelab cluster, so it may be offline, restarting, or blocked by your network. Nothing was downloaded.",
   unexpected: "The service returned a response this page could not read. Nothing usable was recovered.",
+  payment_required: "This download does not need a payment. If you see this, retry from the share link.",
+  insufficient_funds: "This download does not need a payment. If you see this, retry from the share link.",
+  payment_declined: "This download does not need a payment. If you see this, retry from the share link.",
+  payment_failed: "This download does not need a payment. If you see this, retry from the share link.",
 };
 
 function subscribeHash(onStoreChange: () => void) {

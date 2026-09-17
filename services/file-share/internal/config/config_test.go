@@ -28,6 +28,18 @@ func TestLoadDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadPaywallRequiresCredentials(t *testing.T) {
+	_, err := config.Load(func(k string) string {
+		if k == "FILE_SHARE_PAYWALL" {
+			return "true"
+		}
+		return ""
+	})
+	if err == nil {
+		t.Fatal("expected paywall config error")
+	}
+}
+
 func TestLoadRejectsBadInts(t *testing.T) {
 	_, err := config.Load(func(k string) string {
 		if k == "MAX_PAYLOAD_BYTES" {

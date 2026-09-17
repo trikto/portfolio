@@ -7,7 +7,7 @@ access is **Cloudflare-proxied DNS → Traefik**, not Cloudflare Tunnel.
 | Item | Value |
 |------|-------|
 | Host | `api.gajan.dev` |
-| Public paths | `/api/v1/files` (Prefix) only |
+| Public paths | `/api/v1/files` and `/api/v1/ideamart` (Prefix) |
 | Not public | `/healthz`, `/readyz`, `/metrics` |
 | Image | `ghcr.io/trikto/portfolio/file-share` |
 | Namespace | `files` |
@@ -50,7 +50,26 @@ If you prefer a specific host directory instead of the provisioner's default
 (`/var/lib/rancher/k3s/storage/...`), replace `pvc.yaml` with a `hostPath`
 volume and pin the pod to that node with a `nodeSelector` / `nodeName`.
 
-### 3. Apply this package
+### 3. Ideamart CaaS secret (sender pays)
+
+Create the secret **once** from the node. Do not commit the password.
+
+```bash
+kubectl -n files create secret generic file-share-ideamart \
+  --from-literal=IDEAMART_APP_ID='APP_XXXXXX' \
+  --from-literal=IDEAMART_PASSWORD='replace-me' \
+  --from-literal=IDEAMART_CAAS_DEBIT_URL='https://api.ideamart.io/caas/direct/debit'
+```
+
+Whitelist the Contabo egress IP in IdeaPro (`curl -4 https://myip.ideamart.io` on the node).
+Set Charging Notification URL to:
+
+`https://api.gajan.dev/api/v1/ideamart/charging/notification`
+
+`FILE_SHARE_PRICE` in the Deployment must match the CaaS amount provisioned in NCS.
+Default in the manifest is `1.00` LKR.
+
+### 4. Apply this package
 
 From the repository root (after `git pull` on a machine with cluster access):
 
@@ -134,10 +153,14 @@ link including `#`, open it, click **Download file**.
 
 | Method | Path | Body | Success |
 |--------|------|------|---------|
-| POST | `/api/v1/files` | raw ciphertext (`application/octet-stream`) | `201 {"id"}` |
+| GET | `/api/v1/files/paywall` | — | `200 {"enabled","amount","currency"}` |
+| POST | `/api/v1/files/charge` | JSON `{subscriberId,consent}` | `201 {"grant"}` |
+| GET | `/api/v1/files/grants/{grant}` | — | `200 {"status","charged"}` |
+| POST | `/api/v1/files` | raw ciphertext; `X-Upload-Grant` when paywall is on | `201 {"id"}` |
 | POST | `/api/v1/files/{id}` | empty | `200` ciphertext |
+| POST | `/api/v1/ideamart/charging/notification` | Ideamart JSON | `200 {"statusCode":"S1000"}` |
 | GET | `/api/v1/files/{id}` | — | `405` |
-| OPTIONS | both paths | — | `204` CORS |
+| OPTIONS | CORS paths | — | `204` CORS |
 
 Errors use `{ "error": "<code>", "message": "..." }` with codes
 `invalid_request`, `payload_too_large`, `rate_limited`, `store_unavailable`,
@@ -165,7 +188,10 @@ is **not** deleted on fetch.
 
 - The API stores ciphertext only. It never receives the fragment key or the
   plaintext filename.
-- Operators with node or PVC access can see ciphertext size, ids, and mtimes.
+- Operators with node or PVC access can see ciphertext size, ids, mtimes, and
+  masked MSISDNs plus CaaS transaction ids under `/data/billing`.
+- Sender-pays CaaS runs only from this pod. Credentials live in Secret
+  `file-share-ideamart`, never in the image or the Git repo.
 - There is no TTL yet. Files remain until you delete objects under `/data`.
 - Rate limit is per-pod in memory (20 creates and 20 fetches per IP per hour).
   A restart resets counters.

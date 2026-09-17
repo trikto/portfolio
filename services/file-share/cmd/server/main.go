@@ -14,7 +14,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/trikto/portfolio/services/file-share/internal/api"
+	"github.com/trikto/portfolio/services/file-share/internal/billing"
 	"github.com/trikto/portfolio/services/file-share/internal/config"
+	"github.com/trikto/portfolio/services/file-share/internal/ideamart"
 	"github.com/trikto/portfolio/services/file-share/internal/store"
 )
 
@@ -35,7 +37,18 @@ func main() {
 	}
 
 	metrics := api.NewMetrics(prometheus.DefaultRegisterer)
-	server := api.New(cfg, disk, metrics, log)
+	var ledger *billing.Ledger
+	var debit api.Debiter
+	if cfg.Paywall {
+		var err error
+		ledger, err = billing.NewLedger(cfg.DataDir)
+		if err != nil {
+			log.Error("billing ledger", "err", err)
+			os.Exit(1)
+		}
+		debit = ideamart.NewClient(cfg.IdeamartAppID, cfg.IdeamartPassword, cfg.CaasDebitURL)
+	}
+	server := api.New(cfg, disk, ledger, debit, metrics, log)
 
 	apiSrv := &http.Server{
 		Addr:              ":" + cfg.Port,

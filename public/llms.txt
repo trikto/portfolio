@@ -19,7 +19,7 @@ Gajan Rajah is a DevOps and cloud engineer focused on Linux, Kubernetes, infrast
 - [Cron Editor & Crontab Generator](https://gajan.dev/cron): Build and validate five-field Linux cron expressions with human-readable explanations and timezone-aware run previews.
 - [YAML Validator and Formatter](https://gajan.dev/yaml): Browser-based YAML validation, formatting, and troubleshooting.
 - [One-Time Secret Sharing](https://gajan.dev/clipboard): Share a password or token as a self-destructing link. The secret is encrypted in the browser with AES-GCM, only ciphertext is stored, the decryption key stays in the URL fragment, and the link can be opened exactly once.
-- [Encrypted File Sharing](https://gajan.dev/files): Share a file of up to 100 MB as an encrypted link. The file is encrypted in the browser with AES-GCM, only ciphertext is stored on a volume-mounted path, the decryption key stays in the URL fragment, and the link is reusable.
+- [Encrypted File Sharing](https://gajan.dev/files): Share a file of up to 100 MB as an encrypted link. The file is encrypted in the browser with AES-GCM, only ciphertext is stored on a volume-mounted path, the decryption key stays in the URL fragment, and the sender pays a one-time Ideamart mobile charge on the Contabo API.
 
 ## Machine-readable resources
 

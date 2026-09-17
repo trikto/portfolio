@@ -87,7 +87,7 @@ test("storage helpers POST ciphertext and never send the key", async () => {
     assert.equal(calls[0].url, "https://api.gajan.dev/api/v1/files");
     assert.equal(calls[0].init.method, "POST");
     assert.equal(calls[0].init.credentials, "omit");
-    assert.equal((calls[0].init.headers as { "content-type": string })["content-type"], "application/octet-stream");
+    assert.equal((calls[0].init.headers as Record<string, string>)["content-type"], "application/octet-stream");
     assert.equal(JSON.stringify(calls).includes(key), false, "the key must never appear in a request");
     const fetched = await fetchStoredFile("abc123def456ghi789jk");
     assert.ok(fetched.ok);
