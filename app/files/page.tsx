@@ -87,9 +87,13 @@ export default function FilesPage() {
       <SiteHeader />
       <section className="secret-hero" aria-labelledby="files-title">
         <p className="eyebrow">DEVOPS UTILITIES / <Link href="/tools">ALL TOOLS</Link></p>
-        <img className="encryfy-logo" src="/files/encryfy.png" alt="EncryFy" width={320} height={320} />
-        <h1 id="files-title">EncryFy</h1>
-        <p>Send a file of up to 100 MB as an encrypted link. The file is encrypted in your browser, only ciphertext is stored, and the decryption key stays in the URL fragment.</p>
+        <div className="encryfy-hero">
+          <div className="encryfy-hero-copy">
+            <h1 id="files-title">EncryFy</h1>
+            <p>Send a file of up to 100 MB as an encrypted link. The file is encrypted in your browser, only ciphertext is stored, and the decryption key stays in the URL fragment.</p>
+          </div>
+          <img className="encryfy-logo" src="/files/encryfy.png" alt="EncryFy" width={320} height={320} />
+        </div>
       </section>
 
       <FileComposer />

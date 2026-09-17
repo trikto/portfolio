@@ -14,9 +14,13 @@ export default async function FileDownloadPage({ params }: { params: Promise<{ i
       <SiteHeader />
       <section className="secret-hero" aria-labelledby="file-download-title">
         <p className="eyebrow">DEVOPS UTILITIES / <Link href="/files">ENCRYFY</Link></p>
-        <img className="encryfy-logo encryfy-logo-compact" src="/files/encryfy.png" alt="EncryFy" width={240} height={240} />
-        <h1 id="file-download-title">Download File</h1>
-        <p>This link points to an encrypted file. Nothing is retrieved until you ask for it. The stored copy is not deleted on download.</p>
+        <div className="encryfy-hero">
+          <div className="encryfy-hero-copy">
+            <h1 id="file-download-title">Download File</h1>
+            <p>This link points to an encrypted file. Nothing is retrieved until you ask for it. The stored copy is not deleted on download.</p>
+          </div>
+          <img className="encryfy-logo encryfy-logo-compact" src="/files/encryfy.png" alt="EncryFy" width={240} height={240} />
+        </div>
       </section>
 
       <FileDownload id={id} />
