@@ -54,6 +54,8 @@
 
 ## Recent changes
 
+- Added the published Building EncryFy, a Zero-Knowledge Encrypted File Sharing Tool article and local cover image at `/blog/encryfy-zero-knowledge-file-sharing` on 2026-09-20; preserve its threat model, fragment-key and POST-only retrieve rationale, AES-GCM envelope that hides filenames, Contabo K3s volume and single-replica RWO local-path choices, reusable-link (no burn) contrast with clipboard, Ideamart sender-pays CaaS notes, Ingress and cert-manager notes, observability-without-plaintext section, and honest operator-metadata limitations when editing it.
+
 - Added encrypted file sharing at `/files` on 2026-09-17: browser AES-GCM encryption with the key in the URL fragment, Contabo K3s Go API at `api.gajan.dev` with a volume-mounted `local-path` PVC, Traefik Ingress path `/api/v1/files`, POST-only retrieve without burn, and GHCR CI that builds but does not deploy; preserve the zero-knowledge invariants, click-to-download flow, 100 MB cap, and single-replica RWO volume when editing it.
 
 - Added the published Building a Zero-Knowledge One-Time Secret Sharing Tool article and local cover image at `/blog/zero-knowledge-one-time-secret-sharing` on 2026-08-10; preserve its threat model, fragment-key and POST-only burn rationale, AES-GCM browser encryption details, Contabo K3s and memory-only Valkey choices, atomic GETDEL semantics, Ingress and cert-manager notes, observability-without-plaintext section, and honest operator-metadata limitations when editing it.

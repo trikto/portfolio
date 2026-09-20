@@ -52,6 +52,251 @@ Key pages:
 
 ## Published articles
 
+### Building EncryFy, a Zero-Knowledge Encrypted File Sharing Tool
+
+- URL: https://gajan.dev/blog/encryfy-zero-knowledge-file-sharing
+- Published: 2026-09-20
+- Author: Gajan Rajah
+- Tags: security, cryptography, kubernetes, k3s, devops, observability
+- Description: How gajan.dev/files encrypts a file of up to 100 MB in the browser, stores only ciphertext on a Contabo K3s volume, keeps the key in the URL fragment, and charges the sender once through Ideamart CaaS.
+
+A kubeconfig is a paste. A packet capture, a signed PDF, or a 40 MB zip of logs is not. Email attachments sit on two mail servers. Drive links stay readable until someone remembers to revoke them. Paste sites that store plaintext are worse, and [gajan.dev/clipboard](https://gajan.dev/clipboard) is the wrong size for a file.
+
+I built EncryFy at [gajan.dev/files](https://gajan.dev/files) so that:
+
+1. The browser encrypts the file, including its name, before anything leaves the machine.
+2. The server stores only ciphertext it cannot read.
+3. The decryption key lives in the URL fragment, which browsers never send to a server.
+4. The recipient must click **Download file**. Prefetch and link unfurling do not pull the object.
+5. The stored copy is reusable. It is not burned on the first read.
+
+The interesting claim is the same as the clipboard tool: you cannot disclose what you never had. EncryFy applies that claim to a 100 MB payload, a disk volume, and a sender-pays mobile charge. This article explains how that combination is enforced, and why each major choice was made.
+
+## What the tool does
+
+A sender picks a file of up to 100 MB, consents to a one-time Sri Lankan mobile charge when the paywall is on, and receives a link shaped like:
+
+```text
+https://gajan.dev/files/<id>#<key>
+```
+
+The recipient opens the link, presses **Download file**, and decrypts the envelope in the browser. The stored copy remains. A second open with the same full URL still works until the ciphertext is deleted from the volume by hand.
+
+The UI runs on Vercel with the rest of the portfolio. The storage API runs on my Contabo K3s cluster at `https://api.gajan.dev`.
+
+## Threat model and non-goals
+
+The design targets a specific failure mode: a file surviving forever in email, chat, or a shared drive that the operator can open.
+
+It assumes:
+
+- The sender and recipient can share a URL out of band.
+- An attacker who obtains the complete URL, including the fragment, can decrypt the file. That is the same as holding the envelope and the key.
+- The Contabo API operator can see ciphertext size, timing, identifiers, and billing metadata, but not plaintext, the filename, or the key.
+
+It deliberately does **not** claim to protect against:
+
+- A compromised recipient machine that keeps the decrypted file
+- A malicious or fully compromised API that substitutes ciphertext (the recipient gets a decryption failure)
+- Malware inside the chosen file. EncryFy does not scan content.
+- Long-term archival. There is no TTL yet. An abandoned link keeps working until the object is deleted by hand.
+- Burn-after-read. If the payload should die on first open, use [gajan.dev/clipboard](https://gajan.dev/clipboard) instead.
+
+Those boundaries matter. Overclaiming is how security tools lose trust.
+
+## End-to-end architecture
+
+```text
+Sender browser                         Contabo K3s
+-----------------                      ------------------------------
+file bytes + name                      Traefik (TLS, api.gajan.dev)
+   |                                     |
+pack envelope                            v
+   |                                   Go API  (1 replica)
+AES-GCM-256 + random IV                  |
+ciphertext = iv || ciphertext+tag        v
+key = raw AES key                      PVC /data (local-path, RWO)
+   |                                   opaque id path only
+optional CaaS charge  ----------------> grant, then POST ciphertext
+   |
+returns id
+   |
+link = /files/<id>#<keyB64url>
+   |
+   +---- shared out of band ----> Recipient browser
+                                    |
+                                    reads key from location.hash
+                                    clicks Download file
+                                    POST .../files/{id}
+                                    decrypt locally
+```
+
+Nothing in that diagram requires the server to hold the key. The fragment never appears in access logs, reverse-proxy request lines, or CDN analytics as part of the HTTP request.
+
+## Why the key sits after `#`
+
+Everything after `#` is the URL fragment. Browsers keep fragments local. They are not included in the request URI sent to the origin, and they are stripped from `Referer` in normal navigation.
+
+EncryFy uses the same transport as the clipboard tool. I chose it over query parameters, a typed passphrase, and a server-held key for the reasons in [Building a Zero-Knowledge One-Time Secret Sharing Tool](/blog/zero-knowledge-one-time-secret-sharing). The short version:
+
+| Alternative | Why not |
+|---|---|
+| Query parameter `?key=` | Sent to the server, logged, often captured by proxies and analytics |
+| Separate passphrase step | Worse UX for a one-shot file handoff. People reuse weak phrases |
+| Server-held key encrypted with a password | The server becomes capable of reading the file again |
+
+The cost is operational: chat clients and mail scanners truncate or rewrite URLs. A truncated link is permanently unrecoverable because there is no backup of the key. The UI warns about this explicitly.
+
+## Browser encryption details
+
+Encryption uses the Web Crypto API only. There is no extra npm crypto dependency.
+
+For each file the browser:
+
+1. Rejects a plaintext size over 100 MB before it encrypts
+2. Generates an AES-GCM 256-bit key (`crypto.subtle.generateKey`)
+3. Generates a random 12-byte IV
+4. Packs a binary envelope: `u16 nameLen | name | u16 typeLen | type | file bytes`
+5. Encrypts that envelope
+6. Concatenates `iv || ciphertext` (ciphertext includes the GCM auth tag)
+7. POSTs the opaque bytes to the API
+8. Exports the raw key, base64url-encodes it, and places it in the fragment
+
+The filename and MIME type live inside the ciphertext. The volume never sees a plaintext name. A wrong key or flipped byte fails decryption. The server never runs decrypt.
+
+## Why retrieval is POST-only and click-gated
+
+Reusable does not mean automatic.
+
+Slack, Outlook Safe Links, iMessage, corporate mail gateways, and browser prefetch commonly issue **GET** requests to URLs they see. If opening the page fetched the object, every unfurl would copy ciphertext to a scanner, and the recipient would not be the first reader of that network path.
+
+The download page therefore:
+
+- Reads the key from `window.location.hash` without fetching
+- Shows an explicit **Download file** button
+- Only then `POST`s to `/api/v1/files/{id}`
+
+The API rejects `GET` on that route with `405` and `download requires POST`. Automated unfurlers that only GET cannot pull the object by accident. The stored copy is still there afterwards. The click is a retrieval gate, not a burn.
+
+## Why links are reusable
+
+A file share is often a group handoff: two reviewers, a later laptop, a retry after a flaky download. Burning on first read would make EncryFy a worse product for that job, and it would still not make the decrypted bytes disappear from the first recipient's disk.
+
+Retrieve is a read. It is not `GETDEL`. A second POST with the same id returns the same ciphertext.
+
+That is the opposite of [gajan.dev/clipboard](https://gajan.dev/clipboard), where the first successful reveal must win and everyone else must see not-found. Secrets and files are different objects. The crypto and fragment pattern is shared. The lifetime is not.
+
+## Why a volume instead of memory-only Valkey
+
+The clipboard store is memory-only Valkey with no RDB, no AOF, and no PVC. That is the right failure direction for a 64 KiB secret: a restart drops every pending paste, and ciphertext never reaches disk.
+
+A 100 MB file does not belong in RAM on a small node, and a restart should not erase a share that someone is still downloading. EncryFy stores opaque bytes on a volume-mounted path at `/data`.
+
+The PVC is `local-path`, 20Gi, ReadWriteOnce. The Deployment is a single replica with a Recreate strategy because RWO local-path cannot be shared across nodes. Create writes with `O_EXCL` under a random id. Fetch is read-only. There is no delete on download.
+
+The honest cost:
+
+- Positive: a file can survive a pod restart, and the name never appears on disk
+- Negative: ciphertext sits on the node until it is deleted by hand. There is no TTL yet
+
+For a freelance file handoff, persistence is the product. For a password, it would be a mistake. I did not pretend one store could do both jobs.
+
+## Why Contabo K3s instead of Vercel blob storage
+
+The first sketch stored ciphertext next to the Next.js app. That works, and it is less operational work. I rejected it because the backend **is** part of the artifact.
+
+Running the API on Contabo K3s means the tool exercises:
+
+- A real Deployment with probes, resource limits, and a Recreate rollout
+- NetworkPolicy (default deny. Traefik reaches the API. Prometheus scrapes metrics. Egress is DNS plus HTTPS for Ideamart)
+- Traefik Ingress on `api.gajan.dev` for `/api/v1/files` and `/api/v1/ideamart`
+- cert-manager with Let's Encrypt DNS-01 via Cloudflare for a wildcard `*.gajan.dev` certificate
+- Cloudflare Full (strict) once the origin certificate is Ready
+- Prometheus ServiceMonitor / PrometheusRule labelled for the existing `kps` stack
+
+The frontend stays on Vercel at `/files` and calls the API cross-origin. CORS allows `https://gajan.dev` only.
+
+GitHub Actions builds and pushes `ghcr.io/trikto/portfolio/file-share`. CI does not deploy into the cluster. Contabo has no inbound path from Actions by design, so rollout is pull-based or manual `kubectl apply -k`.
+
+I also considered fragment-only encrypted blobs with no server at all. That removes infrastructure, and it also removes a place to enforce size, rate limits, and a charge before storage. A 100 MB object needs a store. Encryption alone cannot refuse an oversized upload.
+
+## Sender-pays Ideamart CaaS
+
+Storage and bandwidth are not free at 100 MB. EncryFy charges the sender, not the recipient.
+
+When the paywall is enabled, the composer asks for a Dialog, Hutch, or Airtel mobile number in Sri Lanka and requires an explicit consent checkbox before any debit. The browser never sees the Ideamart application password. The Contabo API calls CaaS, waits for success, and only then accepts ciphertext on `POST /api/v1/files` with an `X-Upload-Grant` header from that charge.
+
+Downloads stay free for anyone who has the full URL.
+
+The public Ingress includes `/api/v1/ideamart` so charging notifications can reach the same service. That path is billing, not file storage. The ledger on the volume records grant and transaction metadata with a masked subscriber id. It does not record plaintext filenames or keys.
+
+The amount in production is 5 LKR, once per share. A declined or failed charge does not upload the file.
+
+## API surface
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/v1/files/paywall` | Amount, currency, and whether charging is on |
+| `POST` | `/api/v1/files/charge` | One-time debit, returns an upload grant |
+| `GET` | `/api/v1/files/grants/{grant}` | Grant status while the phone confirmation is pending |
+| `POST` | `/api/v1/files` | Store ciphertext, optional `X-Upload-Grant` |
+| `POST` | `/api/v1/files/{id}` | Return ciphertext. Does not delete |
+| `GET` | `/api/v1/files/{id}` | `405`. Download requires POST |
+| `POST` | `/api/v1/ideamart/charging/notification` | Platform charging callback. Acknowledge first |
+| `GET` | `/healthz` | Liveness (does not depend on the volume) |
+| `GET` | `/readyz` | Readiness (requires a writable data dir) |
+| `GET` | `/metrics` | Prometheus exposition on a separate port |
+
+Only the files and Ideamart paths are on the public Ingress. Health and metrics stay cluster-local.
+
+Create and fetch are rate-limited per IP in memory on the pod (20 of each per hour, plus 20 charges). The service is a small Go binary in a distroless image.
+
+## Observability without reading files
+
+Prometheus metrics track envelope behaviour, never contents:
+
+- Files created and fetched
+- Fetch misses
+- Payload size histogram
+- Charge results by class
+- Store availability
+- HTTP latency by route and status class
+
+Logs must not include payloads, keys, or unmasked subscriber numbers. A dashboard that shows creates, fetches, and charge outcomes on a system that cannot decrypt any object is a stronger privacy argument than a policy page.
+
+## What operators can still see
+
+Honesty matters here. Cluster access still reveals:
+
+- Ciphertext bytes on the volume
+- Approximate file size
+- Create and fetch timing
+- Client IP for rate limiting
+- Opaque ids
+- Billing ledger rows (masked subscriber id, grant, transaction id)
+
+None of that is plaintext. None of it includes the fragment key or the original filename. The architecture reduces disclosure risk. It does not make the operator omniscient-proof against metadata, and it does not erase an object after download.
+
+## Repository layout
+
+| Path | Role |
+|---|---|
+| `app/files/` | Next.js UI (compose + download) |
+| `lib/file-share.ts` | Browser crypto, envelope, and API client |
+| `services/file-share/` | Go API, disk store, CaaS paywall |
+| `deploy/file-share/` | Kustomize manifests, PVC, Ingress |
+| `.github/workflows/file-share.yml` | Test, build, push image to GHCR |
+
+The live tool is at [gajan.dev/files](https://gajan.dev/files). The API contract and deploy steps live next to the manifests so the writeup and the running system stay aligned.
+
+## Closing
+
+The hard part was not AES. The hard part was refusing convenience that would quietly break the guarantee: GET downloads, keys in query strings, plaintext names on disk, and a store that can read the file.
+
+EncryFy is a small tool. The design is the product. If the server cannot read the file, a privacy policy is not doing the work. The request path is.
+
+Use EncryFy when the payload is a file and the link should stay reusable. Use [gajan.dev/clipboard](https://gajan.dev/clipboard) when a secret should vanish on first read.
+
 ### Building a Zero-Knowledge One-Time Secret Sharing Tool
 
 - URL: https://gajan.dev/blog/zero-knowledge-one-time-secret-sharing
@@ -289,6 +534,8 @@ The live tool is at [gajan.dev/clipboard](https://gajan.dev/clipboard). The API 
 The hard part was not AES. The hard part was refusing convenience that would quietly break the guarantee: GET burns, managed plaintext stores, keys in query strings, and persistence “just in case.”
 
 One-time secret sharing is a small tool. The design is the product. If the server cannot read the secret, a privacy policy is not doing the work - the request path is.
+
+For a file of up to 100 MB that should stay reusable, EncryFy lives at [gajan.dev/files](/files). The design notes are in [Building EncryFy, a Zero-Knowledge Encrypted File Sharing Tool](/blog/encryfy-zero-knowledge-file-sharing).
 
 ### Route 53 and TLS Certificates
 
