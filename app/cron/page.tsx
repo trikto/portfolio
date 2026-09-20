@@ -90,7 +90,6 @@ export default function CronPage() {
   return (
     <main id="site-top" className="site concept-cloud cron-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }} />
-      <div className="utility"><span className="pulse" /> DEVOPS UTILITIES</div>
       <SiteHeader />
       <section className="cron-hero" aria-labelledby="cron-title">
         <p className="eyebrow">DEVOPS UTILITIES / <Link href="/tools">ALL TOOLS</Link></p>

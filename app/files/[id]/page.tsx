@@ -10,7 +10,6 @@ export default async function FileDownloadPage({ params }: { params: Promise<{ i
   const { id } = await params;
   return (
     <main id="site-top" className="site concept-cloud secret-page">
-      <div className="utility"><span className="pulse" /> DEVOPS UTILITIES</div>
       <SiteHeader />
       <section className="secret-hero" aria-labelledby="file-download-title">
         <p className="eyebrow">DEVOPS UTILITIES / <Link href="/files">ENCRYFY</Link></p>

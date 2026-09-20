@@ -316,7 +316,6 @@ export function HomeClient({ latestArticles }: { latestArticles: ReactNode }) {
 
   return (
     <main id="site-top" className="site concept-cloud">
-      {/* <div className="utility"><span className="pulse" /> AVAILABLE FOR PLATFORM & RELIABILITY WORK <span> · </span> COLOMBO, LK <span> · </span> AVAILABLE FOR FREELANCE PROJECTS</div> */}
       <SiteHeader />
 
       <section id="top" className="hero">

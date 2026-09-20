@@ -13,5 +13,5 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function BlogPage() {
-  return <main id="site-top" className="site concept-cloud blog-page"><div className="utility"><span className="pulse" /> DEVOPS FIELD NOTES</div><SiteHeader /><section className="blog-hero" aria-labelledby="articles-title"><p className="eyebrow">TECHNICAL WRITING</p><h1 id="articles-title">Articles</h1><p>Practical writing about DevOps, cloud infrastructure, Linux, CI/CD, Kubernetes, automation, and the operational lessons behind reliable systems.</p></section><section className="blog-content" aria-label="Published articles"><ArticlesGrid articles={getPublishedPosts()} emptyMessage="No articles have been published yet." /></section><SiteFooter /><BackToTop /></main>;
+  return <main id="site-top" className="site concept-cloud blog-page"><SiteHeader /><section className="blog-hero" aria-labelledby="articles-title"><p className="eyebrow">TECHNICAL WRITING</p><h1 id="articles-title">Articles</h1><p>Practical writing about DevOps, cloud infrastructure, Linux, CI/CD, Kubernetes, automation, and the operational lessons behind reliable systems.</p></section><section className="blog-content" aria-label="Published articles"><ArticlesGrid articles={getPublishedPosts()} emptyMessage="No articles have been published yet." /></section><SiteFooter /><BackToTop /></main>;
 }
